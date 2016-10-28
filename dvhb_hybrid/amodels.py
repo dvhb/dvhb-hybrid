@@ -45,7 +45,7 @@ def method_connect_once(func):
     @functools.wraps(func)
     async def wraper(self, *args, **kwargs):
         if kwargs.get('connection') is None:
-            async with self.app.db.acquire() as connection:
+            async with self.app['db'].acquire() as connection:
                 kwargs['connection'] = ConnectionLogger(connection)
                 return await func(self, *args, **kwargs)
         else:
@@ -60,7 +60,7 @@ def method_redis_once(arg):
         @functools.wraps(func)
         async def wraper(self, *args, **kwargs):
             if kwargs.get(redis) is None:
-                async with getattr(self.app, redis).get() as connection:
+                async with self.app[redis].get() as connection:
                     kwargs[redis] = connection
                     return await func(self, *args, **kwargs)
             else:
