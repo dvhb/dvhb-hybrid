@@ -4,7 +4,7 @@ import invoke
 import yaml
 
 
-def load_conf(overrides=None, *, base_path, env_path, system_prefix, env_prefix):
+def load_conf(overrides=None, local_path=None, *, base_path, env_path, system_prefix, env_prefix):
     with open(base_path) as f:
         base = yaml.load(f)
     path = os.environ.get(env_path)
@@ -16,6 +16,7 @@ def load_conf(overrides=None, *, base_path, env_path, system_prefix, env_prefix)
         overrides=overrides,
         system_prefix=system_prefix,
         env_prefix=env_prefix,
+        runtime_path=local_path,
     )
 
 
