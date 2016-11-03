@@ -303,8 +303,6 @@ class Model(dict, metaclass=MetaModel):
 
     @method_connect_once
     async def save(self, *, fields=None, connection):
-        if 'cant_save_fields' in self and self['cant_save_fields']:
-            fields = [f for f in fields if f not in self['cant_save_fields']]
         pk_field = getattr(self.table.c, self.primary_key)
         self.set_defaults(self)
         if self.primary_key in self:
