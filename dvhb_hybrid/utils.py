@@ -1,4 +1,5 @@
 import importlib
+import pkgutil
 import functools
 import hashlib
 import json
@@ -65,6 +66,15 @@ def import_module_from_all_apps(apps_path, module):
                 continue
             try:
                 importlib.import_module('{}.{}'.format(dir_name, module))
+            except ImportError:
+                pass
+
+
+def import_modules_from_packages(package, module):
+    for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
+        if ispkg:
+            try:
+                importlib.import_module('{}.{}.{}'.format(package.__name__, modname, module))
             except ImportError:
                 pass
 

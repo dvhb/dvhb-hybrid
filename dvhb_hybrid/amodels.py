@@ -460,3 +460,12 @@ class AppModels:
         :param apps_path: путь к директории с приложениями.
         """
         utils.import_module_from_all_apps(apps_path, 'amodels')
+
+
+    @staticmethod
+    def import_modules_from_packages(package):
+        """
+        Импортирует все модели приложения из корневого пакета
+        :param package: пакет
+        """
+        utils.import_modules_from_packages(package, 'amodels')
