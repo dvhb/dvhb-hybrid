@@ -463,7 +463,7 @@ class AppModels:
 
 
     @staticmethod
-    def import_modules_from_packages(package):
+    def import_all_models_from_packages(package):
         """
         Импортирует все модели приложения из корневого пакета
         :param package: пакет
