@@ -41,6 +41,8 @@ def convert_to_djangodb(d, name, base_dir='/tmp'):
             if v}
         db['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
         db['NAME'] = db.pop('DATABASE')
+        # Use same db name for test. Use custom config for tests to separate test and dev dbs.
+        db['TEST'] = {'NAME': db['NAME']}
     else:
         return {
             'ENGINE': 'django.db.backends.sqlite3',
