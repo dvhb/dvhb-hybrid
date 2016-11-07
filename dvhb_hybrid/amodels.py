@@ -7,6 +7,7 @@ from abc import ABCMeta
 from typing import Iterable
 
 import sqlalchemy as sa
+import voluptuous
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
