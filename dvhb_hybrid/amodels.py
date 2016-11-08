@@ -8,6 +8,7 @@ from typing import Iterable
 
 import sqlalchemy as sa
 import voluptuous
+from aiohttp.web_reqrep import Request
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
@@ -42,16 +43,31 @@ class ConnectionLogger:
         return self._connection.scalar(sql, *args, **kwargs)
 
 
-def method_connect_once(func):
-    @functools.wraps(func)
-    async def wraper(self, *args, **kwargs):
-        if kwargs.get('connection') is None:
-            async with self.app['db'].acquire() as connection:
-                kwargs['connection'] = ConnectionLogger(connection)
-                return await func(self, *args, **kwargs)
-        else:
-            return await func(self, *args, **kwargs)
-    return wraper
+def get_app_from_parameters(*args, **kwargs):
+    app = None
+    if kwargs.get('request') is not None:
+        app = kwargs['request'].app
+    elif args and isinstance(args[0], (MetaModel, Model, Request)):
+        app = args[0].app
+    return app
+
+
+def method_connect_once(arg):
+    def with_arg(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            if kwargs.get('connection') is None:
+                app = get_app_from_parameters(*args, **kwargs)
+                async with app['db'].acquire() as connection:
+                    kwargs['connection'] = ConnectionLogger(connection)
+                    return await func(*args, **kwargs)
+            else:
+                return await func(*args, **kwargs)
+        return wrapper
+
+    if not callable(arg):
+        return with_arg
+    return with_arg(arg)
 
 
 def method_redis_once(arg):
@@ -59,14 +75,15 @@ def method_redis_once(arg):
 
     def with_arg(func):
         @functools.wraps(func)
-        async def wraper(self, *args, **kwargs):
+        async def wrapper(*args, **kwargs):
             if kwargs.get(redis) is None:
-                async with self.app[redis].get() as connection:
+                app = get_app_from_parameters(*args, **kwargs)
+                async with app[redis].get() as connection:
                     kwargs[redis] = connection
-                    return await func(self, *args, **kwargs)
+                    return await func(*args, **kwargs)
             else:
-                return await func(self, *args, **kwargs)
-        return wraper
+                return await func(*args, **kwargs)
+        return wrapper
 
     if not callable(arg):
         redis = arg
@@ -149,7 +166,7 @@ class Model(dict, metaclass=MetaModel):
         pass
 
     @classmethod
-    async def _get_one(cls, *args, connection, fields=None):
+    async def _get_one(cls, *args, connection=None, fields=None):
         args = cls._where(args)
         if fields:
             fields = cls.to_column(fields)
@@ -166,7 +183,7 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_connect_once
-    async def get_one(cls, *args, connection, fields=None, silent=False):
+    async def get_one(cls, *args, connection=None, fields=None, silent=False):
         """
         Извлечение по id, или алхимическому условию
         """
