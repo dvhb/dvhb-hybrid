@@ -1,13 +1,16 @@
+def redis_key(project_slug, key, namespace=None):
+    return '{}:{}:{}'.format(
+        project_slug,
+        namespace.replace('/', ':'),
+        key)
+
+
 class RedisMixin:
     project_slug = None
 
     @classmethod
     def redis_key(cls, key, namespace=None):
-        namespace = namespace or cls.namespace
-        return '{}:{}:{}'.format(
-            cls.project_slug,
-            namespace.replace('/', ':'),
-            key)
+        return redis_key(cls.project_slug, key, namespace=namespace)
 
     @classmethod
     async def redis(cls, request, key, *, value=None, sadd=None, expire=None,
