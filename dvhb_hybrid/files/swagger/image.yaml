@@ -1,0 +1,165 @@
+swagger: '2.0'
+
+paths:
+  '':
+    put:
+      operationId: image_upload
+      tags:
+        - files
+      summary: Загрузка нового изображения
+      description:
+        Принимает на вход форму с файлом.
+        Создает запись в базе данных и размещает файл.
+
+      consumes:
+        - multipart/form-data
+
+      parameters:
+
+        - name: file
+          in: formData
+          description: Файл
+          required: true
+          type: file
+
+      produces:
+        - application/json
+
+      responses:
+        400:
+          description: Плохой запрос
+          schema:
+            type: object
+        403:
+          description: Не хватает прав
+          schema:
+            type: object
+        200:
+          description: Файл сохранен
+          schema:
+            type: object
+            properties:
+              uuid:
+                type: string
+
+  '/{uuid}/{processor}_{width:\d+}x{height:\d+}.{ext}':
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+        - files
+    get:
+      operationId: photo_handler
+      tags:
+        - files
+      summary: URL изображения
+      description: Формирует URL для изображения
+
+      parameters:
+
+        - &param_uuid
+          name: uuid
+          in: path
+          description: Идентификатор изображения
+          required: true
+          type: string
+
+        - &param_processor
+          name: processor
+          in: path
+          description: Процессор для обработки
+          required: true
+          type: string
+          enum:
+            - size
+
+        - &param_width
+          name: width
+          in: path
+          description: Ширина
+          required: true
+          type: integer
+          format: int32
+          max: 3000
+
+        - &param_height
+          name: height
+          in: path
+          description: Высота
+          required: true
+          type: integer
+          format: int32
+          max: 3000
+
+        - &param_ext
+          name: ext
+          in: path
+          description: Расширение файла
+          required: true
+          type: string
+
+      responses: &get_response
+        404:
+          description: Не найден
+          schema:
+            type: object
+        200:
+          description: файле
+          schema:
+            type: object
+
+  '/{uuid}/{processor}_{width:\d+}x{height:\d+}_2x.{ext}':
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+        - files
+    get:
+      operationId: photo_handler
+      tags:
+        - files
+      summary: URL изображения
+      description: Формирует URL для изображения
+
+      parameters:
+        - *param_uuid
+        - *param_processor
+        - *param_width
+        - *param_height
+        - *param_ext
+
+      responses: *get_response
+
+  '/{uuid}/origin_2x.{ext}':
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+        - files
+    get:
+      operationId: photo_handler
+      tags:
+        - files
+      summary: URL изображения
+      description: Формирует URL для изображения
+
+      parameters:
+        - *param_uuid
+        - *param_ext
+
+      responses: *get_response
+
+  '/{uuid}/origin.{ext}':
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+        - files
+    get:
+      operationId: photo_handler
+      tags:
+        - files
+      summary: URL изображения
+      description: Формирует URL для изображения
+
+      parameters:
+        - *param_uuid
+        - *param_ext
+
+      responses: *get_response
