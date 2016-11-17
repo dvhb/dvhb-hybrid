@@ -28,7 +28,7 @@ async def image_upload(request, file):
 async def get_image(request):
     request.app['state']['files_photo_db'] += 1
     Image = request.app.models.image
-    async with request.app.db.acquire() as conn:
+    async with request.app['db'].acquire() as conn:
         result = await conn.execute(
             Image.table.select()
             .where(Image.table.c.uuid == request.match_info['uuid'])
