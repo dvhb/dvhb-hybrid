@@ -55,7 +55,7 @@ class ImageStorage(BaseStorage):
         # basename = super(ImageStorage, self).get_valid_name(basename)
         return os.path.join(os.path.dirname(name), basename)
 
-    def get_available_name(self, name, uuid=None):
+    def get_available_name(self, name, max_length=None, uuid=None):
         name = self.get_name(name, uuid)
         while self.exists(name):
             name = self.get_name(name)

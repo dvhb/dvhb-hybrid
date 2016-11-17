@@ -2,6 +2,7 @@ from sqlalchemy import table, column
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from ..amodels import Model
+from .. import utils
 
 
 class Image(Model):
@@ -20,3 +21,4 @@ class Image(Model):
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('meta', {})
+        data['updated_at'] = utils.now()

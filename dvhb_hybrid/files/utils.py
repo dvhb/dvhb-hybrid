@@ -2,7 +2,7 @@ from .. import utils
 from .storages import image_storage
 
 
-async def save_image(app, user, filename, content, content_type, image_role):
+async def save_image(app, user, filename, content, content_type):
     name = await app.loop.run_in_executor(
         None, image_storage.save, filename, content)
     image_uuid = image_storage.uuid(name)
@@ -13,6 +13,5 @@ async def save_image(app, user, filename, content, content_type, image_role):
         mime_type=content_type,
         author_id=user.id,
         created_at=utils.now(),
-        role=image_role,
     )
     return image_uuid
