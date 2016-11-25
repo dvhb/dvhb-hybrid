@@ -47,7 +47,7 @@ def get_app_from_parameters(*args, **kwargs):
     app = None
     if kwargs.get('request') is not None:
         app = kwargs['request'].app
-    elif args and isinstance(args[0], (MetaModel, Model, Request)):
+    elif args and (isinstance(args[0], (MetaModel, Model, Request)) or hasattr(args[0], 'app')):
         app = args[0].app
     return app
 
