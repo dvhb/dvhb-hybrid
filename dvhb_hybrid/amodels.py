@@ -264,7 +264,9 @@ class Model(dict, metaclass=MetaModel):
         if not postfix:
             postfix = utils.get_hash(
                 str(sql.compile(compile_kwargs={"literal_binds": True})))
-        key = 'vprs:count:' + postfix
+
+        key = cls.app.name + ':count:' if cls.app and hasattr(cls.app, 'name') else 'count:'
+        key += postfix
 
         count = await redis.get(key)
         if count is not None:
@@ -289,7 +291,9 @@ class Model(dict, metaclass=MetaModel):
         if not postfix:
             postfix = utils.get_hash(
                 str(sql.compile(compile_kwargs={"literal_binds": True})))
-        key = 'vprs:aggregate:sum:' + postfix
+
+        key = cls.app.name + ':aggregate:sum:' if cls.app and hasattr(cls.app, 'name') else 'aggregate:sum:'
+        key += postfix
 
         if delay:
             count = await redis.get(key)
