@@ -265,7 +265,7 @@ class Model(dict, metaclass=MetaModel):
             return {}
         where = reduce(and_, where)
         if not fields:
-            fields = [cls.primary_key]
+            fields = None
         elif cls.primary_key not in fields:
             fields.append(cls.primary_key)
         l = await cls.get_list(
@@ -274,16 +274,19 @@ class Model(dict, metaclass=MetaModel):
         return {i.pk: i for i in l}
 
     @classmethod
-    def get_table_from_django(cls, model, *jsonb, **field_type):
+    def get_table(cls, model, *jsonb, **field_type):
+        options = model._meta
         fields = []
-        for i in model._meta.get_all_field_names():
+        for i in options.get_all_field_names():
             if i in jsonb:
                 fields.append((i, JSONB))
             elif i in field_type:
                 fields.append((i, field_type[i]))
+            elif options.get_field(i).is_relation and not i.endswith('_id'):
+                continue
             else:
                 fields.append((i,))
-        return sa.table(model._meta.db_table, *[sa.column(*f) for f in fields])
+        return sa.table(options.db_table, *[sa.column(*f) for f in fields])
 
     @classmethod
     @method_connect_once
