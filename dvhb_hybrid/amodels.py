@@ -283,7 +283,9 @@ class Model(dict, metaclass=MetaModel):
                 fields.append((i, JSONB))
             elif i in field_type:
                 fields.append((i, field_type[i]))
-            elif f.is_relation and not i.endswith('_id'):
+            elif f.many_to_one:
+                fields.append((i + '_id',))
+            elif f.related_model is not None:
                 continue
             else:
                 fields.append((i,))
