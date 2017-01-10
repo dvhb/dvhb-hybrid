@@ -247,6 +247,46 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_connect_once
+    async def get_dict(cls, *where_and, connection=None,
+                       fields=None, sort=None, **kwargs):
+        where = []
+        if where_and:
+            if isinstance(where_and[0], (list, tuple, str, int)):
+                v, *where_and = where_and
+                kwargs[cls.primary_key] = v
+        for k, v in kwargs.items():
+            if isinstance(v, (list, tuple)):
+                if v:
+                    where.append(cls.table.c[k].in_(v))
+            else:
+                where.append(cls.table.c[k] == v)
+        where.extend(where_and)
+        if not where:
+            return {}
+        where = reduce(and_, where)
+        if not fields:
+            fields = [cls.primary_key]
+        elif cls.primary_key not in fields:
+            fields.append(cls.primary_key)
+        l = await cls.get_list(
+            where, connection=connection,
+            sort=sort, fields=fields)
+        return {i.pk: i for i in l}
+
+    @classmethod
+    def get_table_from_django(cls, model, *jsonb, **field_type):
+        fields = []
+        for i in model._meta.get_all_field_names():
+            if i in jsonb:
+                fields.append((i, JSONB))
+            elif i in field_type:
+                fields.append((i, field_type[i]))
+            else:
+                fields.append((i,))
+        return sa.table(model._meta.db_table, *[sa.column(*f) for f in fields])
+
+    @classmethod
+    @method_connect_once
     async def _pg_scalar(cls, sql, connection=None):
         return await connection.scalar(sql)
 
