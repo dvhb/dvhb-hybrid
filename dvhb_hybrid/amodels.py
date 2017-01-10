@@ -274,15 +274,16 @@ class Model(dict, metaclass=MetaModel):
         return {i.pk: i for i in l}
 
     @classmethod
-    def get_table(cls, model, *jsonb, **field_type):
+    def get_table_from_django(cls, model, *jsonb, **field_type):
         options = model._meta
         fields = []
-        for i in options.get_all_field_names():
+        for f in options.get_fields():
+            i = f.name
             if i in jsonb:
                 fields.append((i, JSONB))
             elif i in field_type:
                 fields.append((i, field_type[i]))
-            elif options.get_field(i).is_relation and not i.endswith('_id'):
+            elif f.is_relation and not i.endswith('_id'):
                 continue
             else:
                 fields.append((i,))
