@@ -284,7 +284,7 @@ class Model(dict, metaclass=MetaModel):
             elif i in field_type:
                 fields.append((i, field_type[i]))
             elif f.many_to_one:
-                fields.append((i + '_id',))
+                fields.append((f.column,))
             elif f.related_model is not None:
                 continue
             else:
