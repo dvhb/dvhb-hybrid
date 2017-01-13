@@ -59,7 +59,7 @@ def method_connect_once(arg):
             if kwargs.get('connection') is None:
                 app = get_app_from_parameters(*args, **kwargs)
                 async with app['db'].acquire() as connection:
-                    kwargs['connection'] = ConnectionLogger(connection)
+                    kwargs['connection'] = connection
                     return await func(*args, **kwargs)
             else:
                 return await func(*args, **kwargs)
