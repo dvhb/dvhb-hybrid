@@ -2,3 +2,10 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+venv/
+
+# Sphinx documentation
+docs/_build/
+docs/_static/
+docs/_templates/
