@@ -7,8 +7,6 @@ from dvhb_hybrid import exceptions
 from dvhb_hybrid.amodels import method_redis_once
 from dvhb_hybrid.redis import redis_key
 
-from ruam import PROJECT_SLUG
-
 
 def get_api_key(request):
     return request.headers.get('API-KEY') or request.GET.get('api_key')
@@ -24,7 +22,7 @@ async def get_session_data(request, sessions=None):
 
     @amodels.method_redis_once('sessions')
     def get_data(request, sessions):
-        return sessions.hgetall(redis_key(PROJECT_SLUG, api_key, namespace='session'))
+        return sessions.hgetall(redis_key(request.app.name, api_key, namespace='session'))
 
     try:
         api_key = str(uuid.UUID(api_key))
@@ -83,7 +81,7 @@ async def gen_api_key(user_id, *, request=None, sessions=None, **kwargs):
     old_key = get_api_key(request)
 
     if old_key:
-        full_key = redis_key(PROJECT_SLUG, old_key, namespace='session')
+        full_key = redis_key(request.app.name, old_key, namespace='session')
         u = await sessions.hgetall(full_key)
         u = {
             k.decode(): v.decode()
@@ -97,7 +95,7 @@ async def gen_api_key(user_id, *, request=None, sessions=None, **kwargs):
         u = kwargs
         u['c'] = utils.now(ts=True)
         api_key = str(uuid.uuid4())
-        full_key = redis_key(PROJECT_SLUG, api_key, namespace='session')
+        full_key = redis_key(request.app.name, api_key, namespace='session')
 
     pairs = functools.reduce(operator.add, u.items())
     await sessions.hmset(full_key, *pairs)
