@@ -4,10 +4,8 @@ import json
 import logging
 import uuid
 from abc import ABCMeta
-from typing import Iterable
 
 import sqlalchemy as sa
-import voluptuous
 from aiohttp.web_reqrep import Request
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
@@ -478,31 +476,15 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     def validate(cls, data):
-        """ Возвращает валидный объект или исключение
-        """
+        """Returns valid object or exception"""
         validators = cls.validators or [cls.default_validator]
         for validator in validators:
-            try:
-                data = validator(data)
-            except voluptuous.MultipleInvalid as e:
-                raise exceptions.ValidationError(
-                    utils.multiple_invalid_to_errors(e))
+            data = validator(data)
         return cls(**data)
 
     @classmethod
     def default_validator(cls, data):
         return {f: data.get(f) for f in cls.table.columns.keys()}
-
-    def data(self, fields: Iterable[str]=None) -> dict:
-        """
-        Возвращает данные в виде словаря
-        :param fields: необязательные параметр список необходимых полей,
-        если не указан, тогда будут возвращены все поля.
-        :return: dict
-        """
-        if not fields:
-            fields = self.table.columns.keys()
-        return {k: self[k] for k in fields if k in self}
 
 
 class AppModels:
@@ -523,17 +505,10 @@ class AppModels:
 
     @staticmethod
     def import_all_models(apps_path):
-        """
-        Импортирует все модели из приложений.
-        :param apps_path: путь к директории с приложениями.
-        """
+        """Imports all the models from apps_path"""
         utils.import_module_from_all_apps(apps_path, 'amodels')
-
 
     @staticmethod
     def import_all_models_from_packages(package):
-        """
-        Импортирует все модели приложения из корневого пакета
-        :param package: пакет
-        """
+        """Import all the models from package"""
         utils.import_modules_from_packages(package, 'amodels')
