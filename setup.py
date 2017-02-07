@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dvhb-hybrid',
-    version='0.0.3',
+    version='0.0.4',
     description='',
     author='Malev A',
     author_email='am@dvhb.ru',
