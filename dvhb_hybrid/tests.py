@@ -8,6 +8,10 @@ class BaseTestApi:
         self.headers = {'content-type': 'application/json'}
 
     @staticmethod
+    async def check_status(result, response=HTTPOk):
+        assert result.status == response.status_code, await result.text()
+
+    @staticmethod
     async def prepare_result(r):
         data = None
         if 'application/json' in r.headers['Content-Type']:
