@@ -1,3 +1,6 @@
+from aiohttp.web_exceptions import HTTPOk
+
+
 class BaseTestApi:
     """Base class to test API"""
     API_KEY = 'API-KEY'
