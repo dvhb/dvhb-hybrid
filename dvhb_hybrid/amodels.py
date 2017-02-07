@@ -4,9 +4,11 @@ import json
 import logging
 import uuid
 from abc import ABCMeta
+from operator import and_
 
 import sqlalchemy as sa
 from aiohttp.web_reqrep import Request
+from functools import reduce
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
@@ -258,6 +260,7 @@ class Model(dict, metaclass=MetaModel):
                     where.append(cls.table.c[k].in_(v))
             else:
                 where.append(cls.table.c[k] == v)
+
         where.extend(where_and)
         if not where:
             return {}
