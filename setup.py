@@ -7,7 +7,7 @@ setup(
     description='',
     author='Malev A',
     author_email='am@dvhb.ru',
-    url='https://git.dvhb.ru/devhub-libs/dvhb-hybrid',
+    url='https://github.com/dvhbru/dvhb-hybrid',
     packages=find_packages(),
     classifiers=[
         'Environment :: Web Environment',
