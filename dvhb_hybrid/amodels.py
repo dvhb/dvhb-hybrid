@@ -491,6 +491,9 @@ class Model(dict, metaclass=MetaModel):
 
 
 class AppModels:
+    """
+    Class to managing all models of application
+    """
     def __init__(self, app):
         self.app = app
 
