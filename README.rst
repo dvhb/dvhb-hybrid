@@ -1,14 +1,21 @@
 ===========
-dvhb_hybrid
+DVHB Hybrid
 ===========
 
 |docs|
 
-Package to create hybrid django-asyncio applications.
+Package to create hybrid django and asyncio applications.
 
 
+Features
+--------
 
-.. |docs| image:: https://readthedocs.org/projects/dvhb-hybrid/badge/?version=latest 
+- Define your database schema using Django models.
+- Use Django migration to propagating changes you make to your models in your database schema.
+- Uses powerful Django administration to manage your application data.
+- Allow easily creates a REST API based on aiohttp and aiohttp-apiset.
+
+
+.. |docs| image:: https://readthedocs.org/projects/dvhb-hybrid/badge/?version=latest
     :alt: Documentation Status
-    :scale: 100%
     :target: http://dvhb-hybrid.readthedocs.io/en/latest/?badge=latest
