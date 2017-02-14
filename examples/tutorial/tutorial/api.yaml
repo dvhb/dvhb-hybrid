@@ -1,0 +1,12 @@
+swagger: '2.0'
+
+basePath: /api
+
+info:
+  title: TUTORIAL API
+  version: '1.0'
+  description: API версии 1.0
+
+paths:
+  /users:
+  - $include: users/users_api.yaml
