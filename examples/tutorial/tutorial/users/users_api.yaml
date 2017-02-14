@@ -1,0 +1,15 @@
+paths:
+  '':
+    get:
+      $handler: tutorial.users.views.get_users
+      tags:
+      - user
+      summary: Users list
+      description: Returns list of users
+
+      produces:
+      - application/json
+
+      responses:
+        200:
+          description: OK
