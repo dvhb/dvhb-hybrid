@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseStorage(FileSystemStorage):
-    ERROR_CREATE_DIR = _('Ошибка при создании каталога {0}')
+    ERROR_CREATE_DIR = _('Error during creating a directory {0}')
 
     def create_dir(self, path):
         if not path.startswith(os.path.sep):  # is name?

@@ -6,10 +6,10 @@ paths:
       operationId: image_upload
       tags:
         - files
-      summary: Загрузка нового изображения
+      summary: Upload new image
       description:
-        Принимает на вход форму с файлом.
-        Создает запись в базе данных и размещает файл.
+        Takes form with file.
+        Create an entry in db and save file.
 
       consumes:
         - multipart/form-data
@@ -27,15 +27,15 @@ paths:
 
       responses:
         400:
-          description: Плохой запрос
+          description: Bad request
           schema:
             type: object
         403:
-          description: Не хватает прав
+          description: Need permissions
           schema:
             type: object
         200:
-          description: Файл сохранен
+          description: File was saved
           schema:
             type: object
             properties:
@@ -51,22 +51,22 @@ paths:
       operationId: photo_handler
       tags:
         - files
-      summary: URL изображения
-      description: Формирует URL для изображения
+      summary: URL image
+      description: Create URL for image
 
       parameters:
 
         - &param_uuid
           name: uuid
           in: path
-          description: Идентификатор изображения
+          description: Image id
           required: true
           type: string
 
         - &param_processor
           name: processor
           in: path
-          description: Процессор для обработки
+          description: processor for image
           required: true
           type: string
           enum:
@@ -75,7 +75,7 @@ paths:
         - &param_width
           name: width
           in: path
-          description: Ширина
+          description: Width
           required: true
           type: integer
           format: int32
@@ -84,7 +84,7 @@ paths:
         - &param_height
           name: height
           in: path
-          description: Высота
+          description: Height
           required: true
           type: integer
           format: int32
@@ -93,17 +93,17 @@ paths:
         - &param_ext
           name: ext
           in: path
-          description: Расширение файла
+          description: File ext
           required: true
           type: string
 
       responses: &get_response
         404:
-          description: Не найден
+          description: Not found
           schema:
             type: object
         200:
-          description: файле
+          description: File
           schema:
             type: object
 
@@ -116,8 +116,8 @@ paths:
       operationId: photo_handler
       tags:
         - files
-      summary: URL изображения
-      description: Формирует URL для изображения
+      summary: URL of image
+      description: Create URL for iamge
 
       parameters:
         - *param_uuid
@@ -137,8 +137,8 @@ paths:
       operationId: photo_handler
       tags:
         - files
-      summary: URL изображения
-      description: Формирует URL для изображения
+      summary: URL
+      description: Creates URL for image
 
       parameters:
         - *param_uuid
@@ -155,8 +155,8 @@ paths:
       operationId: photo_handler
       tags:
         - files
-      summary: URL изображения
-      description: Формирует URL для изображения
+      summary: URL
+      description: Create URL for image
 
       parameters:
         - *param_uuid

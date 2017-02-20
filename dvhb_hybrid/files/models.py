@@ -12,15 +12,15 @@ from .storages import image_storage
 class Image(UpdatedMixin, models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='images',
-        verbose_name=_('Автор'))
+        verbose_name=_('Author'))
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     image = models.ImageField(storage=image_storage)
-    mime_type = models.CharField(_('тип содежимого'), max_length=99, blank=True)
-    meta = JSONField(_('мета-информация'), default={}, blank=True)
+    mime_type = models.CharField(_('content type'), max_length=99, blank=True)
+    meta = JSONField(_('meta-information'), default={}, blank=True)
 
     class Meta:
-        verbose_name = _('изображение')
-        verbose_name_plural = _('Изображения')
+        verbose_name = _('image')
+        verbose_name_plural = _('images')
         ordering = ('-created_at',)
 
     def __str__(self):
