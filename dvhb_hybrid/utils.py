@@ -52,11 +52,7 @@ def get_hash(data: str) -> str:
 
 
 def import_module_from_all_apps(apps_path, module):
-    """Импортирует все "module" из всех приложений.
-
-    :param apps_path: путь к директории с приложениями.
-    :param module: название модуля который нужно импортировать.
-    """
+    """Imports all the modules from apps directory"""
     # Импортируем "module" из всех приложений.
     for dir_name in os.listdir(apps_path):
         package_dir = os.path.join(apps_path, dir_name)
@@ -71,6 +67,7 @@ def import_module_from_all_apps(apps_path, module):
 
 
 def import_modules_from_packages(package, module):
+    """Imports all the apps from package"""
     for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
         if ispkg:
             try:
@@ -92,7 +89,7 @@ def convert_class_name(name):
 
 def int_or_zero(v):
     """
-    Выполняет преобразование объекта в число
+    Convert object to int
     """
     if isinstance(v, str):
         v = v.strip()
@@ -145,9 +142,7 @@ def method_client_once(func):
 
 
 def _merge(a, b, path=None):
-    """
-    merges b into a
-    """
+    """merges b into a"""
     if path is None:
         path = []
     for key, bv in b.items():

@@ -6,25 +6,22 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class CreatedMixin(models.Model):
-    created_at = models.DateTimeField(_('Дата создания'), auto_now_add=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
 
     class Meta:
         abstract = True
 
 
 class UpdatedMixin(CreatedMixin):
-    updated_at = models.DateTimeField(_('Дата обновления'), auto_now=True)
+    updated_at = models.DateTimeField(_('update at'), auto_now=True)
 
     class Meta:
         abstract = True
 
 
 class AuthorMixin(CreatedMixin):
-    """
-    Принадлежность к автору
-    """
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               verbose_name=_('Автор'))
+                               verbose_name=_('author'))
 
     class Meta:
         abstract = True

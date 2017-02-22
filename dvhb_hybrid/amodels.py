@@ -105,7 +105,7 @@ class Model(dict, metaclass=MetaModel):
     app = None
     primary_key = 'id'
     validators = ()
-    fields_permanent = ()  # Поля которые необходимо всегда сохранять
+    fields_permanent = ()  # Fields need to be saved
     fields_readonly = ()
     fields_list = ()
     fields_one = None
@@ -185,7 +185,7 @@ class Model(dict, metaclass=MetaModel):
     @method_connect_once
     async def get_one(cls, *args, connection=None, fields=None, silent=False):
         """
-        Извлечение по id, или алхимическому условию
+        Extract by id
         """
         r = await cls._get_one(*args, connection=connection, fields=fields)
         if r:
@@ -212,9 +212,7 @@ class Model(dict, metaclass=MetaModel):
     @method_connect_once
     async def get_list(cls, *args, connection, fields=None,
                        offset=None, limit=None, sort=None):
-        """
-        Извлечение списка
-        """
+        """Extract list"""
         if fields:
             fields = cls.to_column(fields)
         elif cls.fields_list:
@@ -301,7 +299,7 @@ class Model(dict, metaclass=MetaModel):
     @method_redis_once
     async def get_count(cls, *args, postfix=None, connection=None, redis=None):
         """
-        Извлечение размера выборки
+        Extract query size
         """
         sql = cls.table.count()
 
@@ -330,9 +328,7 @@ class Model(dict, metaclass=MetaModel):
     @method_redis_once
     async def get_sum(cls, column, where, postfix=None, delay=0,
                       connection=None, redis=None):
-        """
-        Извлечение размера выборки
-        """
+        """Calculates sum"""
         sql = sa.select([func.sum(cls.table.c[column])]).where(where)
 
         if not postfix:
@@ -360,9 +356,7 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     @method_connect_once
     async def create(cls, *, connection, **kwargs):
-        """
-        Возвращает сохраненный объект с данными
-        """
+        """Inserts new object"""
         pk = cls.table.c[cls.primary_key]
         cls.set_defaults(kwargs)
         uid = await connection.scalar(
@@ -434,7 +428,6 @@ class Model(dict, metaclass=MetaModel):
     async def update_json(self, connection=None, **kwargs):
         t = self.table
 
-        # TODO сделать атомарно
         dict_update = {
             t.c[field]: sa.cast(value, JSONB)
             if field not in self or self[field] is None
