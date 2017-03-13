@@ -366,7 +366,7 @@ class Model(dict, metaclass=MetaModel):
 
     @method_connect_once
     async def save(self, *, fields=None, connection):
-        pk_field = getattr(self.table.c, self.primary_key)
+        pk_field = self.table.c[self.primary_key]
         self.set_defaults(self)
         if self.primary_key in self:
             saved = await self._get_one(self.pk, connection=connection)
@@ -375,6 +375,7 @@ class Model(dict, metaclass=MetaModel):
         if not saved:
             pk = await connection.scalar(
                 self.table.insert().returning(pk_field).values(self))
+            self[self.primary_key] = pk
             return pk
         if fields:
             fields = list(itertools.chain(fields, self.fields_permanent))
