@@ -1,9 +1,11 @@
+import asyncio
 from uuid import uuid4
 
 import aiopg.sa
 import pytest
 import sqlalchemy as sa
 
+from dvhb_hybrid import exceptions
 from dvhb_hybrid.amodels import Model
 
 
@@ -38,7 +40,38 @@ async def test_get_one(db_factory):
         app['db'] = db
         obj = await model.create(text='123')
         obj2 = await model.get_one(obj.pk, fields=['id', 'text'])
-    assert obj.pk == obj2.pk
+        assert obj.pk == obj2.pk
+        with pytest.raises(exceptions.NotFound):
+            await model.get_one(None)
+
+
+async def test_count(db_factory, mocker):
+    app = {}
+    model = Model1.factory(app)
+    async with db_factory as db:
+        app['db'] = db
+        await model.create(text='123')
+        assert await model.get_count(
+            redis=mocker.Mock(
+                get=asyncio.coroutine(lambda x: None),
+                set=asyncio.coroutine(lambda x, v: None),
+                expire=asyncio.coroutine(lambda x, v: None),
+            )
+        )
+
+
+async def test_save(db_factory):
+    app = {}
+    model = Model1.factory(app)
+    async with db_factory as db:
+        app['db'] = db
+        obj = model(text='123')
+        obj.text = '321'
+        await obj.save()
+        assert obj.pk
+        obj2 = await model.get_one(obj.pk, fields=['id', 'text'])
+        await obj2.save(fields=['text'])
+    assert obj.text == obj2.text
 
 
 async def test_get_or_create(db_factory):
@@ -62,5 +95,18 @@ async def test_list(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        l = await model.get_list(limit=1, offset=1, fields=['id', 'text'])
-    assert isinstance(l, list)
+        l = await model.get_list(
+            limit=1, offset=1, fields=['id', 'text'], sort='id')
+        assert isinstance(l, list)
+        l = await model.get_list(sort=['id'])
+        assert isinstance(l, list)
+
+
+async def test_dict(db_factory):
+    app = {}
+    model = Model1.factory(app)
+    async with db_factory as db:
+        app['db'] = db
+        ids = [o.pk for o in await model.get_list(fields=['id'])]
+        l = await model.get_dict(ids, fields=['id', 'text'])
+    assert isinstance(l, dict)
