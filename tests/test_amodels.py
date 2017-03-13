@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import aiopg.sa
 import pytest
 import sqlalchemy as sa
@@ -44,8 +46,15 @@ async def test_get_or_create(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        obj, created = await model.get_or_create(model.table.c.text=='123')
-    assert isinstance(created, bool)
+        t = str(uuid4())
+        obj, created = await model.get_or_create(
+            model.table.c.text == t,
+            defaults={'text': t})
+        assert created
+        obj, created = await model.get_or_create(
+            model.table.c.text == t,
+            defaults={'text': t})
+        assert not created
 
 
 async def test_list(db_factory):
