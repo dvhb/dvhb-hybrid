@@ -4,6 +4,8 @@ from aiohttp.web import Application
 import django
 from django.conf import settings
 
+from dvhb_hybrid.utils import import_class
+
 
 def pytest_configure():
     settings.configure(
@@ -19,4 +21,8 @@ def app(loop):
     AppModels.import_all_models_from_packages(dvhb_hybrid)
     application = Application(loop=loop)
     application.models = AppModels(application)
+
+    Mailer = import_class('dvhb_hybrid.mailer.dummy.Mailer')
+    Mailer.setup(application, {})
+
     return application

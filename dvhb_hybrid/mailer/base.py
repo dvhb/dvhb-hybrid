@@ -49,9 +49,9 @@ class BaseMailer:
         self.restart_counter = 0
         self.exception_counter = 0
         self.connect_counter = 0
-        self.queue = asyncio.Queue()
-        self._daemon = asyncio.ensure_future(self.daemon())
-        self.templates = template.load_all(app, conf.templates)
+        self.queue = asyncio.Queue(loop=app.loop)
+        self._daemon = asyncio.ensure_future(self.daemon(), loop=app.loop)
+        # self.templates = template.load_all(app, conf.templates)
 
     async def daemon(self):
         while True:
@@ -104,9 +104,6 @@ class BaseMailer:
     async def send(self, mail_to, subject=None, body=None, *,
                    context=None, connection=None, template=None,
                    attachments=None, save=True):
-        """
-        Отправляет email
-        """
         if template:
             tmpl = self.templates[template]
             subject = tmpl['subject']
