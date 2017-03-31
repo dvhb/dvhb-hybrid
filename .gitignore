@@ -10,9 +10,12 @@ build/
 *.egg-info
 *.egg
 
+.coverage
+
 venv/
 
 # Sphinx documentation
 docs/_build/
 docs/_static/
 docs/_templates/
+dvhb_hybrid/mailer/
