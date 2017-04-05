@@ -3,7 +3,6 @@
 sudo: required
 services:
   - redis-server
-  - postgresql
 
 addons:
   postgresql: "9.5"
