@@ -10,6 +10,8 @@ build/
 *.egg-info
 *.egg
 
+.coverage
+
 venv/
 
 # Sphinx documentation
