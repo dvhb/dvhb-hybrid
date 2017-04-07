@@ -14,6 +14,7 @@ Features
 - Use Django migration to propagating changes you make to your models in your database schema.
 - Uses powerful Django administration to manage your application data.
 - Allow easily creates a REST API based on aiohttp and aiohttp-apiset.
+- Mailer application.
 
 
 .. |docs| image:: https://readthedocs.org/projects/dvhb-hybrid/badge/?version=latest
