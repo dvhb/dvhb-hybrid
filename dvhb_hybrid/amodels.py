@@ -260,15 +260,16 @@ class Model(dict, metaclass=MetaModel):
                 where.append(cls.table.c[k] == v)
 
         where.extend(where_and)
-        if not where:
-            return {}
-        where = reduce(and_, where)
+        if where:
+            where = (reduce(and_, where),)
+        else:
+            where = ()
         if not fields:
             fields = None
         elif cls.primary_key not in fields:
             fields.append(cls.primary_key)
         l = await cls.get_list(
-            where, connection=connection,
+            *where, connection=connection,
             sort=sort, fields=fields)
         return {i.pk: i for i in l}
 
