@@ -22,8 +22,7 @@ class XLSXResponse(web.StreamResponse):
     def __enter__(self):
         wb = openpyxl.Workbook()
         self.archive = ZipFile(self, 'w', ZIP_DEFLATED, allowZip64=True)
-        ws = wb.active
-        self.ws = ws
+        self.ws = wb.active
         self.writer = ExcelWriter(wb, self.archive)
         if self.head:
             self.ws.append(self.head)
