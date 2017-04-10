@@ -7,7 +7,7 @@ from abc import ABCMeta
 from operator import and_
 
 import sqlalchemy as sa
-from aiohttp.web_reqrep import Request
+from aiohttp.web import Request
 from functools import reduce
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
