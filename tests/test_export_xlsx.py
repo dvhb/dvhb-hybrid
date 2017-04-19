@@ -3,7 +3,7 @@ from dvhb_hybrid.export.xlsx import XLSXResponse
 
 
 async def handler1(request):
-    with XLSXResponse() as r:
+    with XLSXResponse(filename='1.xlsx') as r:
         await r.prepare(request)
         r.append({'x': 2, 'y': 3})
         r.append({'x': 'a', 'y': 'f'})

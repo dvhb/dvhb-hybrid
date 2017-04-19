@@ -66,12 +66,14 @@ class BaseView(RedisMixin, ApiSet):
         return limit, offset
 
 
-def response_file(url, mime_type):
+def response_file(url, mime_type, filename=None):
+    headers = {'X-Accel-Redirect': url}
+    if filename:
+        v = 'attachment; filename="{}"'.format(filename)
+        headers['Content-Disposition'] = v
     raise web.HTTPOk(
         content_type=mime_type,
-        headers={
-            'X-Accel-Redirect': url,
-        },
+        headers=headers,
     )
 
 

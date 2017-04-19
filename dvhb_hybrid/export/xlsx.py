@@ -6,7 +6,11 @@ from openpyxl.writer.excel import ExcelWriter
 
 
 class XLSXResponse(web.StreamResponse):
-    def __init__(self, *args, fields=None, head=None, **kwargs):
+    def __init__(self, *args, fields=None, head=None, filename=None, **kwargs):
+        if filename:
+            headers = kwargs.setdefault('headers', {})
+            v = 'attachment; filename="{}"'.format(filename)
+            headers['Content-Disposition'] = v
         super().__init__(*args, **kwargs)
         self.content_type = 'application/xlsx'
         self.fields = fields
