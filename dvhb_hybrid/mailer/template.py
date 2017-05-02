@@ -10,7 +10,7 @@ def load_all(app, path):
     fs += glob(os.path.join(path, '*/mail.yaml'))
     result = {}
     for f in fs:
-        with open(f) as fd:
+        with open(f, encoding='utf-8') as fd:
             result.update(yaml.load(fd))
 
     for k, v in result.items():
