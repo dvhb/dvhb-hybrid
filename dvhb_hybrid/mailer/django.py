@@ -52,8 +52,11 @@ class DjangoConnection(base.BaseConnection):
     async def open(self):
         await self.close()
         if not self._conn:
-            self._conn = mail.get_connection(
-                backend=self.conf.get('django_email_backend'))
+            params = {
+                'backend': self.conf.get('django_email_backend'),
+                **self.conf.get('django_email_backend_params', {}),
+            }
+            self._conn = mail.get_connection(**params)
         await self.loop.run_in_executor(self.executor, self._conn.open)
         return self
 
