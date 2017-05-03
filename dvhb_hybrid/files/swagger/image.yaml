@@ -79,7 +79,7 @@ paths:
           required: true
           type: integer
           format: int32
-          max: 3000
+          maximum: 3000
 
         - &param_height
           name: height
@@ -88,7 +88,7 @@ paths:
           required: true
           type: integer
           format: int32
-          max: 3000
+          maximum: 3000
 
         - &param_ext
           name: ext
