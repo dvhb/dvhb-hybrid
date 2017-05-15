@@ -6,6 +6,9 @@ import aiohttp.web
 from .exceptions import HTTPNotAcceptable
 
 
+RECAPTCHA_FIELD = 'g-recaptcha-response'
+
+
 def recaptcha(arg):
     """
     Decorator to verify recaptcha response.
@@ -21,10 +24,13 @@ def recaptcha(arg):
             request = kwargs['request']
             c = request.app.config.recaptcha
             response = None
-            for v in kwargs.values():
-                if isinstance(v, dict) and 'g-recaptcha-response' in v:
-                    response = v.pop('g-recaptcha-response')
-                    break
+            if RECAPTCHA_FIELD in request:
+                response = request[RECAPTCHA_FIELD]
+            else:
+                for v in kwargs.values():
+                    if isinstance(v, dict) and RECAPTCHA_FIELD in v:
+                        response = v.pop(RECAPTCHA_FIELD)
+                        break
 
             if not c.active:
                 return await view(**kwargs)
