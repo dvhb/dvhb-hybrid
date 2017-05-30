@@ -35,7 +35,8 @@ def get_fixture(app_label, fixture_label, model_name, pk, *, fields=(), ids_fiel
                 if f in fixture:
                     fixture[f + '_id'] = fixture.pop(f)
             for f in exclude_fields:
-                del fixture[f]
+                if f in fixture:
+                    del fixture[f]
             return fixture
 
     raise ValueError('Object %s with pk=%s not found.' % (model, pk))
