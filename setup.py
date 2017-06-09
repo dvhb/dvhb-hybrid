@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dvhb-hybrid',
-    version='0.1.0',
+    version='0.2.0',
     description='',
     author='Malev A',
     author_email='am@dvhb.ru',
@@ -24,6 +24,7 @@ setup(
     install_requires=[
         'psycopg2',
         'aiopg',
+        'aioworkers',
         'aiohttp_apiset',
         'sqlalchemy',
         'invoke',
