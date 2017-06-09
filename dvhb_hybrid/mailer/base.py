@@ -1,8 +1,12 @@
 import asyncio
 import logging
 
-from dvhb_hybrid import exceptions, utils
-from dvhb_hybrid.mailer import template
+from aioworkers.core.context import Context
+from aioworkers.utils import module_path
+from aioworkers.worker.base import Worker
+
+from .. import utils
+from .template import load_all
 
 logger = logging.getLogger('mailer')
 
@@ -27,33 +31,39 @@ class BaseConnection:
         await self.close()
 
 
-class BaseMailer:
+class BaseMailer(Worker):
     connection_class = BaseConnection
 
     @classmethod
     def setup(cls, app, conf):
-        app.mailer = cls(app, conf)
-        app.router.add_route(
+        context = Context(loop=app.loop)
+        context.app = app
+        app.mailer = cls(conf, context=context, loop=app.loop)
+
+    async def init(self):
+        await super().init()
+
+        self.conf = self.config
+        if self.context:
+            self.app = self.context.app
+        self.app.router.add_route(
             'GET',
-            '/monitor/mailer',
-            app.mailer.monitor,
+            self.config.get('status_url', '/monitor/mailer'),
+            self.monitor,
             name='monitor:mailer',
         )
+        path = module_path(self.config.templates_from_module, True)
+        self.templates = load_all(self, path)
 
-    def __init__(self, app, conf):
-        self.app = app
-        self.conf = conf
         self.mail_success = 0
         self.mail_failed = 0
         self.reconnect_counter = 0
         self.restart_counter = 0
         self.exception_counter = 0
         self.connect_counter = 0
-        self.queue = asyncio.Queue(loop=app.loop)
-        self._daemon = asyncio.ensure_future(self.daemon(), loop=app.loop)
-        # self.templates = template.load_all(app, conf.templates)
+        self.queue = asyncio.Queue(loop=self.loop)
 
-    async def daemon(self):
+    async def run(self, *args):
         while True:
             msg = await self.queue.get()
             async with self.get_connection() as conn:
@@ -75,17 +85,8 @@ class BaseMailer:
                         break
 
     async def monitor(self, request):
-        if self._daemon.done():
-            d = self._daemon
-            self._daemon = asyncio.ensure_future(self.daemon())
-            try:
-                await d
-                self.restart_counter += 1
-                logger.critical('Restart mailer')
-            except:
-                self.exception_counter += 1
-                logger.exception('Restart mailer')
-        raise exceptions.HTTPOk(
+        return dict(
+            **await self.status(),
             mail_success=self.mail_success,
             mail_failed=self.mail_failed,
             reconnect_counter=self.reconnect_counter,
@@ -93,7 +94,7 @@ class BaseMailer:
             restart_counter=self.restart_counter,
             exception_counter=self.exception_counter,
             queue=self.queue.qsize(),
-            backend=self.conf.backend,
+            backend=self.config.cls,
         )
 
     def get_connection(self):
