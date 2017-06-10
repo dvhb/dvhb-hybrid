@@ -1,4 +1,4 @@
-import aiopg
+import aiopg.sa
 import pytest
 from aiohttp.web import Application
 

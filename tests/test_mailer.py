@@ -12,5 +12,5 @@ async def test_mailer(app,  cli):
     mail.outbox = []
     await app.mailer.send(email, 'Test mailer', 'Test body')
     await asyncio.sleep(1, loop=app.loop)
-    assert not app.mailer._daemon.done(), await app.mailer._daemon
+    assert app.mailer.running()
     assert len(mail.outbox) == 1

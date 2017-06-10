@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from aioworkers.core.config import MergeDict
 from aioworkers.core.context import Context
 from aioworkers.utils import module_path
 from aioworkers.worker.base import Worker
@@ -36,9 +37,16 @@ class BaseMailer(Worker):
 
     @classmethod
     def setup(cls, app, conf):
-        context = Context(loop=app.loop)
+        context = Context({}, loop=app.loop)
         context.app = app
-        cls(conf, context=context, loop=app.loop)
+        conf = MergeDict(conf)
+        conf.name = 'mailer'
+        m = cls(conf, context=context, loop=app.loop)
+        async def start(app):
+            await m.init()
+            await m.start()
+        app.on_startup.append(start)
+        app.on_shutdown.append(lambda x: m.stop())
 
     async def init(self):
         await super().init()
@@ -52,8 +60,10 @@ class BaseMailer(Worker):
             self.monitor,
             name='monitor:mailer',
         )
-        path = module_path(self.config.templates_from_module, True)
-        self.templates = load_all(self, path)
+        mod = self.config.get('templates_from_module')
+        if mod:
+            path = module_path(mod, True)
+            self.templates = load_all(self, path)
 
         self.mail_success = 0
         self.mail_failed = 0
