@@ -123,6 +123,6 @@ async def test_update_json(db_factory):
         r = await model.get_one(obj.pk)
         assert r['data'] == {'1': 2, '3': {'4': '8', '5': '9'}, '5': '6'}
 
-        await r.update_json('data', '3', '4', 1)
+        await r.update_json('data', '9', '10', 11)
         r = await model.get_one(obj.pk)
-        assert r['data']['3']['4'] == 1
+        assert r['data']['9']['10'] == 11

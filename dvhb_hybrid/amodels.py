@@ -429,30 +429,25 @@ class Model(dict, metaclass=MetaModel):
     @method_connect_once
     async def update_json(self, *args, connection=None, **kwargs):
         t = self.table
-        dict_update = {}
-
-        if kwargs:
-            dict_update.update({
-                t.c[field]: sa.cast(value, JSONB)
-                if field not in self or self[field] is None
-                else t.c[field] + sa.cast(value, JSONB)
-                for field, value in kwargs.items()
-            })
         if len(args) > 1:
             field, *path, value = args
-            if isinstance(field, str):
-                field = t.c[field]
-            dict_update[field] = func.jsonb_set(
-                field, sa.cast(path, ARRAY(sa.String)),
-                sa.cast(value, JSONB), True)
-        if not dict_update:
+            for p in reversed(path):
+                value = {p: value}
+            kwargs[field] = value
+
+        if not kwargs:
             raise ValueError('Need args or kwargs')
 
         await connection.scalar(
             t.update().where(
                 t.c[self.primary_key] == self.pk
             ).values(
-                dict_update
+                {
+                    t.c[field]: sa.func.coalesce(
+                        t.c[field], sa.cast({}, JSONB)
+                    ) + sa.cast(value, JSONB)
+                    for field, value in kwargs.items()
+                }
             ).returning(t.c[self.primary_key]))
 
     @classmethod
