@@ -118,7 +118,7 @@ async def test_update_json(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        obj = await model.create(text='123', data={'1': 2, '3': '4'})
-        await obj.update_json(data={'3': 'text', '5': '6'})
+        obj = await model.create(text='123', data={'1': 2, '3': {'4': '5'}})
+        await obj.update_json(data={'3': {'4': '8', '5': '9'}, '5': '6'})
         r = await model.get_one(obj.pk)
-    assert r['data'] == {'1': 2, '3': 'text', '5': '6'}
+    assert r['data'] == {'1': 2, '3': {'4': '8', '5': '9'}, '5': '6'}
