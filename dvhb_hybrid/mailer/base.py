@@ -38,14 +38,14 @@ class BaseMailer(Worker):
     def setup(cls, app, conf):
         context = Context(loop=app.loop)
         context.app = app
-        app.mailer = cls(conf, context=context, loop=app.loop)
+        cls(conf, context=context, loop=app.loop)
 
     async def init(self):
         await super().init()
 
         self.conf = self.config
-        if self.context:
-            self.app = self.context.app
+        self.app = self.context.app
+        self.app.mailer = self
         self.app.router.add_route(
             'GET',
             self.config.get('status_url', '/monitor/mailer'),
