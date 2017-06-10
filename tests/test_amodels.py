@@ -21,6 +21,7 @@ class Model1(Model):
         'test',
         sa.column('id', sa.Integer),
         sa.column('text', sa.Text),
+        sa.column('data', sa.JSON),
     )
 
 
@@ -29,7 +30,7 @@ async def test_create(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        obj = await model.create(text='123')
+        obj = await model.create(text='123', data={'1': 2, '3': '4'})
     assert isinstance(obj.pk, int)
 
 
@@ -110,3 +111,14 @@ async def test_dict(db_factory):
         ids = [o.pk for o in await model.get_list(fields=['id'])]
         l = await model.get_dict(ids, fields=['id', 'text'])
     assert isinstance(l, dict)
+
+
+async def test_update_json(db_factory):
+    app = {}
+    model = Model1.factory(app)
+    async with db_factory as db:
+        app['db'] = db
+        obj = await model.create(text='123', data={'1': 2, '3': '4'})
+        await obj.update_json(data={'3': 'text', '5': '6'})
+        r = await model.get_one(obj.pk)
+    assert r['data'] == {'1': 2, '3': 'text', '5': '6'}
