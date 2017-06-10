@@ -9,7 +9,7 @@ from operator import and_
 import sqlalchemy as sa
 from aiohttp.web import Request
 from functools import reduce
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
@@ -427,20 +427,33 @@ class Model(dict, metaclass=MetaModel):
             values(dict_update))
 
     @method_connect_once
-    async def update_json(self, connection=None, **kwargs):
+    async def update_json(self, *args, connection=None, **kwargs):
         t = self.table
+        dict_update = {}
 
-        dict_update = {
-            t.c[field]: sa.cast(value, JSONB)
-            if field not in self or self[field] is None
-            else t.c[field] + sa.cast(value, JSONB)
-            for field, value in kwargs.items()
-        }
+        if kwargs:
+            dict_update.update({
+                t.c[field]: sa.cast(value, JSONB)
+                if field not in self or self[field] is None
+                else t.c[field] + sa.cast(value, JSONB)
+                for field, value in kwargs.items()
+            })
+        if len(args) > 1:
+            field, *path, value = args
+            if isinstance(field, str):
+                field = t.c[field]
+            dict_update[field] = func.jsonb_set(
+                field, sa.cast(path, ARRAY(sa.String)),
+                sa.cast(value, JSONB), True)
+        if not dict_update:
+            raise ValueError('Need args or kwargs')
 
-        await connection.execute(
+        await connection.scalar(
             t.update().where(
                 t.c[self.primary_key] == self.pk
-            ).values(dict_update))
+            ).values(
+                dict_update
+            ).returning(t.c[self.primary_key]))
 
     @classmethod
     @method_connect_once

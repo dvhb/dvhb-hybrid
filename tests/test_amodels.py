@@ -121,4 +121,8 @@ async def test_update_json(db_factory):
         obj = await model.create(text='123', data={'1': 2, '3': {'4': '5'}})
         await obj.update_json(data={'3': {'4': '8', '5': '9'}, '5': '6'})
         r = await model.get_one(obj.pk)
-    assert r['data'] == {'1': 2, '3': {'4': '8', '5': '9'}, '5': '6'}
+        assert r['data'] == {'1': 2, '3': {'4': '8', '5': '9'}, '5': '6'}
+
+        await r.update_json('data', '3', '4', 1)
+        r = await model.get_one(obj.pk)
+        assert r['data']['3']['4'] == 1
