@@ -431,13 +431,16 @@ class Model(dict, metaclass=MetaModel):
     @method_connect_once
     async def update_json(self, *args, connection=None, **kwargs):
         t = self.table
-        if len(args) > 1:
-            field, *path, value = args
+        if args:
+            if len(args) > 1 and not kwargs:
+                field, *path, value = args
+            else:
+                field, *path = args
+                value = kwargs
             for p in reversed(path):
                 value = {p: value}
-            kwargs[field] = value
-
-        if not kwargs:
+            kwargs = {field: value}
+        elif not kwargs:
             raise ValueError('Need args or kwargs')
 
         await connection.scalar(
