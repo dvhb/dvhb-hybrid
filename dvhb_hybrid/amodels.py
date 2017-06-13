@@ -145,11 +145,13 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     def _where(cls, args):
-        if not len(args):
+        if not args:
             raise ValueError('Where where?')
         elif isinstance(args[0], (int, str, uuid.UUID)):
-            args = cls.table.c[cls.primary_key] == args[0],
-        return args
+            first, *tail = args
+            args = [cls.table.c[cls.primary_key] == first]
+            args.extend(tail)
+        return reduce(and_, args),
 
     @classmethod
     def to_column(cls, fields):
@@ -224,7 +226,7 @@ class Model(dict, metaclass=MetaModel):
             sql = cls.table.select()
 
         if args and args[0] is not None:
-            sql = sql.where(*args)
+            sql = sql.where(reduce(and_, args))
 
         if offset is not None:
             sql = sql.offset(offset)
@@ -305,7 +307,7 @@ class Model(dict, metaclass=MetaModel):
         sql = cls.table.count()
 
         if args:
-            sql = sql.where(*args)
+            sql = sql.where(reduce(and_, args))
 
         if not postfix:
             postfix = utils.get_hash(
