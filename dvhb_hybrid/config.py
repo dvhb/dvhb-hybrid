@@ -56,3 +56,17 @@ def db_to_settings(db_dict, base_dir):
         n: convert_to_djangodb(v, n, base_dir=base_dir)
         for n, v in db_dict.items()
     }
+
+
+def convert_to_django_redis(config):
+    return {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://{host}:{port}/{db}'.format(**config),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+
+
+def redis_to_settings(redis_dict):
+    return {name: convert_to_django_redis(value) for name, value in redis_dict.items()}
