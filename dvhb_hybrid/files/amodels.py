@@ -60,3 +60,32 @@ class Image(Model):
             author_id=user.pk,
             connection=connection
         )
+
+    @classmethod
+    async def from_field(cls, file_field, *, user, connection=None):
+        name = file_field.name
+        exts = mimetypes.guess_all_extensions(file_field.content_type)
+        for ext in exts:
+            if name.endswith(ext):
+                break
+        else:
+            if exts:
+                name += exts[-1]
+        name = await cls.app.loop.run_in_executor(
+            None, image_storage.save, name, file_field.file)
+        image_uuid = image_storage.uuid(name)
+        return await cls.create(
+            uuid=image_uuid,
+            image=name,
+            mime_type=file_field.content_type,
+            created_at=utils.now(),
+            author_id=user.pk,
+            connection=connection
+        )
+
+    @classmethod
+    async def delete_name(cls, name, connection=None):
+        await cls.app.loop.run_in_executor(
+            None, image_storage.delete, name)
+        uid = image_storage.uuid(name)
+        await cls.delete_where(uid, connection=connection)
