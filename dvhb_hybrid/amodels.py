@@ -213,7 +213,8 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     @method_connect_once
     async def get_list(cls, *args, connection, fields=None,
-                       offset=None, limit=None, sort=None):
+                       offset=None, limit=None, sort=None,
+                       select_from=None):
         """Extract list"""
         if fields:
             fields = cls.to_column(fields)
@@ -224,6 +225,9 @@ class Model(dict, metaclass=MetaModel):
             sql = sa.select(fields).select_from(cls.table)
         else:
             sql = cls.table.select()
+
+        for i in select_from or ():
+            sql = sql.select_from(i)
 
         if args and args[0] is not None:
             sql = sql.where(reduce(and_, args))
