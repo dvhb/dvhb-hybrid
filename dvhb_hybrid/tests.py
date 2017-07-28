@@ -1,3 +1,8 @@
+import json
+
+import pytest
+from aiohttp import hdrs, ClientSession
+from aiohttp import test_utils
 from aiohttp.web_exceptions import HTTPOk
 
 
@@ -25,3 +30,74 @@ class BaseTestApi:
         if 'application/json' in r.headers['Content-Type']:
             data = await r.json()
         return r, data
+
+
+class TestClient(test_utils.TestClient):
+    def dumps(self, data):
+        return json.dumps(data)
+
+    def request(
+            self, method, path, *args,
+            parts=None, json=None,
+            **kwargs):
+        # support name as url
+        if isinstance(path, str) and not path.startswith('/'):
+            parts = parts or {}
+            path = self.server.app.router[path].url_for(**parts)
+        # support raw data
+        if json is not None:
+            kwargs['data'] = self.dumps(json)
+            hs = kwargs.setdefault('headers', {})
+            hs[hdrs.CONTENT_TYPE] = 'application/json'
+        return super().request(
+            method=method, path=path, *args, **kwargs)
+
+
+class AuthClient(TestClient):
+    token_url = 'users:token'
+    default_user = {
+        'email': 'test_user@example.com',
+        'password': '123',
+    }
+
+    @property
+    def user_model(self):
+        return self.server.app.m.user
+
+    async def ensure_user(self, **kwargs):
+        pass
+
+    async def authorize(self, **kwargs):
+        for k, v in self.default_user.items():
+            kwargs.setdefault(k, v)
+        await self.ensure_user(**kwargs)
+        response = await self.post(self.token_url, json=kwargs)
+        assert response.status == HTTPOk.status_code, await response.text()
+        await self.set_auth_session(response)
+
+    async def set_auth_session(self, response):
+        auth = hdrs.AUTHORIZATION
+        headers = {auth: response.headers[auth]}
+        self._session = ClientSession(headers=headers, loop=self._loop)
+
+
+@pytest.yield_fixture
+def test_client(loop, client_class):
+    """Factory to create a TestClient instance.
+    test_client(app, **kwargs)
+    """
+    clients = []
+
+    async def go(app, **kwargs):
+        client = client_class(app, loop=loop, **kwargs)
+        await client.start_server()
+        clients.append(client)
+        return client
+
+    yield go
+
+    async def finalize():
+        while clients:
+            await clients.pop().close()
+
+    loop.run_until_complete(finalize())
