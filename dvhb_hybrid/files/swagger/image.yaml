@@ -2,6 +2,7 @@ swagger: '2.0'
 
 paths:
   '':
+    $name: hybrid.files:image:upload
     put:
       operationId: image_upload
       tags:
@@ -43,6 +44,7 @@ paths:
                 type: string
 
   '/{uuid}/{processor}_{width:\d+}x{height:\d+}.{ext}':
+    $name: hybrid.files:image:processor
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
@@ -79,6 +81,7 @@ paths:
           required: true
           type: integer
           format: int32
+          minimum: 2
           maximum: 3000
 
         - &param_height
@@ -88,6 +91,7 @@ paths:
           required: true
           type: integer
           format: int32
+          minimum: 2
           maximum: 3000
 
         - &param_ext
@@ -108,6 +112,7 @@ paths:
             type: object
 
   '/{uuid}/{processor}_{width:\d+}x{height:\d+}_2x.{ext}':
+    $name: hybrid.files:image_2x:processor
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
@@ -147,6 +152,7 @@ paths:
       responses: *get_response
 
   '/{uuid}/origin.{ext}':
+    $name: hybrid.files:image:origin
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
