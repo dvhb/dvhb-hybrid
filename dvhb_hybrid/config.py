@@ -1,24 +1,5 @@
 import os
 
-import invoke
-import yaml
-
-
-def load_conf(overrides=None, local_path=None, *, base_path, env_path, system_prefix, env_prefix):
-    with open(base_path) as f:
-        base = yaml.load(f)
-    path = os.environ.get(env_path)
-    if not overrides and path and os.path.isfile(path):
-        with open(path) as f:
-            overrides = yaml.load(f)
-    return invoke.Config(
-        defaults=base,
-        overrides=overrides,
-        system_prefix=system_prefix,
-        env_prefix=env_prefix,
-        runtime_path=local_path,
-    )
-
 
 def absdir(directory, base_dir):
     if not directory.startswith('/'):

@@ -1,3 +1,10 @@
+app:
+  cls: tutorial.app.Application
+
+http:
+  port: 8080
+
+
 databases:
   default:
     database: tutorial

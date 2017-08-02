@@ -1,10 +1,10 @@
-import os
 import re
+from pathlib import Path
 
 from setuptools import setup, find_packages
 
 
-with open(os.path.join(os.path.dirname(__file__), 'dvhb_hybrid', '__init__.py')) as f:
+with Path(__file__).with_name('dvhb_hybrid').with_name('__init__.py').open() as f:
     VERSION = re.compile(r'.*__version__ = \'(.*?)\'', re.S).match(f.read()).group(1)
 
 setup(
@@ -35,7 +35,6 @@ setup(
         'aioworkers',
         'aiohttp_apiset',
         'sqlalchemy',
-        'invoke',
         'pyyaml',
     ]
 )

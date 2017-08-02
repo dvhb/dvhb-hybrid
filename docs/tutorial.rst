@@ -14,7 +14,7 @@ Start you project using `django-admin startproject` command:
     $ cd tutorial
     $ pyvenv venv
     $ . venv/bin/activate
-    $ pip install django
+    $ pip install django aioworkers
     $ django-admin startproject tutorial .
 
 Project structure will be look like this:
@@ -39,10 +39,10 @@ Install dvhb-hybrid:
 Create an application
 ---------------------
 
-Generally Django project consist of few application.
+Generally Django project consist of few applications.
 
-For instance we need to create a method GET /users which will return a list of users in the application.
-To do this we need to create `users` django application and place it as subpackage of `tutorial` package:
+For instance we need to create a method `GET /users` which returns a list of users of the application.
+So create a `users` django application and place it as subpackage of `tutorial` package:
 
 .. code-block:: shell
 
@@ -60,8 +60,8 @@ Now we can declare `User` model in `users/models.py` by extending `django.contri
         pass
 
 
-To access this model from asyncio code we need to create a `tutorial/users/amodels.py`
-and add there a `User` class by extending `dvhb_hybrid.amodels.Model`.
+There need to create a `tutorial/users/amodels.py` with `User` model based on `dvhb_hybrid.amodels.Model`.
+It needs to work with model from asyncio.
 This model will be loaded by `dvhb_hybrid.amodels.AppModels` and used to access the data from async functions.
 
 .. code-block:: python
@@ -84,7 +84,7 @@ Let's add an async function which will be used our model in module `tutorial/use
 
 
 
-Our aiohttp application uses `SwaggerRouter` from `aiohttp_apiset` to build application router and we need to specify
+Our aiohttp application uses `SwaggerRouter` from `aiohttp_apiset` to build application routes and we need to specify
 our endpoint as swagger spec here `tutorial/users/users_api.yaml`:
 
 .. code-block:: yaml
@@ -94,12 +94,12 @@ our endpoint as swagger spec here `tutorial/users/users_api.yaml`:
         get:
           $handler: tutorial.users.views.get_users
           tags:
-          - user
+            - user
           summary: Users list
           description: Returns list of users
 
           produces:
-          - application/json
+            - application/json
 
           responses:
             200:
@@ -112,10 +112,16 @@ You can configure project any way you like.
 But we suggest to use common config for you Django Admin and aiohttp application.
 It allow you to avoid duplication of parameters.
 
-For instance application can be configured using `load_conf` function from `dvhb-hybrid`. It is based on `invoke.Config`.
-Create a `config.yaml` in the base folder and specify database configuration:
+For instance application can be configured using `load_conf` function from `aioworkers.config`.
+Create a `config.yaml` in the base folder and specify database configuration
+and some other parameters required by `aioworkers`:
 
 .. code-block:: yaml
+    app:
+      cls: tutorial.app.Application
+
+    http:
+      port: 8080
 
     databases:
       default:
@@ -129,17 +135,11 @@ Load configuration to `settings.py` and use it to build Django `DATABASES`:
 
     ...
 
-    PROJECT_SLUG = 'TUTORIAL'
-    config = load_conf(
-        base_path=os.path.join(BASE_DIR, 'config.yaml'),
-        env_path=PROJECT_SLUG + '_CONF',
-        system_prefix='/etc/tutorial',
-        env_prefix=PROJECT_SLUG,
-    )
+    config = load_conf(os.path.abspath(os.path.join(BASE_DIR, 'config.yaml')))
 
     ...
 
-    DATABASES = db_to_settings(config.databases.config, BASE_DIR)
+    DATABASES = db_to_settings(config.databases, BASE_DIR)
 
 Add our `users` application to `settings.py`:
 
@@ -148,13 +148,14 @@ Add our `users` application to `settings.py`:
     ...
 
     INSTALLED_APPS = [
-        'tutorial.users',
         'django.contrib.admin',
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+
+        'tutorial.users',
     ]
 
     AUTH_USER_MODEL = 'users.User'
@@ -182,7 +183,7 @@ Run Django Administration and login here using username and password specified i
 
     $ python manage.py runserver
 
-Create an aiohttp application
+Create an asyncio application
 -----------------------------
 
 Add `tutorial/api.yaml` with specification from `users` application:
@@ -200,7 +201,7 @@ Add `tutorial/api.yaml` with specification from `users` application:
 
     paths:
       /users:
-      - $include: users/users_api.yaml
+        - $include: users/users_api.yaml
 
 Create `tutorial/app.py`:
 
@@ -208,29 +209,25 @@ Create `tutorial/app.py`:
 
     import os
 
-    import django
     import aiopg.sa
-    from aiohttp import web
+    import django
     from aiohttp_apiset import SwaggerRouter
     from aiohttp_apiset.middlewares import jsonify
-    from dvhb_hybrid.amodels import AppModels
+    import aioworkers.http
 
-    from .settings import config
+    from dvhb_hybrid.amodels import AppModels
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tutorial.settings")
     django.setup()
 
-    # looking for amodels.py in subpackages of tutorial
     import tutorial
     AppModels.import_all_models_from_packages(tutorial)
 
 
-    class Application(web.Application):
+    class Application(aioworkers.http.Application):
         def __init__(self, *args, **kwargs):
-            # collect swagger specs in tutorial folder
-            router = SwaggerRouter(search_dirs=['tutorial'], default_validate=True)
+            router = SwaggerRouter(search_dirs=['tutorial'])
             kwargs['router'] = router
-            self.config = config
 
             kwargs.setdefault('middlewares', []).append(jsonify)
 
@@ -242,11 +239,9 @@ Create `tutorial/app.py`:
             self.on_startup.append(cls.startup_database)
             self.on_cleanup.append(cls.cleanup_database)
 
-
         async def startup_database(self):
-            dbparams = self.config.databases.default.config
+            dbparams = self.config.databases.default
             self['db'] = await aiopg.sa.create_engine(**dbparams)
-            # bind AppModels to the application
             self.models = self.m = AppModels(self)
 
         async def cleanup_database(self):
@@ -255,31 +250,22 @@ Create `tutorial/app.py`:
 
 
 
-Let's create `tutorial/__main__.py` as a entrypoint of the application:
-
-.. code-block:: python
-
-    from aiohttp import web
-    from .app import Application
-
-    def main():
-        app = Application()
-        web.run_app(app)
-
-    main()
-
-So now we can run an application:
+   So now we can run an application:
 
 .. code-block:: shell
 
-    $ python -m tutorial
+    $ python -m aioworkers -c config.yaml
+
+This will run application on `localhost:8080` with Swagger UI here `http://localhost:8080/apidoc/`.
+
+Test API via curl:
 
 .. code-block:: shell
 
     $ curl -X GET http://localhost:8080/api/users
     [{"username": "admin", "email": "admin@example.com"}]
 
-Final project structure will be look like this:
+Final project structure will be looked like this:
 
 .. code-block:: none
 
@@ -288,14 +274,12 @@ Final project structure will be look like this:
     ├── manage.py
     ├── tutorial
     │   ├── __init__.py
-    │   ├── __main__.py
     │   ├── api.yaml
     │   ├── app.py
     │   ├── settings.py
     │   ├── urls.py
     │   ├── users
     │   │   ├── __init__.py
-    │   │   ├── admin.py
     │   │   ├── amodels.py
     │   │   ├── apps.py
     │   │   ├── migrations

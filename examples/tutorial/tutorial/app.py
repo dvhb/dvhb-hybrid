@@ -1,13 +1,12 @@
 import os
 
-import django
 import aiopg.sa
-from aiohttp import web
+import django
 from aiohttp_apiset import SwaggerRouter
 from aiohttp_apiset.middlewares import jsonify
-from dvhb_hybrid.amodels import AppModels
+import aioworkers.http
 
-from .settings import config
+from dvhb_hybrid.amodels import AppModels
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tutorial.settings")
 django.setup()
@@ -16,11 +15,10 @@ import tutorial
 AppModels.import_all_models_from_packages(tutorial)
 
 
-class Application(web.Application):
+class Application(aioworkers.http.Application):
     def __init__(self, *args, **kwargs):
-        router = SwaggerRouter(search_dirs=['tutorial'], default_validate=True)
+        router = SwaggerRouter(search_dirs=['tutorial'])
         kwargs['router'] = router
-        self.config = config
 
         kwargs.setdefault('middlewares', []).append(jsonify)
 
@@ -32,9 +30,8 @@ class Application(web.Application):
         self.on_startup.append(cls.startup_database)
         self.on_cleanup.append(cls.cleanup_database)
 
-
     async def startup_database(self):
-        dbparams = self.config.databases.default.config
+        dbparams = self.config.databases.default
         self['db'] = await aiopg.sa.create_engine(**dbparams)
         self.models = self.m = AppModels(self)
 

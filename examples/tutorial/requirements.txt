@@ -1,2 +1,3 @@
-Django==1.10.5
-git+https://github.com/dvhbru/dvhb-hybrid@0.0.4
+Django==1.11
+aioworkers==0.6.0
+git+https://github.com/dvhbru/dvhb-hybrid@0.2.10
