@@ -1,5 +1,3 @@
-# Config file for automatic testing at travis-ci.org
-
 sudo: required
 services:
   - redis-server
@@ -9,14 +7,16 @@ addons:
 
 language: python
 
-python: 3.5
+python:
+  - "3.5"
+  - "3.6"
 
 before_script:
   - psql -c 'create database test_dvhb_hybrid;' -U postgres
   - psql test_dvhb_hybrid -c 'create table test(id serial, text text, data jsonb);' -U postgres
 
 install:
-  - pip install tox
+  - pip install tox-travis
 
 script:
   - tox
