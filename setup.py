@@ -1,9 +1,15 @@
+import os
+import re
+
 from setuptools import setup, find_packages
 
 
+with open(os.path.join(os.path.dirname(__file__), 'dvhb_hybrid', '__init__.py')) as f:
+    VERSION = re.compile(r'.*__version__ = \'(.*?)\'', re.S).match(f.read()).group(1)
+
 setup(
     name='dvhb-hybrid',
-    version='0.2.0',
+    version=VERSION,
     description='',
     author='Malev A',
     author_email='am@dvhb.ru',
@@ -15,6 +21,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Internet :: WWW/HTTP',
         'Framework :: Django',
         'Framework :: Aiohttp',
@@ -22,6 +29,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
+        'django',
         'psycopg2',
         'aiopg',
         'aioworkers',
