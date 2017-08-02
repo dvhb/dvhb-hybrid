@@ -371,6 +371,19 @@ class Model(dict, metaclass=MetaModel):
         kwargs[cls.primary_key] = uid
         return cls(**kwargs)
 
+    @classmethod
+    @method_connect_once
+    async def create_many(cls, objects, connection=None):
+        """Inserts many objects"""
+        # aiopg doesn't support executemany so create object via cycle
+        result = []
+        for obj in objects:
+            cls.set_defaults(obj)
+            result.append(
+                await cls.create(**obj, connection=connection)
+            )
+        return result
+
     @method_connect_once
     async def save(self, *, fields=None, connection):
         pk_field = self.table.c[self.primary_key]

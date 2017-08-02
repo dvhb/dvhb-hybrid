@@ -25,6 +25,18 @@ class Model1(Model):
     )
 
 
+@pytest.fixture
+def app(loop, db_factory):
+    app = {
+        'db': loop.run_until_complete(db_factory.__aenter__())
+    }
+    app['model'] = Model1.factory(app)
+
+    yield app
+
+    loop.run_until_complete(db_factory.__aexit__(None, None, None))
+
+
 async def test_create(db_factory):
     app = {}
     model = Model1.factory(app)
@@ -126,3 +138,10 @@ async def test_update_json(db_factory):
         await r.update_json('data', '9', '10', 11)
         r = await model.get_one(obj.pk)
         assert r['data']['9']['10'] == 11
+
+
+async def test_create_many(app):
+    await app['model'].create_many([
+        {'text': '123', 'data': {'1': 2, '3': {'4': '5'}}},
+        {'text': '222', 'data': {'1': 2, '3': {'4': '5'}}},
+    ])
