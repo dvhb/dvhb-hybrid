@@ -141,7 +141,9 @@ async def test_update_json(db_factory):
 
 
 async def test_create_many(app):
-    await app['model'].create_many([
+    result = await app['model'].create_many([
         {'text': '123', 'data': {'1': 2, '3': {'4': '5'}}},
         {'text': '222', 'data': {'1': 2, '3': {'4': '5'}}},
     ])
+    assert len(result) == 2
+    assert all('id' in i for i in result)
