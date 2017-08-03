@@ -4,7 +4,7 @@ from pathlib import Path
 from setuptools import setup, find_packages
 
 
-with Path(__file__).with_name('dvhb_hybrid').with_name('__init__.py').open() as f:
+with Path(__file__).with_name('dvhb_hybrid').joinpath('__init__.py').open() as f:
     VERSION = re.compile(r'.*__version__ = \'(.*?)\'', re.S).match(f.read()).group(1)
 
 setup(
