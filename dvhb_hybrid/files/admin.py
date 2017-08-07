@@ -4,5 +4,8 @@ from . import models
 
 @admin.register(models.Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'uuid', 'image')
-    exclude = ('uuid', )
+    list_display = ('uuid', 'image', 'created_at')
+    exclude = ('uuid',)
+    search_fields = ('uuid',)
+    list_filter = ('author', 'mime_type')
+    ordering = ('-created_at',)
