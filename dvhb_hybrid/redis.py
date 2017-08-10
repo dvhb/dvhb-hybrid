@@ -6,14 +6,14 @@ def redis_key(project_slug, key, *namespaces):
     'a:b'
     >>> redis_key('a', 'b', 'c', 'd')
     'a:c:d:b'
-    >>> redis_key('a', 'b', 'c', None)
-    'a:c:b'
+    >>> redis_key('a', 1, 'c', None)
+    'a:c:1'
     """
     l = [project_slug]
     if namespaces:
         l.extend(namespaces)
     l.append(key)
-    return ':'.join(i for i in l if i)
+    return ':'.join(str(i)for i in l if i)
 
 
 class RedisMixin:
