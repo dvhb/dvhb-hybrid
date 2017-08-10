@@ -1,8 +1,17 @@
-def redis_key(project_slug, key, namespace=None):
-    return '{}:{}:{}'.format(
-        project_slug,
-        namespace.replace('/', ':'),
-        key)
+def redis_key(project_slug, key, *namespaces):
+    """
+    Generates project dependent Redis key
+
+    >>> redis_key('a', 'b')
+    'a:b'
+    >>> redis_key('a', 'b', 'c', 'd')
+    'a:c:d:b'
+    """
+    if namespaces:
+        namespace = ':'.join(namespaces)
+        return '{}:{}:{}'.format(project_slug, namespace, key)
+
+    return '{}:{}'.format(project_slug, key)
 
 
 class RedisMixin:
