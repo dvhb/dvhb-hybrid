@@ -6,26 +6,28 @@ def redis_key(project_slug, key, *namespaces):
     'a:b'
     >>> redis_key('a', 'b', 'c', 'd')
     'a:c:d:b'
+    >>> redis_key('a', 'b', 'c', None)
+    'a:c:b'
     """
+    l = [project_slug]
     if namespaces:
-        namespace = ':'.join(namespaces)
-        return '{}:{}:{}'.format(project_slug, namespace, key)
-
-    return '{}:{}'.format(project_slug, key)
+        l.extend(namespaces)
+    l.append(key)
+    return ':'.join(i for i in l if i)
 
 
 class RedisMixin:
     project_slug = None
 
     @classmethod
-    def redis_key(cls, key, namespace=None):
-        return redis_key(cls.project_slug, key, namespace=namespace)
+    def redis_key(cls, key, namespace):
+        return redis_key(cls.project_slug, key, namespace)
 
     @classmethod
     async def redis(cls, request, key, *, value=None, sadd=None, expire=None,
                     default=None, namespace=None, smembers=False, srem=None,
                     delete=False, connection=None):
-        key = cls.redis_key(key, namespace=namespace)
+        key = cls.redis_key(key, namespace)
 
         async def _redis(cache):
             if value:
