@@ -33,6 +33,8 @@ class BaseTestApi:
 
 
 class TestClient(test_utils.TestClient):
+    base_path = None
+
     def dumps(self, data):
         return json.dumps(data)
 
@@ -41,9 +43,12 @@ class TestClient(test_utils.TestClient):
             parts=None, json=None,
             **kwargs):
         # support name as url
-        if isinstance(path, str) and not path.startswith('/'):
-            parts = parts or {}
-            path = self.server.app.router[path].url_for(**parts)
+        if isinstance(path, str):
+            if not path.startswith('/'):
+                parts = parts or {}
+                path = self.server.app.router[path].url_for(**parts)
+            elif self.base_path and not path.startswith(self.base_path):
+                path = self.base_path + path
         # support raw data
         if json is not None:
             kwargs['data'] = self.dumps(json)
