@@ -130,6 +130,12 @@ paths:
         - *param_width
         - *param_height
         - *param_ext
+        - name: retina
+          in: path
+          description: Retina
+          type: boolean
+          default: true
+          required: true
 
       responses: *get_response
 
