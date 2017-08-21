@@ -2,6 +2,7 @@ import asyncio
 import os
 import weakref
 from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+from uuid import UUID
 
 import psycopg2
 from aiohttp import web
@@ -31,7 +32,7 @@ async def get_image(request):
     async with request.app['db'].acquire() as conn:
         result = await conn.execute(
             Image.table.select()
-            .where(Image.table.c.uuid == request.match_info['uuid'])
+            .where(Image.table.c.uuid == request['uuid'])
             .limit(1)
         )
         photo = await result.fetchone()
@@ -119,28 +120,29 @@ async def get_resized_image(request, uid, w, h):
     return url, photo.mime_type
 
 
-async def photo_handler(request):
+async def photo_handler(request, uuid, width, height, retina):
     request.app['state']['files_photo_request'] += 1
-    uid = request.match_info['uuid']
-    w = int(request.match_info.get('width', 0))
-    h = int(request.match_info.get('height', 0))
-    if w > 3000 or h > 2000:
+    try:
+        UUID(uuid)
+    except ValueError:
         raise web.HTTPNotFound()
-    if 'retina' in request.match_info:
-        w, h = 2 * w, 2 * h
+    if width > 3000 or height > 2000:
+        raise web.HTTPNotFound()
+    if retina:
+        width, height = 2 * width, 2 * height
 
-    key = (uid, w, h)
+    key = (uuid, width, height)
     f = cache.get(key)
     if not f:
         f = cache[key] = asyncio.ensure_future(
-            get_resized_image(request, uid, w, h))
+            get_resized_image(request, uuid, width, height))
     if not f.done():
         request.app['state']['files_photo_cache_wait'] += 1
         result = await f
     elif f.cancelled():
         del cache[key]
         request.app['state']['files_photo_cache_cancel'] += 1
-        request.app.logger.error('Cancel %s', uid)
+        request.app.logger.error('Cancel %s', uuid)
         return
     elif f.exception():
         request.app.logger.exception(
