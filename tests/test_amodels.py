@@ -26,6 +26,11 @@ class Model1(Model):
 
 
 @pytest.fixture
+def new_object():
+    return dict(text='123', data={'1': 2, '3': {'4': '5'}})
+
+
+@pytest.fixture
 def app(loop, db_factory):
     app = {
         'db': loop.run_until_complete(db_factory.__aenter__())
@@ -147,3 +152,15 @@ async def test_create_many(app):
     ])
     assert len(result) == 2
     assert all('id' in i for i in result)
+
+
+async def test_create_delete(app, new_object):
+    obj = await app['model'].create(**new_object)
+    obj_id = obj.pk
+    r = await app['model'].get_one(obj_id, silent=True)
+    assert r
+
+    await obj.delete()
+
+    r = await app['model'].get_one(obj_id, silent=True)
+    assert not r

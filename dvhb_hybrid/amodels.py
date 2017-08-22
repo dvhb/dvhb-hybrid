@@ -482,6 +482,11 @@ class Model(dict, metaclass=MetaModel):
         await connection.execute(
             t.delete().where(*where))
 
+    @method_connect_once
+    async def delete(self, connection=None):
+        pk_field = self.table.c[self.primary_key]
+        await connection.execute(self.table.delete().where(pk_field == self.pk))
+
     @classmethod
     @method_connect_once
     async def get_or_create(cls, *args, defaults=None, connection):
