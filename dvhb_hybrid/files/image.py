@@ -26,13 +26,13 @@ async def image_upload(request, file):
     }
 
 
-async def get_image(request):
+async def get_image(request, uid):
     request.app['state']['files_photo_db'] += 1
     Image = request.app.models.image
     async with request.app['db'].acquire() as conn:
         result = await conn.execute(
             Image.table.select()
-            .where(Image.table.c.uuid == request['uuid'])
+            .where(Image.table.c.uuid == uid)
             .limit(1)
         )
         photo = await result.fetchone()
@@ -58,7 +58,7 @@ async def get_resized_image(request, uid, w, h):
     """
     f = cache.get(uid)
     if not f:
-        f = cache[uid] = asyncio.ensure_future(get_image(request))
+        f = cache[uid] = asyncio.ensure_future(get_image(request, uid))
     if not f.done():
         request.app['state']['files_photo_db_cache_wait'] += 1
         try:
