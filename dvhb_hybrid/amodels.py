@@ -304,7 +304,7 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_redis_once
-    async def get_count(cls, *args, postfix=None, connection=None, redis=None):
+    async def get_count(cls, *args, postfix=None, connection=None, redis=None, expire=180):
         """
         Extract query size
         """
@@ -326,7 +326,7 @@ class Model(dict, metaclass=MetaModel):
 
         count = await cls._pg_scalar(sql=sql, connection=connection)
         await redis.set(key, count)
-        await redis.expire(key, 3 * 60)
+        await redis.expire(key, expire)
 
         return count
 
