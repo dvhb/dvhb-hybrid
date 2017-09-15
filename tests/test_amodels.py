@@ -164,3 +164,21 @@ async def test_create_delete(app, new_object):
 
     r = await app['model'].get_one(obj_id, silent=True)
     assert not r
+
+
+async def test_validate_and_save(app, new_object):
+    def validator(obj, data):
+        if len(obj.text) > len(data['text']):
+            raise Exception()
+    m = app['model']
+    m.update_validators = (validator,)
+    o = await m.create(**new_object)
+
+    # Update object with invalid data
+    with pytest.raises(Exception):
+        await o.validate_and_save({'text': '12'})
+    assert (await m.get_one(o.pk))['text'] == '123'
+
+    # Valid update
+    await o.validate_and_save({'text': '1234'})
+    assert (await m.get_one(o.pk))['text'] == '1234'

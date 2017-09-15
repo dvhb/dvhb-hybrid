@@ -104,7 +104,8 @@ class Model(dict, metaclass=MetaModel):
     models = {}
     app = None
     primary_key = 'id'
-    validators = ()
+    validators = ()  # Validators for data
+    update_validators = ()  # Validators to validate object and data before update
     fields_permanent = ()  # Fields need to be saved
     fields_readonly = ()
     fields_list = ()
@@ -518,6 +519,18 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     def default_validator(cls, data):
         return {f: data.get(f) for f in cls.table.columns.keys()}
+
+    @method_connect_once
+    async def validate_and_save(self, data, connection=None):
+        """
+        Method performs default validations, update validations and save object.
+        """
+        # Validate  data using default validators
+        self.validate(data)
+        for v in self.update_validators:
+            v(self, data)
+        self.update(data)
+        await self.save(fields=data.keys(), connection=connection)
 
 
 class AppModels:
