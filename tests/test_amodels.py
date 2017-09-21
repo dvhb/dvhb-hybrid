@@ -168,10 +168,11 @@ async def test_create_delete(app, new_object):
 
 async def test_validate_and_save(app, new_object):
     def validator(obj, data):
-        if len(obj.text) > len(data['text']):
-            raise Exception()
-        else:
-            data['text'] = 2 * data['text']
+        if data:
+            if len(obj.text) > len(data['text']):
+                raise Exception()
+            else:
+                data['text'] = 2 * data['text']
         return data
     m = app['model']
     m.update_validators = (validator,)
@@ -185,3 +186,7 @@ async def test_validate_and_save(app, new_object):
     # Valid update
     await o.validate_and_save({'text': '1234'})
     assert (await m.get_one(o.pk))['text'] == '12341234'
+
+    # Valid update
+    o = await m.get_one(o.pk, fields=['id'])
+    await o.validate_and_save({})

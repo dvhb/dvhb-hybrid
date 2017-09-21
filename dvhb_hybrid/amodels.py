@@ -531,8 +531,10 @@ class Model(dict, metaclass=MetaModel):
         data = self.validate(data, to_class=False, default_validator=False)
         for v in self.update_validators:
             data = v(self, data)
-        self.update(data)
-        return await self.save(fields=data.keys(), connection=connection)
+        # Do not allow object update for empty data to avoid extra save.
+        if data:
+            self.update(data)
+            return await self.save(fields=data.keys(), connection=connection)
 
 
 class AppModels:
