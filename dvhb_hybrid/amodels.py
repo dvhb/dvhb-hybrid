@@ -509,12 +509,14 @@ class Model(dict, metaclass=MetaModel):
         return obj, True
 
     @classmethod
-    def validate(cls, data):
+    def validate(cls, data, to_class=True, default_validator=True):
         """Returns valid object or exception"""
-        validators = cls.validators or [cls.default_validator]
+        validators = cls.validators
+        if not validators and default_validator:
+            validators = [cls.default_validator]
         for validator in validators:
             data = validator(data)
-        return cls(**data)
+        return cls(**data) if to_class else data
 
     @classmethod
     def default_validator(cls, data):
@@ -525,12 +527,12 @@ class Model(dict, metaclass=MetaModel):
         """
         Method performs default validations, update validations and save object.
         """
-        # Validate  data using default validators
-        self.validate(data)
+        # Validate data using user defined validators
+        data = self.validate(data, to_class=False, default_validator=False)
         for v in self.update_validators:
-            v(self, data)
+            data = v(self, data)
         self.update(data)
-        await self.save(fields=data.keys(), connection=connection)
+        return await self.save(fields=data.keys(), connection=connection)
 
 
 class AppModels:

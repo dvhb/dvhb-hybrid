@@ -170,6 +170,9 @@ async def test_validate_and_save(app, new_object):
     def validator(obj, data):
         if len(obj.text) > len(data['text']):
             raise Exception()
+        else:
+            data['text'] = 2 * data['text']
+        return data
     m = app['model']
     m.update_validators = (validator,)
     o = await m.create(**new_object)
@@ -181,4 +184,4 @@ async def test_validate_and_save(app, new_object):
 
     # Valid update
     await o.validate_and_save({'text': '1234'})
-    assert (await m.get_one(o.pk))['text'] == '1234'
+    assert (await m.get_one(o.pk))['text'] == '12341234'
