@@ -113,14 +113,10 @@ class BaseMailer(Worker):
         return connection
 
     async def send(self, mail_to, subject=None, body=None, *,
-                   context=None, connection=None, template=None,
+                   context=None, connection=None,
                    attachments=None, save=True):
-        if template:
-            tmpl = self.templates[template]
-            subject = tmpl['subject']
-            body = tmpl['body']
 
-        elif not subject or not body:
+        if not subject or not body:
             raise ValueError()
 
         if not isinstance(context, dict):
@@ -140,7 +136,6 @@ class BaseMailer(Worker):
         kwargs = dict(
             body=body,
             subject=subject,
-            template=template,
             attachments=attachments,
         )
         for recipient in mail_to:
