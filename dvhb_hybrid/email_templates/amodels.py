@@ -27,3 +27,9 @@ class EmailTemplateTranslation(Model):
             (cls.table.c.template_id == template_id) & (cls.table.c.lang_code == lang_code),
             connection=connection,
             silent=True)
+
+    def as_dict(self):
+        return {
+            'subject': self.message_subject,
+            'body': self.message_body,
+        }
