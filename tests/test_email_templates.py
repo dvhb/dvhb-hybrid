@@ -5,7 +5,7 @@ import pytest
 async def test_get_template_by_name(app, test_client):
     await test_client(app)  # to initialize DB
     template_name = 'AccountActivation'
-    template = await app.m.email_template.get_by_name(template_name)
+    template = await app.models.email_template.get_by_name(template_name)
     assert template is not None
 
 
@@ -13,7 +13,7 @@ async def test_get_template_by_name(app, test_client):
 async def test_get_tranlations(app, test_client):
     await test_client(app)  # to initialize DB
     template_name = 'AccountActivation'
-    template = await app.m.email_template.get_by_name(template_name)
+    template = await app.models.email_template.get_by_name(template_name)
     translation = await template.get_translation('en')
     assert translation is not None
     translation = await template.get_translation('ru')

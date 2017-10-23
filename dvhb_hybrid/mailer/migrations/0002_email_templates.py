@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
-import dvhb_hybrid.email_templates.models
+import dvhb_hybrid.mailer.models
 
 
 class Migration(migrations.Migration):
@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('mailer', '0001_initial'),
     ]
 
     operations = [
@@ -35,10 +36,10 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='update at')),
-                ('lang_code', models.CharField(db_index=True, max_length=2, validators=[dvhb_hybrid.email_templates.models.validate_lang_code], verbose_name='language code')),
+                ('lang_code', models.CharField(db_index=True, max_length=2, validators=[dvhb_hybrid.mailer.models.validate_lang_code], verbose_name='language code')),
                 ('message_subject', models.CharField(max_length=1024, verbose_name='subject')),
                 ('message_body', models.CharField(max_length=4096, verbose_name='body')),
-                ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='email_templates.Template')),
+                ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='mailer.Template')),
             ],
             options={
                 'verbose_name': 'message template translation',
