@@ -1,0 +1,52 @@
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.utils.translation import ugettext_lazy as _
+
+from .models import AbstractUser, UserActivationRequest
+
+
+@admin.register(AbstractUser)
+class AbstractUserAdmin(DjangoUserAdmin):
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name')}),
+        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('first_name', 'last_name', 'email', 'password1', 'password2')}
+         ),
+    )
+
+    list_display = ('email', 'first_name', 'last_name', 'is_staff')
+    search_fields = ('email',)
+    ordering = ('email',)
+
+
+@admin.register(UserActivationRequest)
+class UserActivationRequestAdmin(admin.ModelAdmin):
+    list_display = ('email', 'created_at', 'status')
+    fields = ('uuid', 'email', 'status', 'created_at', 'user',)
+    search_fields = ('email', 'name')
+    ordering = ('-created_at',)
+
+    list_filter = (
+        'status',
+        'created_at',
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = ['uuid', 'status', 'created_at', 'user']
+        if obj:
+            fields.append('email')
+        return fields
+
+    def has_add_permission(self, request):
+        """
+        Disables 'Add' button in admin
+        """
+
+        return False
