@@ -13,7 +13,7 @@
     template: 1
     lang_code: en
     message_subject: Account activation
-    message_body: 'Please activate your account on myeasyfarm.com following the URL {url}'
+    message_body: 'Please activate your account on example.com following the URL {url}'
 - model: email_templates.templatetranslation
   pk: 2
   fields:
