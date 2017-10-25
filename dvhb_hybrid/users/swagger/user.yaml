@@ -1,0 +1,95 @@
+paths:
+  '/login':
+    $name: dvhb_hybrid.users:token
+    post:
+      $handler: dvhb_hybrid.users.views.login
+      $validate: true
+      tags:
+      - user
+      summary: User login
+      description: Returns api key on success
+
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+
+      produces:
+      - application/json
+
+      parameters:
+      - name: email
+        in: formData
+        description: User email addres
+        required: true
+        type: string
+        format: email
+
+      - name: password
+        in: formData
+        description: User password
+        required: true
+        type: string
+        format: password
+
+      responses:
+        200:
+          description: OK
+          type: object
+          properties:
+            api_key:
+              type: string
+        400:
+          description: Invalid parameters given
+        401:
+          description: Login incorrect
+        409:
+          description: User administratively disabled
+
+  '/logout':
+    $name: dvhb_hybrid.user:logout
+    post:
+      $handler: dvhb_hybrid.users.views.logout
+      tags:
+      - user
+      summary: User logout
+      description: Deactivate api key
+
+      security:
+      - UserSecurity: []
+
+      responses:
+        200:
+          description: OK
+
+  '/activate':
+     $name: dvhb_hybrid.user:activate
+     post:
+      $handler: dvhb_hybrid.users.views.activate_user
+      tags:
+        - user
+      summary: Activate user account
+      description: Activate user account using code sent via activation email message
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+      - name: activation_code
+        in: formData
+        description: Activation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      responses:
+        200:
+          description: OK
+          type: object
+          properties:
+            api_key:
+              type: string
+        404:
+          description: Wrong activation code given
+        409:
+          description: Account have been activated already

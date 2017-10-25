@@ -1,0 +1,51 @@
+paths:
+  '':
+    $name: dvhb_hybrid.users:create
+    post:
+      $handler: dvhb_hybrid.users.views.create_user
+      tags:
+        - user
+      summary: Create new user
+      description: Returns api_key on successful user creation
+
+      parameters:
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/NewUser'
+
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid parameters given
+        406:
+          description: Wrong recapture
+        409:
+          description: User already exists
+
+
+definitions:
+  NewUser:
+    type: object
+    additionalProperties: false
+    properties:
+      email:
+        type: string
+        format: email
+        minLength: 5
+      password:
+        type: string
+        format: password
+        pattern: '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$'
+      g-recaptcha-response:
+        type: string
+    required:
+      - email
+      - password
+      - g-recaptcha-response
+    example:
+      email: new_user@example.com
+      password: Pa55w0rd
+      g-recaptcha-response: xxx

@@ -547,14 +547,14 @@ class AppModels:
     def __getitem__(self, item):
         if hasattr(self, item):
             return getattr(self, item)
-        return KeyError()
+        return KeyError(item)
 
     def __getattr__(self, item):
         if item in Model.models:
             sub_class = Model.models[item].factory(self.app)
             setattr(self, item, sub_class)
             return sub_class
-        raise AttributeError()
+        raise AttributeError(item)
 
     @staticmethod
     def import_all_models(apps_path):
