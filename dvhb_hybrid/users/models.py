@@ -43,6 +43,7 @@ class AbstractUserManager(BaseUserManager):
 
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     class Meta:
+        db_table = 'users_user'
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
