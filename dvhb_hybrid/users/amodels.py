@@ -8,7 +8,7 @@ from dvhb_hybrid.amodels import Model, method_connect_once
 from sqlalchemy.dialects.postgresql import UUID
 
 from .enums import UserActivationRequestStatus
-from .models import AbstractUser as DjangoAbstractUser, UserActivationRequest as DjangoUserActivationRequest
+from .models import AbstractUser as DjangoAbstractUser, AbstractUserActivationRequest as DjangoUserActivationRequest
 
 
 class AbstractUser(Model):

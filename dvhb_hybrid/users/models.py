@@ -78,7 +78,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         return self.first_name
 
 
-class UserActivationRequest(UpdatedMixin, models.Model):
+class AbstractUserActivationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     email = models.EmailField(verbose_name=_('email'), max_length=255)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
@@ -87,5 +87,6 @@ class UserActivationRequest(UpdatedMixin, models.Model):
                               default=UserActivationRequestStatus.sent.value)
 
     class Meta:
+        abstract = True
         verbose_name = _('user activation request')
         verbose_name_plural = _('user activation requests')
