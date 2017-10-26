@@ -7,7 +7,6 @@ from dvhb_hybrid.redis import redis_key
 
 
 async def login(request, email, password):
-    print(dir(request.app.models))
     user = await request.app.models.user.get_user_by_email(email)
     if user:
         if not user.is_active:
@@ -55,3 +54,11 @@ async def activate_user(request, activation_code, connection=None):
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
     return {'api_key': request.session}
+
+
+@permissions
+async def change_password(request, old_password, new_password):
+    if not check_password(old_password, request.user.password):
+        raise exceptions.HTTPBadRequest(errors=dict(old_password='Wrong password'))
+    request.user['password'] = make_password(new_password)
+    await request.user.save(fields=['password'])
