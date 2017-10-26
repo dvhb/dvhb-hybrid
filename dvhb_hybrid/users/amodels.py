@@ -5,14 +5,12 @@ import uuid
 from django.contrib.auth.hashers import make_password
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
-from sqlalchemy.dialects.postgresql import UUID
 
 from .enums import UserActivationRequestStatus
-from .models import AbstractUser as DjangoAbstractUser, AbstractUserActivationRequest as DjangoUserActivationRequest
 
 
 class AbstractUser(Model):
-    table = Model.get_table_from_django(DjangoAbstractUser)
+
     list_fields = (
         Model.primary_key,
         'email',
@@ -47,9 +45,8 @@ class AbstractUser(Model):
         await self.save(fields=['is_active'], connection=connection)
 
 
-class UserActivationRequest(Model):
+class AbstractUserActivationRequest(Model):
     primary_key = 'uuid'
-    table = Model.get_table_from_django(DjangoUserActivationRequest, uuid=UUID(as_uuid=True))
 
     @classmethod
     def set_defaults(cls, data: dict):
