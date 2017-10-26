@@ -1,1 +1,2 @@
 recursive-include dvhb_hybrid/files/swagger *
+recursive-include dvhb_hybrid/users/swagger *
