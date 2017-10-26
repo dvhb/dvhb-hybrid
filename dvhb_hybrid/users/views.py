@@ -7,7 +7,6 @@ from dvhb_hybrid.redis import redis_key
 
 
 async def login(request, email, password):
-    print(dir(request.app.models))
     user = await request.app.models.user.get_user_by_email(email)
     if user:
         if not user.is_active:
