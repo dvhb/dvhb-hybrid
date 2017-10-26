@@ -1,10 +1,11 @@
-from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
+from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+
 from dvhb_hybrid.models import UpdatedMixin
 from dvhb_hybrid.utils import enum_to_choice
-
 from .enums import UserActivationRequestStatus
 
 
@@ -43,7 +44,7 @@ class AbstractUserManager(BaseUserManager):
 
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
     class Meta:
-        db_table = 'users_user'
+        abstract = True
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
@@ -80,7 +81,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
 class UserActivationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     email = models.EmailField(verbose_name=_('email'), max_length=255)
-    user = models.ForeignKey('users.AbstractUser', related_name='+', verbose_name=_('user'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
     status = models.CharField(verbose_name=_('status'), max_length=20,
                               choices=enum_to_choice(UserActivationRequestStatus),
                               default=UserActivationRequestStatus.sent.value)
