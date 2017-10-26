@@ -93,3 +93,32 @@ paths:
           description: Wrong activation code given
         409:
           description: Account have been activated already
+
+  '/change/password':
+    $name: dvhb_hybrid.user:change_password
+    post:
+      $handler: dvhb_hybrid.users.views.change_password
+      tags:
+        - user
+      summary: Change password
+      description: Change user password
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+        - name: old_password
+          in: formData
+          description: Old password
+          required: true
+          type: string
+
+        - name: new_password
+          in: formData
+          description: New password
+          required: true
+          type: string
+
+      produces:
+        - application/json

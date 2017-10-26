@@ -55,3 +55,11 @@ async def activate_user(request, activation_code, connection=None):
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
     return {'api_key': request.session}
+
+
+@permissions
+async def change_password(request, old_password, new_password):
+    if not check_password(old_password, request.user.password):
+        raise exceptions.HTTPBadRequest(errors=dict(old_password='Wrong password'))
+    request.user['password'] = make_password(new_password)
+    await request.user.save(fields=['password'])
