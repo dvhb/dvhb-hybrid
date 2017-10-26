@@ -6,7 +6,7 @@ from .models import AbstractUser, AbstractUserActivationRequest
 
 
 @admin.register(AbstractUser)
-class AbstractUserAdmin(DjangoUserAdmin):
+class UserAdmin(DjangoUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
