@@ -2,11 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
 
-from .models import AbstractUser, AbstractUserActivationRequest
 
-
-@admin.register(AbstractUser)
-class UserAdmin(DjangoUserAdmin):
+class BaseUserAdmin(DjangoUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
@@ -26,8 +23,7 @@ class UserAdmin(DjangoUserAdmin):
     ordering = ('email',)
 
 
-@admin.register(AbstractUserActivationRequest)
-class UserActivationRequestAdmin(admin.ModelAdmin):
+class BaseUserActivationRequestAdmin(admin.ModelAdmin):
     list_display = ('email', 'created_at', 'status')
     fields = ('uuid', 'email', 'status', 'created_at', 'user',)
     search_fields = ('email', 'name')
