@@ -8,16 +8,22 @@ from django.conf import settings
 from dvhb_hybrid.utils import import_class
 
 
+SECRET_KEY = '123'
+INSTALLED_APPS = [
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'dvhb_hybrid.users',
+    'dvhb_hybrid.mailer',
+]
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'dvhb_hybrid_app',
+    }
+}
+
+
 def pytest_configure():
-    settings.configure(
-        INSTALLED_APPS=['dvhb_hybrid.mailer'],
-        DATABASES={
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': 'dvhb_hybrid_app',
-            }
-        },
-    )
     django.setup()
 
 
