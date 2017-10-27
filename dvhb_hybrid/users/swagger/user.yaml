@@ -33,11 +33,7 @@ paths:
 
       responses:
         200:
-          description: OK
-          type: object
-          properties:
-            api_key:
-              type: string
+          $ref: "#/responses/AuthSuccessful"
         400:
           description: Invalid parameters given
         401:
@@ -84,11 +80,7 @@ paths:
 
       responses:
         200:
-          description: OK
-          type: object
-          properties:
-            api_key:
-              type: string
+          $ref: "#/responses/AuthSuccessful"
         404:
           description: Wrong activation code given
         409:
@@ -122,3 +114,20 @@ paths:
 
       produces:
         - application/json
+
+responses:
+  AuthSuccessful:
+    description: OK
+    headers:
+      Authorization:
+        type: string
+        description: API key to be used for user identification
+    schema:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: ID of user
+          required: true
+      example:
+        uid: 1
