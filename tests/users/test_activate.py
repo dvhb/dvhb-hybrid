@@ -3,9 +3,9 @@ import pytest
 
 @pytest.fixture
 def activate_code_request(app, test_client):
-    async def wrapper(code, api=None):
-        api = api or await test_client(app)
-        response = await api.post('dvhb_hybrid.user:activate', json=dict(activation_code=code))
+    async def wrapper(code):
+        api = await test_client(app)
+        response = await api.post('user:activate', json=dict(activation_code=code))
         return response.status, await response.json()
     return wrapper
 

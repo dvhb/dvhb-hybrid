@@ -5,27 +5,18 @@ import pytest
 
 @pytest.fixture
 def create_user_request(app, test_client):
-    async def wrapper(user_data, api=None):
-        api = api or await test_client(app)
-        response = await api.post('dvhb_hybrid.users:create', json=user_data)
+    async def wrapper(user_data):
+        api = await test_client(app)
+        response = await api.post('users:create', json=user_data)
         return response.status, await response.json()
     return wrapper
 
 
 @pytest.fixture
 def login_request(app, test_client):
-    async def wrapper(user_data, api=None):
-        api = api or await test_client(app)
+    async def wrapper(user_data):
+        api = await test_client(app)
         response = await api.post(api.token_url, json=user_data)
-        return response.status, await response.json()
-    return wrapper
-
-
-@pytest.fixture
-def logout_request(app, test_client):
-    async def wrapper(api=None):
-        api = api or await test_client(app)
-        response = await api.post('dvhb_hybrid.user:logout')
         return response.status, await response.json()
     return wrapper
 
