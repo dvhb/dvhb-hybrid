@@ -39,6 +39,11 @@ definitions:
         type: string
         format: password
         pattern: '^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$'
+      lang_code:
+        type: string
+        pattern: '^[a-z]{2}$'
+        description: ISO 639-1 alpha-2 language code for language to be used for activation email sending
+        default: en
       g-recaptcha-response:
         type: string
     required:
@@ -48,4 +53,5 @@ definitions:
     example:
       email: new_user@example.com
       password: Pa55w0rd
+      lang_code: fr
       g-recaptcha-response: xxx

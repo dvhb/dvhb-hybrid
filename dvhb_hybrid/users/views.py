@@ -33,7 +33,7 @@ async def create_user(request, user, connection=None):
         raise exceptions.HTTPConflict(reason='User with this email already exists.')
     user['password'] = make_password(user.pop('password'))
     user['is_active'] = False
-    user = await request.app.models.user.create(**user, connection=connection)
+    user = await request.app.models.user.create(email=user['email'], password=user['password'], connection=connection)
     await request.app.models.user_activation_request.send(user, connection=connection)
 
 
