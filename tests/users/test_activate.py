@@ -2,32 +2,27 @@ import pytest
 
 
 @pytest.fixture
-def activate_code_request(app, test_client):
-    async def wrapper(code):
-        api = await test_client(app)
-        response = await api.post('user:activate', json=dict(activation_code=code))
-        return response.status, await response.json()
+def activate_code_request(make_request):
+    async def wrapper(code, expected_status=None, api=None):
+        return await make_request(
+            'dvhb_hybrid.user:activate', json=dict(activation_code=code), api=api, expected_status=expected_status)
     return wrapper
 
 
 @pytest.mark.django_db
 async def test_activate_unknown_code(activate_code_request):
-    status, _ = await activate_code_request(code='F' * 32)
-    assert status == 404
+    await activate_code_request(code='F' * 32, expected_status=404)
 
 
 @pytest.mark.django_db
 async def test_activate_successful(create_user_request, new_user_data, get_activation_code, activate_code_request):
-    status, _ = await create_user_request(new_user_data)
-    assert status == 200
+    await create_user_request(new_user_data, expected_status=200)
 
     # Extract user's activation code from the DB
     code = await get_activation_code(new_user_data['email'])
     # Activate user account using the code
-    status, data = await activate_code_request(code=code)
-    assert status == 200
-    assert 'api_key' in data
+    response_data = await activate_code_request(code=code, expected_status=200)
+    assert 'uid' in response_data
 
     # Try to activate with same code again
-    status, data = await activate_code_request(code=code)
-    assert status == 409
+    await activate_code_request(code=code, expected_status=409)

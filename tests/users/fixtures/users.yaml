@@ -1,0 +1,65 @@
+- model: users.user
+  pk: 1
+  fields:
+    first_name: 'Admin'
+    last_name: 'Admin'
+    email: admin@example.com
+    is_superuser: true
+    is_staff: true
+    is_active: true
+    date_joined: '2016-11-01T11:19:12.593Z'
+    groups: []
+    user_permissions: []
+    password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
+- model: users.user
+  pk: 2
+  fields:
+    first_name: 'Staff'
+    last_name: 'Staff'
+    email: staff@example.com
+    is_superuser: false
+    is_staff: true
+    is_active: true
+    date_joined: '2016-11-01T11:19:12.593Z'
+    groups: []
+    user_permissions: []
+    password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
+- model: users.user
+  pk: 3
+  fields:
+    first_name: 'User'
+    last_name: 'User'
+    email: user@example.com
+    is_superuser: false
+    is_staff: false
+    is_active: true
+    date_joined: '2016-11-01T11:19:12.593Z'
+    groups: []
+    user_permissions: []
+    password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
+- model: users.user
+  pk: 4
+  fields:
+    first_name: 'Disabled user'
+    last_name: 'Disabled user'
+    email: user_disabled@example.com
+    is_superuser: false
+    is_staff: false
+    is_active: false
+    date_joined: '2016-11-01T11:19:12.593Z'
+    groups: []
+    user_permissions: []
+    password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
+- model: users.user
+  pk: 5
+  fields:
+    first_name: 'User for change password tests'
+    last_name: 'User for change password tests'
+    email: user_to_change_pw@example.com
+    is_superuser: false
+    is_staff: false
+    is_active: true
+    date_joined: '2016-11-01T11:19:12.593Z'
+    groups: []
+    user_permissions: []
+    password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=

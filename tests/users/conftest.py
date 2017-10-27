@@ -4,20 +4,34 @@ import pytest
 
 
 @pytest.fixture
-def create_user_request(app, test_client):
-    async def wrapper(user_data):
-        api = await test_client(app)
-        response = await api.post('users:create', json=user_data)
-        return response.status, await response.json()
+def make_request(app, test_client):
+    async def wrapper(url, api=None, json=None, expected_status=None):
+        api = api or await test_client(app)
+        response = await api.post(url, json=json)
+        if expected_status:
+            assert response.status == expected_status, await response.text()
+        return await response.json()
     return wrapper
 
 
 @pytest.fixture
-def login_request(app, test_client):
-    async def wrapper(user_data):
-        api = await test_client(app)
-        response = await api.post(api.token_url, json=user_data)
-        return response.status, await response.json()
+def create_user_request(make_request):
+    async def wrapper(user_data, expected_status=None, api=None):
+        return await make_request('dvhb_hybrid.users:create', json=user_data, api=api, expected_status=expected_status)
+    return wrapper
+
+
+@pytest.fixture
+def login_request(make_request):
+    async def wrapper(user_data, expected_status=None, api=None):
+        return await make_request('dvhb_hybrid.user:login', json=user_data, api=api, expected_status=expected_status)
+    return wrapper
+
+
+@pytest.fixture
+def logout_request(make_request):
+    async def wrapper(expected_status=None, api=None):
+        return await make_request('dvhb_hybrid.user:logout', api=api, expected_status=expected_status)
     return wrapper
 
 
