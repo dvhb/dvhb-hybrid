@@ -76,9 +76,9 @@ class AbstractUserActivationRequest(Model):
         )
         await cls.app.mailer.send(
             user.email,
-            subject='User account activation',
-            body='Please follow URL {url} to activate your account',
-            context=context)
+            template='AccountActivation',
+            context = context,
+            lang_code = user.get('lang_code', 'en'))
 
     @method_connect_once
     async def activate(self, connection=None):
