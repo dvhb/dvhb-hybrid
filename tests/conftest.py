@@ -44,7 +44,7 @@ def app(loop):
     application.on_cleanup.append(cleanup_database)
 
     AppModels.import_all_models_from_packages(dvhb_hybrid)
-    application.models = AppModels(application)
+    application.models = application.m = AppModels(application)
 
     Mailer = import_class('dvhb_hybrid.mailer.django.Mailer')
     Mailer.setup(application, {'from_email': 'no-replay@dvhb.ru'})
