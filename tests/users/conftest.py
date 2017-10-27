@@ -31,6 +31,14 @@ def get_activation_code(app):
 
 
 @pytest.fixture
+def user():
+    return {
+        'email': 'user@example.com',
+        'password': 'password',
+    }
+
+
+@pytest.fixture
 def new_user_data():
     return {
         'email': '{}@example.com'.format(uuid4()),
