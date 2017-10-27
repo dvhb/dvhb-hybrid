@@ -14,7 +14,8 @@ async def login(request, email, password):
         elif check_password(password, user.password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
-            return {'api_key': request.session}
+            raise exceptions.HTTPOk(
+                uid=user.id, headers={'Authorization': request.session}, content_type='application/json')
     raise exceptions.HTTPUnauthorized(reason="Login incorrect")
 
 
@@ -53,7 +54,8 @@ async def activate_user(request, activation_code, connection=None):
     # Generate and return API key
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
-    return {'api_key': request.session}
+    raise exceptions.HTTPOk(
+        uid=user.id, headers={'Authorization': request.session}, content_type='application/json')
 
 
 @permissions
