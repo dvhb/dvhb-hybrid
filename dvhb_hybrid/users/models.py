@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from dvhb_hybrid.models import UpdatedMixin
 from dvhb_hybrid.utils import enum_to_choice
+from dvhb_hybrid.mailer.models import validate_lang_code
 from .enums import UserActivationRequestStatus
 
 
@@ -85,6 +86,7 @@ class AbstractUserActivationRequest(UpdatedMixin, models.Model):
     status = models.CharField(verbose_name=_('status'), max_length=20,
                               choices=enum_to_choice(UserActivationRequestStatus),
                               default=UserActivationRequestStatus.sent.value)
+    lang_code = models.CharField(_('language code'), max_length=2, validators=[validate_lang_code])
 
     class Meta:
         abstract = True

@@ -70,7 +70,8 @@ class AbstractUserActivationRequest(Model):
         Sends email with activation request to the user specified
         """
 
-        activation = await cls.create(email=user.email, user_id=user.pk, connection=connection)
+        activation = await cls.create(
+            email=user.email, user_id=user.pk, lang_code=user.get('lang_code', 'en'), connection=connection)
         context = dict(
             url=cls.app.config.users.url_template.format(activation_code=activation.code)
         )
@@ -78,7 +79,7 @@ class AbstractUserActivationRequest(Model):
             user.email,
             template='AccountActivation',
             context = context,
-            lang_code = user.get('lang_code', 'en'))
+            lang_code = activation.lang_code)
 
     @method_connect_once
     async def activate(self, connection=None):
