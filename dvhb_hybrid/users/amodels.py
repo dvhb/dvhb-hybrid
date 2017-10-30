@@ -137,7 +137,10 @@ class AbstractUserProfileDeleteRequest(Model):
         deletion_request = await cls.create(
             email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
         context = dict(
-            url=cls.app.config.users.delete_confirmation_url_template.format(confirmation_code=deletion_request.code)
+            confirm_url=cls.app.config.users.confirm_delete_url_template.format(
+                confirmation_code=deletion_request.code),
+            cancel_url=cls.app.config.users.cancel_delete_url_template.format(
+                confirmation_code=deletion_request.code)
         )
         await cls.app.mailer.send(
             user.email,
@@ -148,7 +151,15 @@ class AbstractUserProfileDeleteRequest(Model):
     def is_confirmed(self):
         return self.status == UserProfileDeleteRequestStatus.confirmed.value
 
+    def is_cancelled(self):
+        return self.status == UserProfileDeleteRequestStatus.cancelled.value
+
     @method_connect_once
     async def confirm(self, connection=None):
         self.status = UserProfileDeleteRequestStatus.confirmed.value
+        await self.save(fields=['status', 'updated_at'], connection=connection)
+
+    @method_connect_once
+    async def cancel(self, connection=None):
+        self.status = UserProfileDeleteRequestStatus.cancelled.value
         await self.save(fields=['status', 'updated_at'], connection=connection)

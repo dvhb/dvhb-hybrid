@@ -90,9 +90,28 @@ async def confirm_deletion(request, confirmation_code, connection=None):
         raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
     if deletion_request.is_confirmed():
         raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+    if deletion_request.is_cancelled():
+        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
 
     # Change request status
-    await deletion_request.confirm(connection)
+    await deletion_request.confirm(connection=connection)
 
     # Change user status
-    await user.delete_account(connection)
+    await user.delete_account(connection=connection)
+
+
+@method_connect_once
+@permissions
+async def cancel_deletion(request, confirmation_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_one(
+        confirmation_code, connection=connection)
+    if deletion_request.user_id != user.pk:
+        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+    if deletion_request.is_confirmed():
+        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+    if deletion_request.is_cancelled():
+        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
+
+    # Change request status
+    await deletion_request.cancel(connection=connection)

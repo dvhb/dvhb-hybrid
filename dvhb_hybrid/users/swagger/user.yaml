@@ -174,7 +174,35 @@ paths:
         404:
           description: Wrong confirmation code given
         409:
-          description: Account deletion has been confirmed already
+          description: Account deletion has been cancelled or confirmed already
+
+  '/delete/cancel':
+     $name: dvhb_hybrid.user:cancel_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.cancel_deletion
+      tags:
+        - user
+      summary: Cancel deletion of user account
+      description: User account deletion request is marked as cancelled
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+      - name: confirmation_code
+        in: formData
+        description: Confirmation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      responses:
+        200:
+          description: OK
+        400:
+          description: Wrong confirmation code given
+        409:
+          description: Account deletion has been cancelled or confirmed already
 
 responses:
   AuthSuccessful:

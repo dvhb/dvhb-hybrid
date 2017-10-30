@@ -19,6 +19,7 @@ class UserProfileDeleteRequestStatus(enum.Enum):
     created = 'created'
     sent = 'sent'
     confirmed = 'confirmed'
+    cancelled = 'cancelled'
 
     @classmethod
     def translation(cls):
@@ -26,4 +27,5 @@ class UserProfileDeleteRequestStatus(enum.Enum):
             cls.created: _('Created'),
             cls.sent: _('Sent'),
             cls.confirmed: _('Confirmed'),
+            cls.cancelled: _('Cancelled'),
         }
