@@ -1,3 +1,4 @@
+from aiohttp_apiset.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 from dvhb_hybrid import exceptions
 from dvhb_hybrid.amodels import method_redis_once, method_connect_once
@@ -62,6 +63,6 @@ async def activate_user(request, activation_code, connection=None):
 @permissions
 async def change_password(request, old_password, new_password):
     if not check_password(old_password, request.user.password):
-        raise exceptions.HTTPBadRequest(errors=dict(old_password='Wrong password'))
+        raise ValidationError(old_password=['Wrong password'])
     request.user['password'] = make_password(new_password)
     await request.user.save(fields=['password'])
