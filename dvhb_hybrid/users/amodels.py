@@ -120,12 +120,13 @@ class AbstractUserProfileDeleteRequest(Model):
 
     @classmethod
     @method_connect_once
-    async def send(cls, user, connection=None):
+    async def send(cls, user, lang_code, connection=None):
         """
         Sends email with profile deletion request confirmation to the user specified
         """
 
-        deletion_request = await cls.create(email=user.email, user_id=user.pk, connection=connection)
+        deletion_request = await cls.create(
+            email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
         context = dict(
             url=cls.app.config.users.delete_confirmation_url_template.format(confirmation_code=deletion_request.code)
         )

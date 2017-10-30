@@ -66,3 +66,15 @@ async def change_password(request, old_password, new_password):
         raise ValidationError(old_password=['Wrong password'])
     request.user['password'] = make_password(new_password)
     await request.user.save(fields=['password'])
+
+
+@method_connect_once
+@permissions
+async def request_deletion(request, lang_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_by_email(
+        user.email, connection=connection)
+    if deletion_request:
+        raise exceptions.HTTPConflict(reason="Account removing have been requested already")
+    await request.app.models.user_profile_delete_request.send(
+        user, lang_code=lang_code, connection=connection)

@@ -118,6 +118,36 @@ paths:
       produces:
         - application/json
 
+  '/delete/request':
+     $name: dvhb_hybrid.user:request_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.request_deletion
+      tags:
+        - user
+      summary: Request deletion of user account
+      description: Request deletion of user account. Profile would be deleted after obtaining confirmation from the user
+
+      security:
+      - UserSecurity: []
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+      - name: lang_code
+        in: formData
+        type: string
+        pattern: '^[a-z]{2}$'
+        description: ISO 639-1 alpha-2 language code for language to be used for confirmation email sending
+        default: en
+
+      responses:
+        200:
+          description: OK
+        409:
+          description: Account removing have been requested already
+
 responses:
   AuthSuccessful:
     description: OK
