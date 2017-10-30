@@ -24,6 +24,7 @@ async def login(request, email, password):
 async def logout(request, sessions):
     key = redis_key(request.app.name, request.session, 'session')
     await sessions.delete(key)
+    raise exceptions.HTTPOk(content_type='application/json')
 
 
 @method_connect_once
