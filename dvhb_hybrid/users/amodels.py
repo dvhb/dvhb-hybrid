@@ -7,7 +7,7 @@ from django.utils.crypto import get_random_string
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
 
-from .enums import UserActivationRequestStatus, UserProfileDeleteRequestStatus
+from .enums import UserConfirmationRequestStatus
 
 
 class AbstractUser(Model):
@@ -54,14 +54,14 @@ class AbstractUser(Model):
         await self.save(fields=['email', 'date_deleted', 'is_active'], connection=connection)
 
 
-class AbstractUserActivationRequest(Model):
+class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'
 
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('uuid', uuid.uuid4())
         data.setdefault('created_at', utils.now())
-        data.setdefault('status', UserActivationRequestStatus.sent.value)
+        data.setdefault('status', UserConfirmationRequestStatus.sent.value)
         data['updated_at'] = utils.now()
 
     @property
@@ -74,58 +74,29 @@ class AbstractUserActivationRequest(Model):
 
     @classmethod
     @method_connect_once
-    async def send(cls, user, connection=None):
-        """
-        Sends email with activation request to the user specified
-        """
+    def get_by_email(cls, email, connection=None):
+        return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
 
-        activation = await cls.create(
-            email=user.email, user_id=user.pk, lang_code=user.get('lang_code', 'en'), connection=connection)
-        context = dict(
-            url=cls.app.config.users.url_template.format(activation_code=activation.code)
-        )
-        await cls.app.mailer.send(
-            user.email,
-            template='AccountActivation',
-            context = context,
-            lang_code = activation.lang_code)
+    def is_confirmed(self):
+        return self.status == UserConfirmationRequestStatus.confirmed.value
+
+    def is_cancelled(self):
+        return self.status == UserConfirmationRequestStatus.cancelled.value
 
     @method_connect_once
-    async def activate(self, connection=None):
-        self.status = UserActivationRequestStatus.activated.value
+    async def confirm(self, connection=None):
+        self.status = UserConfirmationRequestStatus.confirmed.value
         await self.save(fields=['status', 'updated_at'], connection=connection)
 
-    def is_activated(self):
-        return self.status == UserActivationRequestStatus.activated.value
-
-    @classmethod
     @method_connect_once
-    def get_by_email(cls, email, connection=None):
-        return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
+    async def cancel(self, connection=None):
+        self.status = UserConfirmationRequestStatus.cancelled.value
+        await self.save(fields=['status', 'updated_at'], connection=connection)
 
-
-class AbstractUserProfileDeleteRequest(Model):
-    primary_key = 'uuid'
-
-    @classmethod
-    def set_defaults(cls, data: dict):
-        data.setdefault('uuid', uuid.uuid4())
-        data.setdefault('created_at', utils.now())
-        data.setdefault('status', UserProfileDeleteRequestStatus.created.value)
-        data['updated_at'] = utils.now()
-
-    @property
-    def code(self):
-        """
-        Returns string representation of UUID without dashes
-        """
-
-        return str(self.uuid).replace('-', '')
-
-    @classmethod
     @method_connect_once
-    def get_by_email(cls, email, connection=None):
-        return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
+    async def mark_as_sent(self, connection=None):
+        self.status = UserConfirmationRequestStatus.sent.value
+        await self.save(fields=['status', 'updated_at'], connection=connection)
 
     @classmethod
     @method_connect_once
@@ -134,38 +105,37 @@ class AbstractUserProfileDeleteRequest(Model):
         Sends email with profile deletion request confirmation to the user specified
         """
 
-        deletion_request = await cls.create(
+        confirmation_request = await cls.create(
             email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
-        context = dict(
-            confirm_url=cls.app.config.users.confirm_delete_url_template.format(
-                confirmation_code=deletion_request.code),
-            cancel_url=cls.app.config.users.cancel_delete_url_template.format(
-                confirmation_code=deletion_request.code)
-        )
         await cls.app.mailer.send(
             user.email,
-            template='AccountRemovingConfirmation',
-            context = context,
-            lang_code = deletion_request.lang_code)
-        return deletion_request
+            template=cls.template_name,
+            context = cls.get_template_context(confirmation_request),
+            lang_code = confirmation_request.lang_code)
+        return confirmation_request
 
-    def is_confirmed(self):
-        return self.status == UserProfileDeleteRequestStatus.confirmed.value
 
-    def is_cancelled(self):
-        return self.status == UserProfileDeleteRequestStatus.cancelled.value
+class AbstractUserActivationRequest(BaseAbstractConfirmationRequest):
 
-    @method_connect_once
-    async def confirm(self, connection=None):
-        self.status = UserProfileDeleteRequestStatus.confirmed.value
-        await self.save(fields=['status', 'updated_at'], connection=connection)
+    template_name = 'AccountActivation'
 
-    @method_connect_once
-    async def cancel(self, connection=None):
-        self.status = UserProfileDeleteRequestStatus.cancelled.value
-        await self.save(fields=['status', 'updated_at'], connection=connection)
+    @classmethod
+    def get_template_context(cls, confirmation_request):
+        activation_url = cls.app.config.users.url_template.format(activation_code=confirmation_request.code)
+        return dict(url=activation_url)
 
-    @method_connect_once
-    async def mark_as_sent(self, connection=None):
-        self.status = UserProfileDeleteRequestStatus.sent.value
-        await self.save(fields=['status', 'updated_at'], connection=connection)
+
+class AbstractUserProfileDeleteRequest(BaseAbstractConfirmationRequest):
+
+    template_name = 'AccountRemovingConfirmation'
+
+    @classmethod
+    def get_template_context(cls, confirmation_request):
+        confirm_url = cls.app.config.users.confirm_delete_url_template.format(
+            confirmation_code=confirmation_request.code)
+        cancel_url = cls.app.config.users.cancel_delete_url_template.format(
+            confirmation_code=confirmation_request.code)
+        return dict(
+            confirm_url=confirm_url,
+            cancel_url=cancel_url
+        )

@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from dvhb_hybrid.models import UpdatedMixin
 from dvhb_hybrid.utils import enum_to_choice
 from dvhb_hybrid.mailer.models import validate_lang_code
-from .enums import UserActivationRequestStatus, UserProfileDeleteRequestStatus
+from .enums import UserConfirmationRequestStatus
 
 
 class AbstractUserManager(BaseUserManager):
@@ -79,14 +79,20 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         return self.first_name
 
 
-class AbstractUserActivationRequest(UpdatedMixin, models.Model):
+class BaseAbstractConfirmationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     email = models.EmailField(verbose_name=_('email'), max_length=255)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
     status = models.CharField(verbose_name=_('status'), max_length=20,
-                              choices=enum_to_choice(UserActivationRequestStatus),
-                              default=UserActivationRequestStatus.sent.value)
+                              choices=enum_to_choice(UserConfirmationRequestStatus),
+                              default=UserConfirmationRequestStatus.created.value)
     lang_code = models.CharField(_('language code'), max_length=2, validators=[validate_lang_code])
+
+    class Meta:
+        abstract = True
+
+
+class AbstractUserActivationRequest(BaseAbstractConfirmationRequest):
 
     class Meta:
         abstract = True
@@ -94,16 +100,7 @@ class AbstractUserActivationRequest(UpdatedMixin, models.Model):
         verbose_name_plural = _('user activation requests')
 
 
-class AbstractUserProfileDeleteRequest(UpdatedMixin, models.Model):
-    uuid = models.UUIDField(_('UUID'), primary_key=True)
-    email = models.EmailField(verbose_name=_('email'), max_length=255)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
-    status = models.CharField(
-        verbose_name=_('status'),
-        max_length=20,
-        choices=enum_to_choice(UserProfileDeleteRequestStatus),
-        default=UserProfileDeleteRequestStatus.created.value)
-    lang_code = models.CharField(_('language code'), max_length=2, validators=[validate_lang_code])
+class AbstractUserProfileDeleteRequest(BaseAbstractConfirmationRequest):
 
     class Meta:
         abstract = True
