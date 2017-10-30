@@ -95,6 +95,9 @@ paths:
       summary: Change password
       description: Change user password
 
+      security:
+      - UserSecurity: []
+
       consumes:
         - application/json
         - application/x-www-form-urlencoded
