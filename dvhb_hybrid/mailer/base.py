@@ -125,14 +125,21 @@ class BaseMailer(Worker):
         # Try to find template with name given
         template = await self.app.models.email_template.get_by_name(template_name, connection=connection)
         if template is None:
+            logger.error("No template name '%s' found in DB", template_name)
             return
         # Try to find its translation to specifed language
         translation = await template.get_translation(lang_code, connection=connection)
         # Try to find fallback translation if necessary
         if translation is None:
+            logger.warning(
+                "No '%s' translation for template name '%s' found in DB, falling back to '%s'",
+                lang_code, template_name, fallback_lang_code)
             translation = await template.get_translation(fallback_lang_code, connection=connection)
         if translation:
             return translation.as_dict()
+        else:
+            logger.error(
+                "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
 
     async def send(self, mail_to, subject=None, body=None, *,
                    context=None, connection=None, template=None,
