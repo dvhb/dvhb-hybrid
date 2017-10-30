@@ -3,9 +3,12 @@ import pytest
 
 @pytest.fixture
 def activate_code_request(make_request):
-    async def wrapper(code, expected_status=None, api=None):
+    async def wrapper(code, expected_status=None, client=None):
         return await make_request(
-            'dvhb_hybrid.user:activate', json=dict(activation_code=code), api=api, expected_status=expected_status)
+            'dvhb_hybrid.user:activate',
+            json=dict(activation_code=code),
+            client=client,
+            expected_status=expected_status)
     return wrapper
 
 
