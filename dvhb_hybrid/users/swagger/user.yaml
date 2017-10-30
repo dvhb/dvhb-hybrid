@@ -148,6 +148,34 @@ paths:
         409:
           description: Account removing have been requested already
 
+  '/delete/confirm':
+     $name: dvhb_hybrid.user:confirm_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.confirm_deletion
+      tags:
+        - user
+      summary: Confirm deletion of user account
+      description: Actually deletes user account
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+      - name: confirmation_code
+        in: formData
+        description: Confirmation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      responses:
+        200:
+          description: OK
+        404:
+          description: Wrong confirmation code given
+        409:
+          description: Account deletion has been confirmed already
+
 responses:
   AuthSuccessful:
     description: OK

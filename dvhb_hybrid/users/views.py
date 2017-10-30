@@ -78,3 +78,21 @@ async def request_deletion(request, lang_code, connection=None):
         raise exceptions.HTTPConflict(reason="Account removing have been requested already")
     await request.app.models.user_profile_delete_request.send(
         user, lang_code=lang_code, connection=connection)
+
+
+@method_connect_once
+@permissions
+async def confirm_deletion(request, confirmation_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_one(
+        confirmation_code, connection=connection)
+    if deletion_request.user_id != user.pk:
+        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+    if deletion_request.is_confirmed():
+        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+
+    # Change request status
+    await deletion_request.confirm(connection)
+
+    # Change user status
+    await user.delete_account(connection)

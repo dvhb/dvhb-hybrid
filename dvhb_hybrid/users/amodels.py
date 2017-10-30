@@ -3,6 +3,7 @@ import string
 import uuid
 
 from django.contrib.auth.hashers import make_password
+from django.utils.crypto import get_random_string
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
 
@@ -43,6 +44,14 @@ class AbstractUser(Model):
     async def activate(self, connection=None):
         self.is_active = True
         await self.save(fields=['is_active'], connection=connection)
+
+    @method_connect_once
+    async def delete_account(self, connection=None):
+        self.date_deleted = utils.now()
+        self.is_active = False
+        # Add random string to email to allow new registration with such address
+        self.email = '#'.join((self.email[:230], get_random_string()))
+        await self.save(fields=['email', 'date_deleted', 'is_active'], connection=connection)
 
 
 class AbstractUserActivationRequest(Model):
@@ -135,3 +144,11 @@ class AbstractUserProfileDeleteRequest(Model):
             template='AccountRemovingConfirmation',
             context = context,
             lang_code = deletion_request.lang_code)
+
+    def is_confirmed(self):
+        return self.status == UserProfileDeleteRequestStatus.confirmed.value
+
+    @method_connect_once
+    async def confirm(self, connection=None):
+        self.status = UserProfileDeleteRequestStatus.confirmed.value
+        await self.save(fields=['status', 'updated_at'], connection=connection)
