@@ -13,3 +13,17 @@ class UserActivationRequestStatus(enum.Enum):
             cls.sent: _('Sent'),
             cls.activated: _('Activated'),
         }
+
+
+class UserProfileDeleteRequestStatus(enum.Enum):
+    created = 'created'
+    sent = 'sent'
+    confirmed = 'confirmed'
+
+    @classmethod
+    def translation(cls):
+        return {
+            cls.created: _('Created'),
+            cls.sent: _('Sent'),
+            cls.confirmed: _('Confirmed'),
+        }

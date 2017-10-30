@@ -6,7 +6,7 @@ from django.contrib.auth.hashers import make_password
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
 
-from .enums import UserActivationRequestStatus
+from .enums import UserActivationRequestStatus, UserProfileDeleteRequestStatus
 
 
 class AbstractUser(Model):
@@ -58,7 +58,7 @@ class AbstractUserActivationRequest(Model):
     @property
     def code(self):
         """
-        Returns string representation of UUID withou dashes
+        Returns string representation of UUID without dashes
         """
 
         return str(self.uuid).replace('-', '')
@@ -93,3 +93,44 @@ class AbstractUserActivationRequest(Model):
     @method_connect_once
     def get_by_email(cls, email, connection=None):
         return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
+
+
+class AbstractUserProfileDeleteRequest(Model):
+    primary_key = 'uuid'
+
+    @classmethod
+    def set_defaults(cls, data: dict):
+        data.setdefault('uuid', uuid.uuid4())
+        data.setdefault('created_at', utils.now())
+        data.setdefault('status', UserProfileDeleteRequestStatus.created.value)
+        data['updated_at'] = utils.now()
+
+    @property
+    def code(self):
+        """
+        Returns string representation of UUID without dashes
+        """
+
+        return str(self.uuid).replace('-', '')
+
+    @classmethod
+    @method_connect_once
+    def get_by_email(cls, email, connection=None):
+        return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
+
+    @classmethod
+    @method_connect_once
+    async def send(cls, user, connection=None):
+        """
+        Sends email with profile deletion request confirmation to the user specified
+        """
+
+        deletion_request = await cls.create(email=user.email, user_id=user.pk, connection=connection)
+        context = dict(
+            url=cls.app.config.users.delete_confirmation_url_template.format(confirmation_code=deletion_request.code)
+        )
+        await cls.app.mailer.send(
+            user.email,
+            template='AccountRemovingConfirmation',
+            context = context,
+            lang_code = deletion_request.lang_code)
