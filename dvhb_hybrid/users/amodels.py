@@ -147,6 +147,7 @@ class AbstractUserProfileDeleteRequest(Model):
             template='AccountRemovingConfirmation',
             context = context,
             lang_code = deletion_request.lang_code)
+        return deletion_request
 
     def is_confirmed(self):
         return self.status == UserProfileDeleteRequestStatus.confirmed.value
@@ -162,4 +163,9 @@ class AbstractUserProfileDeleteRequest(Model):
     @method_connect_once
     async def cancel(self, connection=None):
         self.status = UserProfileDeleteRequestStatus.cancelled.value
+        await self.save(fields=['status', 'updated_at'], connection=connection)
+
+    @method_connect_once
+    async def mark_as_sent(self, connection=None):
+        self.status = UserProfileDeleteRequestStatus.sent.value
         await self.save(fields=['status', 'updated_at'], connection=connection)
