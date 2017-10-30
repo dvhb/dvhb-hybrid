@@ -55,6 +55,8 @@ class JsonHTTPMessage(JsonHTTPException):
 
 
 class HTTPOk(JsonHTTPMessage, aiohttp.web.HTTPOk):
+    # Workaround for bug in aiohttp (see https://github.com/aio-libs/aiohttp/issues/1718). Seems to be fixed in 2.3.1
+    _body_payload = False
     pass
 
 

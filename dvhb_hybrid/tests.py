@@ -59,7 +59,7 @@ class TestClient(test_utils.TestClient):
 
 
 class AuthClient(TestClient):
-    token_url = 'users:token'
+    token_url = 'dvhb_hybrid.user:login'
     default_user = {
         'email': 'test_user@example.com',
         'password': '123',
