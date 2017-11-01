@@ -66,6 +66,9 @@ class AbstractUser(Model):
         profile_data = dict()
         for f in self.user_profile_fields:
             profile_data[f] = getattr(self, f)
+        if self.picture:
+            profile_data['picture'] = self.picture
+        self.prepare_image(profile_data)
         return profile_data
 
     @method_connect_once
@@ -78,6 +81,21 @@ class AbstractUser(Model):
 
         if need_update:
             await self.save(fields=need_update, connection=connection)
+
+    def prepare_image(self, result=None):
+        if not self.get('picture'):
+            return
+        if result is None:
+            result = self
+        result['picture_uuid'] = utils.get_uuid4(self.picture, match=False)
+        for k, v in (
+                ('picture_150', 'hybrid.files:image:processor'),
+                ('picture_150_2x', 'hybrid.files:image_2x:processor')):
+            result[k] = self.app.router[v].url_for(
+                uuid=result['picture_uuid'],
+                processor='size',
+                width=150, height=150,
+                ext='jpg')
 
 
 class BaseAbstractConfirmationRequest(Model):

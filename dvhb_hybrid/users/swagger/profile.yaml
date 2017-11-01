@@ -68,3 +68,48 @@ paths:
           description: OK
         400:
           description: Invalid parameters given
+
+  /profile/picture:
+    $name: dvhb_hybrid.user:profile.picture
+    post:
+      $handler: dvhb_hybrid.users.views.post_profile_picture
+      tags:
+        - user
+      summary: Change user picture
+      description: Replaces old picture (if any) with new one
+
+      consumes:
+        - multipart/form-data
+
+      parameters:
+        - name: picture_file
+          in: formData
+          description: User picture file
+          required: true
+          type: file
+
+      produces:
+        - application/json
+
+      security:
+      - UserSecurity: []
+
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+        409:
+          description: Inactive user
+    delete:
+      $handler: dvhb_hybrid.users.views.delete_profile_picture
+      tags:
+        - user
+      summary: Remove user picture
+      security:
+      - UserSecurity: []
+      responses:
+        200:
+          description: OK
+        409:
+          description: No user picture has been set
