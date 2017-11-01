@@ -118,3 +118,9 @@ async def cancel_deletion(request, confirmation_code, connection=None):
 
     # Change request status
     await deletion_request.cancel(connection=connection)
+
+
+@permissions
+async def get_profile(request):
+    user = request.user
+    return await user.get_profile()

@@ -22,6 +22,14 @@ class AbstractUser(Model):
         'date_joined',
     )
 
+    # Fields to be included into user profile data
+    user_profile_fields = (
+        'email',
+        'first_name',
+        'last_name',
+        'is_staff',
+    )
+
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('date_joined', utils.now())
@@ -52,6 +60,13 @@ class AbstractUser(Model):
         # Add random string to email to allow new registration with such address
         self.email = '#'.join((self.email[:230], get_random_string()))
         await self.save(fields=['email', 'date_deleted', 'is_active'], connection=connection)
+
+    @method_connect_once
+    async def get_profile(self, connection=None):
+        profile_data = dict()
+        for f in self.user_profile_fields:
+            profile_data[f] = getattr(self, f)
+        return profile_data
 
 
 class BaseAbstractConfirmationRequest(Model):

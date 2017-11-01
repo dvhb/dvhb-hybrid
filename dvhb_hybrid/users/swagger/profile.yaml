@@ -1,0 +1,21 @@
+paths:
+  '/profile':
+    $name: dvhb_hybrid.user:profile
+    get:
+      $handler: dvhb_hybrid.users.views.get_profile
+      tags:
+      - user
+      summary: Get profile
+      description: Returns profile data for current user
+
+      produces:
+      - application/json
+
+      security:
+      - UserSecurity: []
+
+      responses:
+        200:
+          description: Profile data
+          schema:
+            type: object
