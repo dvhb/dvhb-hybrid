@@ -19,3 +19,52 @@ paths:
           description: Profile data
           schema:
             type: object
+            properties:
+              email:
+                type: string
+                description: Email address of the user
+              first_name:
+                type: string
+                description: User's first name
+              last_name:
+                type: string
+                description: User's last name
+
+    patch:
+      $handler: dvhb_hybrid.users.views.patch_profile
+      $validate: true
+      tags:
+      - user
+      summary: Update profile
+      description: Updates user profile data
+
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+
+      produces:
+      - application/json
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+        - name: profile_data
+          in: body
+          description: User profile data
+          required: true
+          schema:
+            type: object
+            minProperties: 1
+            properties:
+              email:
+                type: string
+                description: Email address of the user
+            example:
+              first_name: John
+              last_name: Smith
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid parameters given

@@ -124,3 +124,10 @@ async def cancel_deletion(request, confirmation_code, connection=None):
 async def get_profile(request):
     user = request.user
     return await user.get_profile()
+
+
+@permissions
+async def patch_profile(request, profile_data):
+    user = request.user
+    await user.patch_profile(profile_data)
+    return await user.get_profile()

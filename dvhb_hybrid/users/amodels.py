@@ -68,6 +68,17 @@ class AbstractUser(Model):
             profile_data[f] = getattr(self, f)
         return profile_data
 
+    @method_connect_once
+    async def patch_profile(self, profile_data, connection=None):
+        need_update = []
+        for f in self.user_profile_fields:
+            if f in profile_data:
+                setattr(self, f, profile_data[f])
+                need_update.append(f)
+
+        if need_update:
+            await self.save(fields=need_update, connection=connection)
+
 
 class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'
