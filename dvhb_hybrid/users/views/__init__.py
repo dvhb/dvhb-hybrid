@@ -1,11 +1,16 @@
 from aiohttp_apiset.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 
-from .. import exceptions
-from ..amodels import method_redis_once, method_connect_once
-from ..decorators import recaptcha
-from ..permissions import permissions, gen_api_key
-from ..redis import redis_key
+from dvhb_hybrid import exceptions
+from dvhb_hybrid.amodels import method_redis_once, method_connect_once
+from dvhb_hybrid.decorators import recaptcha
+from dvhb_hybrid.permissions import permissions, gen_api_key
+from dvhb_hybrid.redis import redis_key
+
+from .oauth import UserOAuthView
+
+
+__all__ = ['UserOAuthView']
 
 
 @method_connect_once
