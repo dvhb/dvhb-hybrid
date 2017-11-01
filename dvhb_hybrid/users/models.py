@@ -67,6 +67,8 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         ),
     )
 
+    picture = models.ImageField(_('user picture'), upload_to='user_pictures', blank=True, null=True)
+
     date_joined = models.DateTimeField(_('registration date'), default=timezone.now)
     date_deleted = models.DateTimeField(_('removing date'), null=True, blank=True)
 

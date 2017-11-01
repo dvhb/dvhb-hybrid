@@ -36,5 +36,6 @@ setup(
         'aiohttp_apiset',
         'sqlalchemy',
         'pyyaml',
+        'Pillow',
     ]
 )
