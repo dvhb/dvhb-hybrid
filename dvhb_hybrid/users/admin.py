@@ -23,7 +23,7 @@ class BaseUserAdmin(DjangoUserAdmin):
     ordering = ('email',)
 
 
-class BaseUserActivationRequestAdmin(admin.ModelAdmin):
+class BaseUserConfirmationRequestAdmin(admin.ModelAdmin):
     list_display = ('email', 'created_at', 'status')
     fields = ('uuid', 'email', 'status', 'created_at', 'user',)
     search_fields = ('email', 'name')

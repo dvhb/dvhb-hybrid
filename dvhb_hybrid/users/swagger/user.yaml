@@ -95,6 +95,9 @@ paths:
       summary: Change password
       description: Change user password
 
+      security:
+      - UserSecurity: []
+
       consumes:
         - application/json
         - application/x-www-form-urlencoded
@@ -114,6 +117,92 @@ paths:
 
       produces:
         - application/json
+
+  '/delete/request':
+     $name: dvhb_hybrid.user:request_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.request_deletion
+      tags:
+        - user
+      summary: Request deletion of user account
+      description: Request deletion of user account. Profile would be deleted after obtaining confirmation from the user
+
+      security:
+      - UserSecurity: []
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+      - name: lang_code
+        in: formData
+        type: string
+        pattern: '^[a-z]{2}$'
+        description: ISO 639-1 alpha-2 language code for language to be used for confirmation email sending
+        default: en
+
+      responses:
+        200:
+          description: OK
+        409:
+          description: Account removing have been requested already
+
+  '/delete/confirm':
+     $name: dvhb_hybrid.user:confirm_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.confirm_deletion
+      tags:
+        - user
+      summary: Confirm deletion of user account
+      description: Actually deletes user account
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+      - name: confirmation_code
+        in: formData
+        description: Confirmation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      responses:
+        200:
+          description: OK
+        404:
+          description: Wrong confirmation code given
+        409:
+          description: Account deletion has been cancelled or confirmed already
+
+  '/delete/cancel':
+     $name: dvhb_hybrid.user:cancel_deletion
+     post:
+      $handler: dvhb_hybrid.users.views.cancel_deletion
+      tags:
+        - user
+      summary: Cancel deletion of user account
+      description: User account deletion request is marked as cancelled
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+      - name: confirmation_code
+        in: formData
+        description: Confirmation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      responses:
+        200:
+          description: OK
+        400:
+          description: Wrong confirmation code given
+        409:
+          description: Account deletion has been cancelled or confirmed already
 
 responses:
   AuthSuccessful:

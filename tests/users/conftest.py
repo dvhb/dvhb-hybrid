@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+from django.contrib.auth.hashers import make_password
+
 import pytest
 
 
@@ -61,3 +63,14 @@ def new_user_data():
         'password': 'Pa55w0rd',
         'g-recaptcha-response': ''
     }
+
+
+@pytest.fixture
+def create_new_user(app, new_user_data):
+    async def wrapper():
+        user = await app.models.user.create(
+            email=new_user_data['email'], password=make_password(new_user_data['password']), is_active=True)
+        result = dict(new_user_data)
+        result[id] = user.id
+        return result
+    return wrapper

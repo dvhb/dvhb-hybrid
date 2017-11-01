@@ -34,20 +34,21 @@ async def create_user(request, user, connection=None):
     user_exists = await request.app.models.user.get_user_by_email(user['email'], connection=connection)
     if user_exists:
         raise exceptions.HTTPConflict(reason='User with this email already exists.')
-    user['password'] = make_password(user.pop('password'))
-    user['is_active'] = False
-    user = await request.app.models.user.create(email=user['email'], password=user['password'], connection=connection)
-    await request.app.models.user_activation_request.send(user, connection=connection)
+    user = await request.app.models.user.create(
+        email=user['email'], password=make_password(user['password']), connection=connection)
+    activation_request = await request.app.models.user_activation_request.send(
+        user, lang_code=user.get('lang_code', 'en'), connection=connection)
+    await activation_request.mark_as_sent(connection=connection)
 
 
 @method_connect_once
 async def activate_user(request, activation_code, connection=None):
     activation_request = await request.app.models.user_activation_request.get_one(
         activation_code, connection=connection)
-    if activation_request.is_activated():
+    if activation_request.is_confirmed():
         raise exceptions.HTTPConflict(reason="Account have been activated already")
     # Change activation request status
-    await activation_request.activate(connection=connection)
+    await activation_request.confirm(connection=connection)
 
     # Change user status
     user = await request.app.models.user.get_one(activation_request.user_id, connection=connection)
@@ -66,3 +67,54 @@ async def change_password(request, old_password, new_password):
         raise ValidationError(old_password=['Wrong password'])
     request.user['password'] = make_password(new_password)
     await request.user.save(fields=['password'])
+
+
+@method_connect_once
+@permissions
+async def request_deletion(request, lang_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_by_email(
+        user.email, connection=connection)
+    if deletion_request:
+        raise exceptions.HTTPConflict(reason="Account removing have been requested already")
+
+    deletion_request = await request.app.models.user_profile_delete_request.send(
+        user, lang_code=lang_code, connection=connection)
+    await deletion_request.mark_as_sent(connection=connection)
+
+
+@method_connect_once
+@permissions
+async def confirm_deletion(request, confirmation_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_one(
+        confirmation_code, connection=connection)
+    if deletion_request.user_id != user.pk:
+        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+    if deletion_request.is_confirmed():
+        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+    if deletion_request.is_cancelled():
+        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
+
+    # Change request status
+    await deletion_request.confirm(connection=connection)
+
+    # Change user status
+    await user.delete_account(connection=connection)
+
+
+@method_connect_once
+@permissions
+async def cancel_deletion(request, confirmation_code, connection=None):
+    user = request.user
+    deletion_request = await request.app.models.user_profile_delete_request.get_one(
+        confirmation_code, connection=connection)
+    if deletion_request.user_id != user.pk:
+        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+    if deletion_request.is_confirmed():
+        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+    if deletion_request.is_cancelled():
+        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
+
+    # Change request status
+    await deletion_request.cancel(connection=connection)

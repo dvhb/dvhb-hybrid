@@ -23,9 +23,9 @@ async def test_change_password_wrong_old_password(app, test_client, user, change
 
 
 @pytest.mark.django_db
-async def test_change_password_successful(app, test_client, user, change_password_request):
+async def test_change_password_successful(app, test_client, create_new_user, change_password_request):
     client = await test_client(app)
-    user['email'] = 'user_to_change_pw@example.com'
-    await client.authorize(**user)
+    user = await create_new_user()
+    await client.authorize(email=user['email'], password=user['password'])
     await change_password_request(
         old_password=user['password'], new_password='xxx', client=client, expected_status=200)

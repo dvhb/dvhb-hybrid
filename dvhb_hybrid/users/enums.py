@@ -3,13 +3,17 @@ import enum
 from django.utils.translation import ugettext_lazy as _
 
 
-class UserActivationRequestStatus(enum.Enum):
+class UserConfirmationRequestStatus(enum.Enum):
+    created = 'created'
     sent = 'sent'
-    activated = 'activated'
+    confirmed = 'confirmed'
+    cancelled = 'cancelled'
 
     @classmethod
     def translation(cls):
         return {
+            cls.created: _('Created'),
             cls.sent: _('Sent'),
-            cls.activated: _('Activated'),
+            cls.confirmed: _('Confirmed'),
+            cls.cancelled: _('Cancelled'),
         }
