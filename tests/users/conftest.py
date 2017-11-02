@@ -7,9 +7,12 @@ import pytest
 
 @pytest.fixture
 def make_request(app, test_client):
-    async def wrapper(url, client=None, json=None, expected_status=None):
+    async def wrapper(url, url_params={}, method='post', client=None, json=None, data=None, expected_status=None):
         client = client or await test_client(app)
-        response = await client.post(url, json=json)
+        method_fn = getattr(client, method)
+        url = url if not url_params else app.router[url].url_for(**url_params)
+        print(url)
+        response = await method_fn(url, json=json, data=data)
         if expected_status:
             assert response.status == expected_status, await response.text()
         return await response.json()
@@ -73,4 +76,15 @@ def create_new_user(app, new_user_data):
         result = dict(new_user_data)
         result[id] = user.id
         return result
+    return wrapper
+
+
+@pytest.fixture
+def get_profile_request(make_request):
+    async def wrapper(expected_status=None, client=None):
+        return await make_request(
+            'dvhb_hybrid.user:profile',
+            method='get',
+            client=client,
+            expected_status=expected_status)
     return wrapper

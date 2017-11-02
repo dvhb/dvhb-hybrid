@@ -22,6 +22,14 @@ class AbstractUser(Model):
         'date_joined',
     )
 
+    # Fields to be included into user profile data
+    user_profile_fields = (
+        'email',
+        'first_name',
+        'last_name',
+        'is_staff',
+    )
+
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('date_joined', utils.now())
@@ -52,6 +60,42 @@ class AbstractUser(Model):
         # Add random string to email to allow new registration with such address
         self.email = '#'.join((self.email[:230], get_random_string()))
         await self.save(fields=['email', 'date_deleted', 'is_active'], connection=connection)
+
+    @method_connect_once
+    async def get_profile(self, connection=None):
+        profile_data = dict()
+        for f in self.user_profile_fields:
+            profile_data[f] = getattr(self, f)
+        if self.picture:
+            profile_data['picture'] = self.picture
+        self.prepare_image(profile_data)
+        return profile_data
+
+    @method_connect_once
+    async def patch_profile(self, profile_data, connection=None):
+        need_update = []
+        for f in self.user_profile_fields:
+            if f in profile_data:
+                setattr(self, f, profile_data[f])
+                need_update.append(f)
+
+        if need_update:
+            await self.save(fields=need_update, connection=connection)
+
+    def prepare_image(self, result=None):
+        if not self.get('picture'):
+            return
+        if result is None:
+            result = self
+        result['picture_uuid'] = utils.get_uuid4(self.picture, match=False)
+        for k, v in (
+                ('picture_150', 'hybrid.files:image:processor'),
+                ('picture_150_2x', 'hybrid.files:image_2x:processor')):
+            result[k] = self.app.router[v].url_for(
+                uuid=result['picture_uuid'],
+                processor='size',
+                width=150, height=150,
+                ext='jpg')
 
 
 class BaseAbstractConfirmationRequest(Model):

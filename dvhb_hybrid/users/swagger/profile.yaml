@@ -1,0 +1,115 @@
+paths:
+  '/profile':
+    $name: dvhb_hybrid.user:profile
+    get:
+      $handler: dvhb_hybrid.users.views.get_profile
+      tags:
+      - user
+      summary: Get profile
+      description: Returns profile data for current user
+
+      produces:
+      - application/json
+
+      security:
+      - UserSecurity: []
+
+      responses:
+        200:
+          description: Profile data
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: Email address of the user
+              first_name:
+                type: string
+                description: User's first name
+              last_name:
+                type: string
+                description: User's last name
+
+    patch:
+      $handler: dvhb_hybrid.users.views.patch_profile
+      $validate: true
+      tags:
+      - user
+      summary: Update profile
+      description: Updates user profile data
+
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+
+      produces:
+      - application/json
+
+      security:
+      - UserSecurity: []
+
+      parameters:
+        - name: profile_data
+          in: body
+          description: User profile data
+          required: true
+          schema:
+            type: object
+            minProperties: 1
+            properties:
+              email:
+                type: string
+                description: Email address of the user
+            example:
+              first_name: John
+              last_name: Smith
+      responses:
+        200:
+          description: OK
+        400:
+          description: Invalid parameters given
+
+  /profile/picture:
+    $name: dvhb_hybrid.user:profile.picture
+    post:
+      $handler: dvhb_hybrid.users.views.post_profile_picture
+      tags:
+        - user
+      summary: Change user picture
+      description: Replaces old picture (if any) with new one
+
+      consumes:
+        - multipart/form-data
+
+      parameters:
+        - name: picture_file
+          in: formData
+          description: User picture file
+          required: true
+          type: file
+
+      produces:
+        - application/json
+
+      security:
+      - UserSecurity: []
+
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+        409:
+          description: Inactive user
+    delete:
+      $handler: dvhb_hybrid.users.views.delete_profile_picture
+      tags:
+        - user
+      summary: Remove user picture
+      security:
+      - UserSecurity: []
+      responses:
+        200:
+          description: OK
+        409:
+          description: No user picture has been set
