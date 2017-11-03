@@ -50,6 +50,11 @@ paths:
       summary: User logout
       description: Deactivate api key
 
+      consumes: []
+
+      produces:
+      - application/json
+
       security:
       - UserSecurity: []
 
