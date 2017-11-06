@@ -1,0 +1,78 @@
+- model: mailer.templatetranslation
+  pk: 1
+  fields:
+    created_at: !!timestamp '2017-10-19 16:08:49.304113+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.132353+00:00'
+    template: 1
+    lang_code: en
+    message_subject: Account activation
+    message_body: 'Please activate your account on example.com following the URL {url}'
+
+- model: mailer.templatetranslation
+  pk: 2
+  fields:
+    created_at: !!timestamp '2017-10-19 16:09:06.304659+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.133244+00:00'
+    template: 1
+    lang_code: ru
+    message_subject: "\u0410\u043A\
+      \u0442\u0438\u0432\u0430\u0446\u0438\u044F \u0443\u0447\u0435\u0442\u043D\u043E\
+      \u0439 \u0437\u0430\u043F\u0438\u0441\u0438"
+    message_body: "\u041F\u043E\u0436\
+-      \u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0430\u043A\u0442\u0438\u0432\u0438\
+-      \u0440\u0443\u0439\u0442\u0435 \u0412\u0430\u0448\u0443 \u0443\u0447\u0435\u0442\
+-      \u043D\u0443\u044E \u0437\u0430\u043F\u0438\u0441\u044C \u043D\u0430 example.com,\
+-      \ \u043F\u0440\u043E\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u0432 \u043F\u043E\
+-      \ \u0441\u0441\u044B\u043B\u043A\u0435: {url}"
+
+- model: mailer.templatetranslation
+  pk: 3
+  fields:
+    created_at: !!timestamp '2017-10-19 16:16:52.134159+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.134181+00:00'
+    template: 1
+    lang_code: fr
+    message_subject: Activation de compte
+    message_body: 'Veuillez activer votre compte sur example.com en suivant l''URL {url}'
+
+- model: mailer.templatetranslation
+  pk: 4
+  fields:
+    created_at: !!timestamp '2017-10-19 16:18:09.763343+00:00'
+    updated_at: !!timestamp '2017-10-19 16:18:09.763364+00:00'
+    template: 1
+    lang_code: de
+    message_subject: Account Aktivierung
+    message_body: 'Bitte aktivieren Sie Ihren Account auf example.com unter der URL {URL}'
+
+- model: mailer.templatetranslation
+  pk: 5
+  fields:
+    created_at: !!timestamp '2017-10-19 16:08:49.304113+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.132353+00:00'
+    template: 2
+    lang_code: en
+    message_subject: Account removing
+    message_body: "Please confirm removing of your account on example.com following the URL {confirm_url}.\nTo cancel your account removing use the URL {cancel_url}."
+
+- model: mailer.templatetranslation
+  pk: 6
+  fields:
+    created_at: !!timestamp '2017-10-19 16:08:49.304113+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.132353+00:00'
+    template: 3
+    lang_code: en
+    message_subject: Email address change
+    message_body: "Please confirm changing of email address associated with your account on example.com \
+-      to {new_email} following the URL {confirm_url}."
+
+- model: mailer.templatetranslation
+  pk: 7
+  fields:
+    created_at: !!timestamp '2017-10-19 16:08:49.304113+00:00'
+    updated_at: !!timestamp '2017-10-19 16:16:52.132353+00:00'
+    template: 4
+    lang_code: en
+    message_subject: Email address change
+    message_body: "Someone tries to set your email address as associated with his account on example.com.\n\
+-      If it is you please confirm by following the URL {confirm_url}."

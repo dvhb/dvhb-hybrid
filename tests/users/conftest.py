@@ -74,8 +74,19 @@ def create_new_user(app, new_user_data):
         user = await app.models.user.create(
             email=new_user_data['email'], password=make_password(new_user_data['password']), is_active=True)
         result = dict(new_user_data)
-        result[id] = user.id
+        result['id'] = user.id
         return result
+    return wrapper
+
+
+@pytest.fixture
+def get_user(app):
+    async def wrapper(user_id=None, email=None):
+        assert user_id or email
+        if user_id:
+            return await app.models.user.get_one(user_id)
+        else:
+            return await app.models.user.get_one(app.models.user.table.c.email == email)
     return wrapper
 
 
