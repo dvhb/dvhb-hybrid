@@ -209,6 +209,81 @@ paths:
         409:
           description: Account deletion has been cancelled or confirmed already
 
+  '/change/email':
+    $name: dvhb_hybrid.user:change_email
+    put:
+      $handler: dvhb_hybrid.users.views.send_email_change_request
+      tags:
+        - user
+      summary: Request to change user email address
+      description: Initiates sending of confirmation email on both user's existing and new email addresses
+
+      security:
+      - UserSecurity: []
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+        - name: new_email_address
+          in: formData
+          description: New email address
+          required: true
+          type: string
+        - name: lang_code
+          in: formData
+          type: string
+          pattern: '^[a-z]{2}$'
+          description: ISO 639-1 alpha-2 language code for language to be used for confirmation email sending
+          default: en
+
+      produces:
+        - application/json
+
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+        400:
+          description: Bad new email address
+        409:
+          description: Change to this address has been requested already
+    post:
+      $handler: dvhb_hybrid.users.views.approve_email_change_request
+      tags:
+        - user
+      summary: Confirms email change
+      description: Email will be changed after obtaining both confirmations for existing and new email address
+
+      security: []
+
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+
+      parameters:
+      - name: confirmation_code
+        in: formData
+        description: Confirmation code
+        required: true
+        type: string
+        pattern: '^[0-9a-fA-F]{32}$'
+
+      produces:
+        - application/json
+
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+        400:
+          description: Wrong confirmation code given
+        409:
+          description: Confirmed already
+
 responses:
   AuthSuccessful:
     description: OK

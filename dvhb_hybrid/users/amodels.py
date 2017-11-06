@@ -97,6 +97,13 @@ class AbstractUser(Model):
                 width=150, height=150,
                 ext='jpg')
 
+    @classmethod
+    @method_connect_once
+    async def change_email(cls, user_id, new_email_address, connection=None):
+        user = await cls.get_one(user_id, connection=connection)
+        user.email = new_email_address
+        await user.save(fields=['email'], connection=connection)
+
 
 class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'
@@ -142,20 +149,23 @@ class BaseAbstractConfirmationRequest(Model):
         self.status = UserConfirmationRequestStatus.sent.value
         await self.save(fields=['status', 'updated_at'], connection=connection)
 
+    async def send_via_mailer(self):
+        await self.app.mailer.send(
+            self.email,
+            template=self.template_name,
+            context=self.get_template_context(),
+            lang_code=self.lang_code)
+
     @classmethod
     @method_connect_once
     async def send(cls, user, lang_code, connection=None):
         """
-        Sends email with profile deletion request confirmation to the user specified
+        Send confirmation request to user email address using translation of class message template into language given
         """
 
         confirmation_request = await cls.create(
             email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
-        await cls.app.mailer.send(
-            user.email,
-            template=cls.template_name,
-            context = cls.get_template_context(confirmation_request),
-            lang_code = confirmation_request.lang_code)
+        await confirmation_request.send_via_mailer()
         return confirmation_request
 
 
@@ -163,23 +173,72 @@ class AbstractUserActivationRequest(BaseAbstractConfirmationRequest):
 
     template_name = 'AccountActivation'
 
-    @classmethod
-    def get_template_context(cls, confirmation_request):
-        activation_url = cls.app.config.users.url_template.format(activation_code=confirmation_request.code)
-        return dict(url=activation_url)
+    def get_template_context(self):
+        activation_url = self.app.config.users.url_template.format(activation_code=self.code)
+        return dict(
+            url=activation_url)
 
 
 class AbstractUserProfileDeleteRequest(BaseAbstractConfirmationRequest):
 
     template_name = 'AccountRemovingConfirmation'
 
-    @classmethod
-    def get_template_context(cls, confirmation_request):
-        confirm_url = cls.app.config.users.confirm_delete_url_template.format(
-            confirmation_code=confirmation_request.code)
-        cancel_url = cls.app.config.users.cancel_delete_url_template.format(
-            confirmation_code=confirmation_request.code)
+    def get_template_context(self):
+        confirm_url = self.app.config.users.confirm_delete_url_template.format(confirmation_code=self.code)
+        cancel_url = self.app.config.users.cancel_delete_url_template.format(confirmation_code=self.code)
         return dict(
             confirm_url=confirm_url,
             cancel_url=cancel_url
         )
+
+
+class AbstractUserChangeEmailOriginalAddressRequest(BaseAbstractConfirmationRequest):
+
+    template_name = 'EmailChangeForOriginalAddress'
+
+    def get_template_context(self):
+        confirm_url = self.app.config.users.confirm_email_change_url_template.format(confirmation_code=self.code)
+        return dict(
+            confirm_url=confirm_url,
+            orig_email=self.orig_email,
+            new_email=self.new_email,
+        )
+
+    @classmethod
+    @method_connect_once
+    async def get_by_new_email(cls, new_email_address, user_id=None, connection=None):
+        args = [cls.table.c.new_email == new_email_address]
+        if user_id:
+            args.append(cls.table.c.user_id == user_id)
+        return await cls.get_one(*args, connection=connection, silent=True)
+
+    @classmethod
+    @method_connect_once
+    async def send(cls, user, new_email_address, lang_code, connection=None):
+        """
+        Sends email with email change request to the original email address of user specified
+        """
+
+        confirmation_request = await cls.create(
+            email=user.email, orig_email=user.email, new_email=new_email_address, user_id=user.pk,
+            lang_code=lang_code, connection=connection)
+        await confirmation_request.send_via_mailer()
+        return confirmation_request
+
+
+class AbstractUserChangeEmailNewAddressRequest(AbstractUserChangeEmailOriginalAddressRequest):
+
+    template_name = 'EmailChangeForNewAddress'
+
+    @classmethod
+    @method_connect_once
+    async def send(cls, user, new_email_address, lang_code, connection=None):
+        """
+        Sends email with email change request to the new email address
+        """
+
+        confirmation_request = await cls.create(
+            email=new_email_address, orig_email=user.email, new_email=new_email_address, user_id=user.pk,
+            lang_code=lang_code, connection=connection)
+        await confirmation_request.send_via_mailer()
+        return confirmation_request
