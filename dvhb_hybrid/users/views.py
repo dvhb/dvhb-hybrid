@@ -159,3 +159,13 @@ async def delete_profile_picture(request, connection=None):
     user['picture'] = None
     await user.save(fields=['picture'], connection=connection)
     await Image.delete_name(old_picture, connection=connection)
+
+
+@permissions
+async def send_email_change_request(request, new_email_address):
+    pass
+
+
+@method_connect_once
+async def approve_email_change_request(request, confirmation_code, connection=None):
+    pass
