@@ -83,6 +83,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
 
 class BaseAbstractConfirmationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
+    # Email address the request is sent to
     email = models.EmailField(verbose_name=_('email'), max_length=255)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
     status = models.CharField(verbose_name=_('status'), max_length=20,
@@ -108,3 +109,22 @@ class AbstractUserProfileDeleteRequest(BaseAbstractConfirmationRequest):
         abstract = True
         verbose_name = _('user profile deletion request')
         verbose_name_plural = _('user profile deletion requests')
+
+
+class AbstractUserChangeEmailOriginalAddressRequest(BaseAbstractConfirmationRequest):
+
+    orig_email = models.EmailField(verbose_name=_('original user email'), max_length=255, db_index=True)
+    new_email = models.EmailField(verbose_name=_('new user email'), max_length=255, db_index=True)
+
+    class Meta:
+        abstract = True
+        verbose_name = _('user email change original address request')
+        verbose_name_plural = _('user email change original address requests')
+
+
+class AbstractUserChangeEmailNewAddressRequest(AbstractUserChangeEmailOriginalAddressRequest):
+
+    class Meta:
+        abstract = True
+        verbose_name = _('user email change new address request')
+        verbose_name_plural = _('user email change new address requests')
