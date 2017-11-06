@@ -161,9 +161,29 @@ async def delete_profile_picture(request, connection=None):
     await Image.delete_name(old_picture, connection=connection)
 
 
+@method_connect_once
 @permissions
-async def send_email_change_request(request, new_email_address):
-    pass
+async def send_email_change_request(request, new_email_address, lang_code, connection=None):
+    user = request.user
+    orig_m = request.app.m.user_change_email_original_address_request
+    new_m = request.app.m.user_change_email_new_address_request
+
+    # Same email specified
+    if user.email == new_email_address:
+        raise ValidationError(new_email_address=["User's existing email specified"])
+
+    # Change to this address has been requested already
+    orig_address_request = await orig_m.get_by_new_email(new_email_address, connection=connection)
+    new_address_request = await new_m.get_by_new_email(new_email_address, connection=connection)
+    if orig_address_request is not None and orig_address_request.user_id == user.pk:
+        raise exceptions.HTTPConflict(reason="Email change to this address requested already")
+    if new_address_request is not None and new_address_request.user_id == user.pk:
+        raise exceptions.HTTPConflict(reason="Email change to this address requested already")
+
+    # Create and send confirmation request for both original and new email addresses
+    await orig_m.send(user, new_email_address, lang_code, connection=connection)
+    await new_m.send(user, new_email_address, lang_code, connection=connection)
+    raise exceptions.HTTPOk(content_type='application/json')
 
 
 @method_connect_once
