@@ -97,6 +97,13 @@ class AbstractUser(Model):
                 width=150, height=150,
                 ext='jpg')
 
+    @classmethod
+    @method_connect_once
+    async def change_email(cls, user_id, new_email_address, connection=None):
+        user = await cls.get_one(user_id, connection=connection)
+        user.email = new_email_address
+        await user.save(fields=['email'], connection=connection)
+
 
 class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'
@@ -199,8 +206,11 @@ class AbstractUserChangeEmailOriginalAddressRequest(BaseAbstractConfirmationRequ
 
     @classmethod
     @method_connect_once
-    async def get_by_new_email(cls, new_email_address, connection=None):
-        return await cls.get_one(cls.table.c.new_email == new_email_address, connection=connection, silent=True)
+    async def get_by_new_email(cls, new_email_address, user_id=None, connection=None):
+        args = [cls.table.c.new_email == new_email_address]
+        if user_id:
+            args.append(cls.table.c.user_id == user_id)
+        return await cls.get_one(*args, connection=connection, silent=True)
 
     @classmethod
     @method_connect_once

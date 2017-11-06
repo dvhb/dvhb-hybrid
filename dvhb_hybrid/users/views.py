@@ -172,9 +172,12 @@ async def send_email_change_request(request, new_email_address, lang_code, conne
     if user.email == new_email_address:
         raise ValidationError(new_email_address=["User's existing email specified"])
 
+    orig_address_request = await orig_m.get_by_new_email(
+        new_email_address=new_email_address, user_id=user.pk, connection=connection)
+    new_address_request = await new_m.get_by_new_email(
+        new_email_address=new_email_address, user_id=user.pk, connection=connection)
+
     # Change to this address has been requested already
-    orig_address_request = await orig_m.get_by_new_email(new_email_address, connection=connection)
-    new_address_request = await new_m.get_by_new_email(new_email_address, connection=connection)
     if orig_address_request is not None and orig_address_request.user_id == user.pk:
         raise exceptions.HTTPConflict(reason="Email change to this address requested already")
     if new_address_request is not None and new_address_request.user_id == user.pk:
@@ -188,4 +191,34 @@ async def send_email_change_request(request, new_email_address, lang_code, conne
 
 @method_connect_once
 async def approve_email_change_request(request, confirmation_code, connection=None):
-    pass
+    orig_m = request.app.m.user_change_email_original_address_request
+    new_m = request.app.m.user_change_email_new_address_request
+
+    # Change to this address has been requested already
+    orig_address_request = await orig_m.get_one(confirmation_code, connection=connection, silent=True)
+    new_address_request = await new_m.get_one(confirmation_code, connection=connection, silent=True)
+
+    confirmation_request = orig_address_request or new_address_request
+
+    # Confirmation code not found for both addresses
+    if confirmation_request is None:
+        raise exceptions.HTTPNotFound(reason="No such confirmation code")
+    else:
+        # It is confirmed already
+        if confirmation_request.is_confirmed():
+            raise exceptions.HTTPConflict(reason="Confirmation already obtained")
+        # Change confirmation request status
+        await confirmation_request.confirm(connection=connection)
+
+        orig_address_request = await orig_m.get_by_new_email(
+            confirmation_request.new_email, user_id=confirmation_request.user_id, connection=connection)
+        new_address_request = await new_m.get_by_new_email(
+            confirmation_request.new_email, user_id=confirmation_request.user_id, connection=connection)
+
+        # Check whether second request confirmed already
+        if orig_address_request and new_address_request \
+                and orig_address_request.is_confirmed() and new_address_request.is_confirmed():
+            await request.app.m.user.change_email(
+                confirmation_request.user_id, confirmation_request.new_email, connection=connection)
+
+        raise exceptions.HTTPOk(content_type='application/json')
