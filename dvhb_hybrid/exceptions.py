@@ -1,3 +1,7 @@
+"""
+DEPRECATED module. Use aiohttp.web_exceptions instead
+"""
+
 import json
 
 import aiohttp.web
