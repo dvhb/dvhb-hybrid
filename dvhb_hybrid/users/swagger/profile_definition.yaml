@@ -1,0 +1,35 @@
+swagger: '2.0'
+
+definitions:
+  EditableUserProfile:
+    type: object
+    minProperties: 1
+    properties:
+      first_name:
+        type: string
+        description: User's first name
+      last_name:
+        type: string
+        description: User's last name
+    example:
+      first_name: John
+      last_name: Smith
+
+  DisplayedUserProfile:
+    allOf:
+    - $ref: '#/definitions/EditableUserProfile'
+    - type: object
+      properties:
+        email:
+          type: string
+          description: Email address of the user
+      required:
+      - email
+      - first_name
+      - last_name
+      example:
+        email: user@example.com
+        first_name: John
+        last_name: Smith
+
+paths: {}

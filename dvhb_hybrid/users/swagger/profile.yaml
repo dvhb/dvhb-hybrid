@@ -18,17 +18,7 @@ paths:
         200:
           description: Profile data
           schema:
-            type: object
-            properties:
-              email:
-                type: string
-                description: Email address of the user
-              first_name:
-                type: string
-                description: User's first name
-              last_name:
-                type: string
-                description: User's last name
+            $ref: 'users/swagger/profile_definition.yaml#/definitions/DisplayedUserProfile'
 
     patch:
       $handler: dvhb_hybrid.users.views.patch_profile
@@ -54,18 +44,12 @@ paths:
           description: User profile data
           required: true
           schema:
-            type: object
-            minProperties: 1
-            properties:
-              email:
-                type: string
-                description: Email address of the user
-            example:
-              first_name: John
-              last_name: Smith
+            $ref: 'users/swagger/profile_definition.yaml#/definitions/EditableUserProfile'
       responses:
         200:
           description: OK
+          schema:
+            $ref: 'users/swagger/profile_definition.yaml#/definitions/DisplayedUserProfile'
         400:
           description: Invalid parameters given
 
