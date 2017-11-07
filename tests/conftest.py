@@ -3,8 +3,9 @@ import pytest
 from aiohttp.web import Application
 
 import django
-from django.conf import settings
+from django.core.management import call_command
 
+from dvhb_hybrid import BASE_DIR
 from dvhb_hybrid.utils import import_class
 
 
@@ -58,3 +59,15 @@ def cli(app, test_client):
         client = await test_client(app)
         return client
     return create_client
+
+
+@pytest.fixture(scope='session')
+def django_db_setup(django_db_setup, django_db_blocker):
+    """
+    Creates and initializes test DB
+    """
+    names = []
+    for i in BASE_DIR.glob('*/fixtures/*yaml'):
+       names.append(i.with_suffix('').name)
+    with django_db_blocker.unblock():
+        call_command('loaddata', *names)
