@@ -131,4 +131,5 @@ class AbstractUserChangeEmailNewAddressRequest(AbstractUserChangeEmailOriginalAd
 
 
 class User(AbstractUser):
-    pass
+    class Meta(AbstractUser.Meta):
+        swappable = 'AUTH_USER_MODEL'
