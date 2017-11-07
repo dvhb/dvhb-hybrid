@@ -128,3 +128,7 @@ class AbstractUserChangeEmailNewAddressRequest(AbstractUserChangeEmailOriginalAd
         abstract = True
         verbose_name = _('user email change new address request')
         verbose_name_plural = _('user email change new address requests')
+
+
+class User(AbstractUser):
+    pass
