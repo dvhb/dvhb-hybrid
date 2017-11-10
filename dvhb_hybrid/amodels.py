@@ -7,7 +7,6 @@ from abc import ABCMeta
 from operator import and_
 
 import sqlalchemy as sa
-from aiohttp.web import Request
 from functools import reduce
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.sql.elements import ClauseElement
@@ -44,12 +43,13 @@ class ConnectionLogger:
 
 
 def get_app_from_parameters(*args, **kwargs):
-    app = None
     if kwargs.get('request') is not None:
-        app = kwargs['request'].app
-    elif args and (isinstance(args[0], (MetaModel, Model, Request)) or hasattr(args[0], 'app')):
-        app = args[0].app
-    return app
+        return kwargs['request'].app
+    for i in args:
+        if hasattr(i, 'app'):
+            return i.app
+        elif hasattr(i, 'request'):
+            return i.request.app
 
 
 def method_connect_once(arg):
