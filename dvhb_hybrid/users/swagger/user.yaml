@@ -2,8 +2,7 @@ paths:
   '/login':
     $name: dvhb_hybrid.user:login
     post:
-      $handler: dvhb_hybrid.users.views.login
-      $validate: true
+      operationId: user_login
       tags:
       - user
       summary: User login
