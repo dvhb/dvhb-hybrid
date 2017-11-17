@@ -16,14 +16,17 @@ async def login(request, email, password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
             raise exceptions.HTTPOk(
-                uid=user.id, headers={'Authorization': request.session}, content_type='application/json')
+                uid=user.id,
+                headers={'Authorization': request.api_key},
+                content_type='application/json'
+            )
     raise exceptions.HTTPUnauthorized(reason="Login incorrect")
 
 
 @method_redis_once('sessions')
 @permissions
 async def logout(request, sessions):
-    key = redis_key(request.app.name, request.session, 'session')
+    key = redis_key(request.app.name, request.api_key, 'session')
     await sessions.delete(key)
     raise exceptions.HTTPOk(content_type='application/json')
 
@@ -58,7 +61,10 @@ async def activate_user(request, activation_code, connection=None):
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
     raise exceptions.HTTPOk(
-        uid=user.id, headers={'Authorization': request.session}, content_type='application/json')
+        uid=user.id,
+        headers={'Authorization': request.api_key},
+        content_type='application/json'
+    )
 
 
 @permissions

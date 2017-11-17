@@ -9,40 +9,42 @@ from dvhb_hybrid.redis import redis_key
 
 
 def get_api_key(request):
-    return request.headers.get('API-KEY') or request.headers.get('Authorization') or request.GET.get('api_key')
+    return (
+        request.headers.get('API-KEY') or
+        request.headers.get('Authorization') or
+        request.GET.get('api_key')
+    )
 
 
 async def get_session_data(request, sessions=None):
     api_key = get_api_key(request)
-    request.session = api_key
-
-    if not api_key:
-        request.session_data = {}
-        return request.session_data
-
-    @amodels.method_redis_once('sessions')
-    def get_data(request, sessions):
-        return sessions.hgetall(redis_key(request.app.name, api_key, 'session'))
-
-    try:
-        api_key = str(uuid.UUID(api_key))
-    except (ValueError, TypeError):
-        return None
-    else:
-        d = await get_data(request, sessions=sessions)
-        return {k.decode(): v.decode() for k, v in d.items()}
+    request.api_key = api_key
+    session = {}
+    if api_key:
+        try:
+            api_key = str(uuid.UUID(api_key))
+        except (ValueError, TypeError):
+            pass
+        else:
+            @amodels.method_redis_once('sessions')
+            def get_data(request, sessions):
+                return sessions.hgetall(redis_key(request.app.name, api_key, 'session'))
+            d = await get_data(request, sessions=sessions)
+            session = {k.decode(): v.decode() for k, v in d.items()}
+    request.session = session
+    return session
 
 
-async def get_current_user(request, *, anonymous_allowed=True, sessions=None, connection=None, fields=None):
+async def get_current_user(request, *,
+                           anonymous_allowed=True,
+                           sessions=None,
+                           connection=None,
+                           fields=None):
     data = await get_session_data(request, sessions=sessions)
-
     if not data:
         raise exceptions.HTTPUnauthorized()
-    elif 'uid' in data:
-        user_id = data['uid']
-    else:
-        user_id = None
 
+    user_id = data.get('uid')
     if not user_id:
         if not anonymous_allowed:
             raise exceptions.HTTPUnauthorized(reason='anonymous not allowed')
@@ -51,8 +53,11 @@ async def get_current_user(request, *, anonymous_allowed=True, sessions=None, co
         return request.user
 
     user = await request.app.models.user.get_one(
-        user_id, connection=connection, fields=fields, silent=True)
-
+        user_id,
+        connection=connection,
+        fields=fields,
+        silent=True
+    )
     if not user:
         raise exceptions.HTTPUnauthorized()
 
@@ -111,5 +116,5 @@ async def gen_api_key(user_id, *, request=None, sessions=None, **kwargs):
     pairs = functools.reduce(operator.add, u.items())
     await sessions.hmset(full_key, *pairs)
 
-    request.session = api_key
+    request.api_key = api_key
     return api_key
