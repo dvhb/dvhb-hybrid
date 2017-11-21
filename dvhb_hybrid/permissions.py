@@ -12,7 +12,7 @@ def get_api_key(request):
     return (
         request.headers.get('API-KEY') or
         request.headers.get('Authorization') or
-        request.GET.get('api_key')
+        request.query.get('api_key')
     )
 
 
