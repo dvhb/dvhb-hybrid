@@ -7,13 +7,17 @@ paths:
         - user
       summary: Create new user
       description: Returns api_key on successful user creation
-
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+      produces:
+      - application/json
       parameters:
-        - name: user
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/NewUser'
+      - name: user
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/NewUser'
 
       responses:
         200:
