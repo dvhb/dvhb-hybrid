@@ -33,7 +33,7 @@ class AbstractUser(Model):
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('date_joined', utils.now())
-        data.setdefault('is_active', True)
+        data.setdefault('is_active', False)
         data.setdefault('is_superuser', False)
         data.setdefault('is_staff', False)
         data.setdefault('first_name', '')
