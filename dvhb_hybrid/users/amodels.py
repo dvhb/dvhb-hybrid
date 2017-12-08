@@ -168,6 +168,11 @@ class BaseAbstractConfirmationRequest(Model):
         await confirmation_request.send_via_mailer()
         return confirmation_request
 
+    def get_status(self):
+        "Returns confirmation request status string representation"
+
+        return UserConfirmationRequestStatus(self.status).name
+
 
 class AbstractUserActivationRequest(BaseAbstractConfirmationRequest):
 
