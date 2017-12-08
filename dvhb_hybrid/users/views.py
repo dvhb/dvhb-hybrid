@@ -37,10 +37,11 @@ async def create_user(request, user, connection=None):
     user_exists = await request.app.models.user.get_user_by_email(user['email'], connection=connection)
     if user_exists:
         raise exceptions.HTTPConflict(reason='User with this email already exists.')
+    lang_code = user.get('lang_code', 'en')
     user = await request.app.models.user.create(
         email=user['email'], password=make_password(user['password']), connection=connection)
     activation_request = await request.app.models.user_activation_request.send(
-        user, lang_code=user.get('lang_code', 'en'), connection=connection)
+        user, lang_code=lang_code, connection=connection)
     await activation_request.mark_as_sent(connection=connection)
 
 
