@@ -33,7 +33,7 @@ class AbstractUser(Model):
     @classmethod
     def set_defaults(cls, data: dict):
         data.setdefault('date_joined', utils.now())
-        data.setdefault('is_active', True)
+        data.setdefault('is_active', False)
         data.setdefault('is_superuser', False)
         data.setdefault('is_staff', False)
         data.setdefault('first_name', '')
@@ -167,6 +167,11 @@ class BaseAbstractConfirmationRequest(Model):
             email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
         await confirmation_request.send_via_mailer()
         return confirmation_request
+
+    def get_status(self):
+        "Returns confirmation request status string representation"
+
+        return UserConfirmationRequestStatus(self.status).name
 
 
 class AbstractUserActivationRequest(BaseAbstractConfirmationRequest):
