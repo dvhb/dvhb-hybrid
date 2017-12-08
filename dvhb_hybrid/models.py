@@ -21,7 +21,8 @@ class UpdatedMixin(CreatedMixin):
 
 class AuthorMixin(CreatedMixin):
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               verbose_name=_('author'))
+                               verbose_name=_('author'),
+                               on_delete=models.PROTECT)
 
     class Meta:
         abstract = True

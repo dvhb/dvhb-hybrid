@@ -12,7 +12,7 @@ from .storages import image_storage
 class Image(UpdatedMixin, models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='images',
-        verbose_name=_('Author'))
+        verbose_name=_('Author'), on_delete=models.PROTECT)
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     image = models.ImageField(storage=image_storage)
     mime_type = models.CharField(_('content type'), max_length=99, blank=True)

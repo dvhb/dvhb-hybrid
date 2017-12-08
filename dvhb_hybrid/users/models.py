@@ -85,7 +85,8 @@ class BaseAbstractConfirmationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     # Email address the request is sent to
     email = models.EmailField(verbose_name=_('email'), max_length=255)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+', verbose_name=_('user'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='+',
+                             verbose_name=_('user'), on_delete=models.PROTECT)
     status = models.CharField(verbose_name=_('status'), max_length=20,
                               choices=enum_to_choice(UserConfirmationRequestStatus),
                               default=UserConfirmationRequestStatus.created.value)

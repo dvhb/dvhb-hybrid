@@ -40,7 +40,7 @@ def validate_lang_code(value):
 
 
 class TemplateTranslation(UpdatedMixin, models.Model):
-    template = models.ForeignKey('mailer.Template')
+    template = models.ForeignKey('mailer.Template', on_delete=models.PROTECT)
     lang_code = models.CharField(_('language code'), max_length=2, validators=[validate_lang_code], db_index=True)
     message_subject = models.CharField(_('subject'), max_length=1024)
     message_body = models.CharField(_('body'), max_length=4096)
