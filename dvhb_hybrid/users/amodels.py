@@ -104,6 +104,12 @@ class AbstractUser(Model):
         user.email = new_email_address
         await user.save(fields=['email'], connection=connection)
 
+    @method_connect_once
+    async def on_login(self, connection=None):
+        # Update login timestamp
+        self.last_login = utils.now()
+        await self.save(fields=['last_login'], connection=connection)
+
 
 class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'
