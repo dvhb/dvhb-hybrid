@@ -15,6 +15,7 @@ async def login(request, email, password):
         elif check_password(password, user.password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
+            await user.on_login()
             raise exceptions.HTTPOk(
                 uid=user.id,
                 headers={'Authorization': request.api_key},
