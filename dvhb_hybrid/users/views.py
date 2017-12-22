@@ -7,7 +7,8 @@ from dvhb_hybrid.permissions import permissions, gen_api_key
 from dvhb_hybrid.redis import redis_key
 
 
-async def login(request, email, password):
+@method_connect_once
+async def login(request, email, password, connection=None):
     user = await request.app.models.user.get_user_by_email(email)
     if user:
         if not user.is_active:
@@ -15,7 +16,8 @@ async def login(request, email, password):
         elif check_password(password, user.password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
-            await user.on_login()
+            await user.on_login(connection=connection)
+            await request.app.m.user_action_log_entry.create_login(request, connection=connection)
             raise exceptions.HTTPOk(
                 uid=user.id,
                 headers={'Authorization': request.api_key},
@@ -29,6 +31,7 @@ async def login(request, email, password):
 async def logout(request, sessions):
     key = redis_key(request.app.name, request.api_key, 'session')
     await sessions.delete(key)
+    await request.app.m.user_action_log_entry.create_logout(request)
     raise exceptions.HTTPOk(content_type='application/json')
 
 
