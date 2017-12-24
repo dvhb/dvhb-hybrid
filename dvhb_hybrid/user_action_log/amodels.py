@@ -97,3 +97,36 @@ class UserActionLogEntry(Model):
             payload=dict(old_email=old_email, new_email=new_email, confirmation_code=confirmation_code),
             user_id=user_id,
             connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_user_create_model(
+            cls, request, model_name, connection=None):
+        return await cls.create_record(
+            request,
+            message="User created new '{}'".format(model_name),
+            type=UserActionLogEntryType.crud,
+            subtype=UserActionLogEntrySubType.create,
+            connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_user_update_model(
+            cls, request, model_name, connection=None):
+        return await cls.create_record(
+            request,
+            message="User updated '{}'".format(model_name),
+            type=UserActionLogEntryType.crud,
+            subtype=UserActionLogEntrySubType.update,
+            connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_user_delete_model(
+            cls, request, model_name, connection=None):
+        return await cls.create_record(
+            request,
+            message="User deleted '{}'".format(model_name),
+            type=UserActionLogEntryType.crud,
+            subtype=UserActionLogEntrySubType.delete,
+            connection=connection)
