@@ -65,3 +65,13 @@ class UserActionLogEntry(Model):
             type=UserActionLogEntryType.reg,
             subtype=UserActionLogEntrySubType.create,
             connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_user_deletion(cls, request, connection=None):
+        return await cls.create_record(
+            request,
+            message="User deleted",
+            type=UserActionLogEntryType.reg,
+            subtype=UserActionLogEntrySubType.delete,
+            connection=connection)

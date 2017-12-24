@@ -116,6 +116,8 @@ async def confirm_deletion(request, confirmation_code, connection=None):
 
     # Change user status
     await user.delete_account(connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_deletion(request, connection=connection)
 
 
 @method_connect_once
