@@ -45,3 +45,13 @@ class UserActionLogEntry(Model):
             type=UserActionLogEntryType.auth,
             subtype=UserActionLogEntrySubType.logout,
             connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_change_password(cls, request, connection=None):
+        return await cls.create_record(
+            request,
+            message="User changed password",
+            type=UserActionLogEntryType.auth,
+            subtype=UserActionLogEntrySubType.change_password,
+            connection=connection)

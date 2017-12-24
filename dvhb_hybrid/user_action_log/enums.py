@@ -25,6 +25,7 @@ class UserActionLogEntrySubType(enum.Enum):
     delete = 'delete'
     login = 'login'
     logout = 'logout'
+    change_password = 'change_password'
 
     @classmethod
     def translation(cls):
@@ -34,4 +35,5 @@ class UserActionLogEntrySubType(enum.Enum):
             cls.delete: _('Deleted'),
             cls.login: _('Login'),
             cls.logout: _('Logout'),
+            cls.change_password: _('Change password'),
         }

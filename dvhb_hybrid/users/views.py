@@ -72,12 +72,14 @@ async def activate_user(request, activation_code, connection=None):
     )
 
 
+@method_connect_once
 @permissions
-async def change_password(request, old_password, new_password):
+async def change_password(request, old_password, new_password, connection=None):
     if not check_password(old_password, request.user.password):
         raise ValidationError(old_password=['Wrong password'])
     request.user['password'] = make_password(new_password)
-    await request.user.save(fields=['password'])
+    await request.user.save(fields=['password'], connection=connection)
+    await request.app.m.user_action_log_entry.create_change_password(request, connection=connection)
 
 
 @method_connect_once
