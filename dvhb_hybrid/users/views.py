@@ -244,5 +244,13 @@ async def approve_email_change_request(request, confirmation_code, connection=No
                 and orig_address_request.is_confirmed() and new_address_request.is_confirmed():
             await request.app.m.user.change_email(
                 confirmation_request.user_id, confirmation_request.new_email, connection=connection)
+            # Add log entry
+            await request.app.m.user_action_log_entry.create_user_change_email_address(
+                request,
+                user_id=confirmation_request.user_id,
+                old_email=confirmation_request.orig_email,
+                new_email=confirmation_request.new_email,
+                confirmation_code=confirmation_code,
+                connection=connection)
 
         raise exceptions.HTTPOk(content_type='application/json')

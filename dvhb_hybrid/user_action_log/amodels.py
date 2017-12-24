@@ -13,14 +13,13 @@ class UserActionLogEntry(Model):
 
     @classmethod
     @method_connect_once
-    async def create_record(cls, request, message, type, subtype, payload=None, connection=None):
-        user_id = None
+    async def create_record(cls, request, message, type, subtype, payload=None, user_id=None, connection=None):
         ip_address = None
         if request is not None:
             peername = request.transport.get_extra_info('peername')
             if peername is not None:
                 ip_address, _ = peername
-            if request.user:
+            if hasattr(request, 'user') and user_id is None:
                 user_id = request.user.id
         return await cls.create(
             user_id=user_id, ip_address=ip_address, message=message, type=type.value, subtype=subtype.value,
@@ -85,4 +84,18 @@ class UserActionLogEntry(Model):
             message="User updated profile",
             type=UserActionLogEntryType.reg,
             subtype=UserActionLogEntrySubType.update,
+            connection=connection)
+
+
+    @classmethod
+    @method_connect_once
+    async def create_user_change_email_address(
+            cls, request, user_id, old_email, new_email, confirmation_code, connection=None):
+        return await cls.create_record(
+            request,
+            message="User changed email address",
+            type=UserActionLogEntryType.email,
+            subtype=UserActionLogEntrySubType.update,
+            payload=dict(old_email=old_email, new_email=new_email, confirmation_code=confirmation_code),
+            user_id=user_id,
             connection=connection)
