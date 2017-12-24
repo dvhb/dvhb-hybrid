@@ -75,3 +75,14 @@ class UserActionLogEntry(Model):
             type=UserActionLogEntryType.reg,
             subtype=UserActionLogEntrySubType.delete,
             connection=connection)
+
+
+    @classmethod
+    @method_connect_once
+    async def create_user_profile_update(cls, request, connection=None):
+        return await cls.create_record(
+            request,
+            message="User updated profile",
+            type=UserActionLogEntryType.reg,
+            subtype=UserActionLogEntrySubType.update,
+            connection=connection)

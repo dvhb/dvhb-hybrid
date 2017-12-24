@@ -143,11 +143,14 @@ async def get_profile(request):
     return await user.get_profile()
 
 
+@method_connect_once
 @permissions
-async def patch_profile(request, profile_data):
+async def patch_profile(request, profile_data, connection=None):
     user = request.user
-    await user.patch_profile(profile_data)
-    return await user.get_profile()
+    await user.patch_profile(profile_data, connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
+    return await user.get_profile(connection=connection)
 
 
 @method_connect_once
@@ -159,6 +162,8 @@ async def post_profile_picture(request, picture_file, connection=None):
     old_picture = user.picture
     user['picture'] = new_picture.image
     await user.save(fields=['picture'], connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
     if old_picture:
         await Image.delete_name(old_picture, connection=connection)
     user.prepare_image(new_picture)
@@ -175,6 +180,8 @@ async def delete_profile_picture(request, connection=None):
         raise exceptions.HTTPConflict(reason="No user picture has been set")
     user['picture'] = None
     await user.save(fields=['picture'], connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
     await Image.delete_name(old_picture, connection=connection)
 
 
