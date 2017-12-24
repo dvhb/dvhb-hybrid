@@ -65,6 +65,8 @@ async def activate_user(request, activation_code, connection=None):
     # Generate and return API key
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_registration(request, connection=connection)
     raise exceptions.HTTPOk(
         uid=user.id,
         headers={'Authorization': request.api_key},

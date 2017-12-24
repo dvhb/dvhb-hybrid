@@ -55,3 +55,13 @@ class UserActionLogEntry(Model):
             type=UserActionLogEntryType.auth,
             subtype=UserActionLogEntrySubType.change_password,
             connection=connection)
+
+    @classmethod
+    @method_connect_once
+    async def create_user_registration(cls, request, connection=None):
+        return await cls.create_record(
+            request,
+            message="User registered",
+            type=UserActionLogEntryType.reg,
+            subtype=UserActionLogEntrySubType.create,
+            connection=connection)
