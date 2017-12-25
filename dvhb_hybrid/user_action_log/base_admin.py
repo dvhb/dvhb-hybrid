@@ -10,7 +10,7 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
         'created_at', 'user', 'ip_address', 'message', 'type', 'subtype'
     ]
     readonly_fields = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype'
+        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'payload'
     ]
     list_filter = [
         'type',
