@@ -17,6 +17,9 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
         'subtype',
         ('created_at', admin.DateFieldListFilter)
     ]
+    search_fields = [
+        'ip_address', 'message'
+    ]
 
     def has_add_permission(self, request):
         return False
