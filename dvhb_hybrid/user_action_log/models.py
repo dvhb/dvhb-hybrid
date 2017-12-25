@@ -7,10 +7,6 @@ from dvhb_hybrid.utils import enum_to_choice
 from .enums import UserActionLogEntryType, UserActionLogEntrySubType
 
 
-class UserActionLogEntryManager(models.Manager):
-    use_in_migrations = True
-
-
 class UserActionLogEntry(models.Model):
     created_at = models.DateTimeField(
         _('created at'),
@@ -35,8 +31,6 @@ class UserActionLogEntry(models.Model):
         choices=enum_to_choice(UserActionLogEntrySubType)
     )
     payload = JSONField(_('additional data'), null=True)
-
-    objects = UserActionLogEntryManager()
 
     class Meta:
         verbose_name = _('user action log record')
