@@ -18,19 +18,24 @@ class BaseUserActionLogEntry(Model):
 
     @classmethod
     @method_connect_once
-    async def create_record(cls, request, message, type, subtype, payload=None, user_id=None, connection=None):
-        rec_data = await cls._prepare_data(request, message, type, subtype, payload, user_id, connection=connection)
+    async def create_record(
+            cls, request, message, type, subtype, payload=None, user_id=None, object=None, connection=None):
+        rec_data = await cls._prepare_data(
+            request, message, type, subtype, payload, user_id, object, connection=connection)
         return await cls.create(**rec_data, connection=connection)
 
     @classmethod
-    async def _prepare_data(cls, request, message, type, subtype, payload, user_id, connection):
+    async def _prepare_data(cls, request, message, type, subtype, payload, user_id, object, connection):
         rec_data = dict(
             ip_address=None,
             message=message,
             user_id=user_id,
             type=type.value,
             subtype=subtype.value,
-            payload=payload
+            payload=payload,
+            content_type_id=None,
+            object_id=None,
+            object_repr=None,
         )
         if request is not None:
             peername = request.transport.get_extra_info('peername')
@@ -38,6 +43,10 @@ class BaseUserActionLogEntry(Model):
                 rec_data['ip_address'], _ = peername
             if hasattr(request, 'user') and rec_data['user_id'] is None:
                 rec_data['user_id'] = request.user.id
+        if object is not None:
+            rec_data['object_id'] = str(object.pk)
+            rec_data['object_repr'] = repr(object)
+            rec_data['content_type_id'] = 28
         return rec_data
 
     @classmethod

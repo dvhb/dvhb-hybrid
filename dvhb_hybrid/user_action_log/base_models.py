@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -36,10 +37,14 @@ class BaseUserActionLogEntry(models.Model):
     )
     payload = JSONField(_('additional data'), null=True)
 
+    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    object_id = models.TextField(_('object id'), blank=True, null=True)
+    object_repr = models.CharField(_('object repr'), blank=True, null=True, max_length=200)
+
+    def __str__(self):
+        return str(self.created_at)
+
     class Meta:
         verbose_name = _('user action log record')
         ordering = ('-created_at',)
         abstract = True
-
-    def __str__(self):
-        return str(self.created_at)
