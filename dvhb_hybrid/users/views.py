@@ -9,7 +9,7 @@ from dvhb_hybrid.redis import redis_key
 
 @method_connect_once
 async def login(request, email, password, connection=None):
-    user = await request.app.models.user.get_user_by_email(email)
+    user = await request.app.models.user.get_user_by_email(email, connection=connection)
     if user:
         if not user.is_active:
             raise exceptions.HTTPConflict(reason="User disabled")
