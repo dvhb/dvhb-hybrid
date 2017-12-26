@@ -133,10 +133,10 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_user_create_model(
-            cls, request, model_name, connection=None):
+            cls, request, object, connection=None):
         return await cls.create_record(
             request,
-            message="User created new '{}'".format(model_name),
+            object=object,
             type=UserActionLogEntryType.crud,
             subtype=UserActionLogEntrySubType.create,
             connection=connection)
@@ -144,10 +144,10 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_user_update_model(
-            cls, request, model_name, connection=None):
+            cls, request, object, connection=None):
         return await cls.create_record(
             request,
-            message="User updated '{}'".format(model_name),
+            object=object,
             type=UserActionLogEntryType.crud,
             subtype=UserActionLogEntrySubType.update,
             connection=connection)
@@ -155,10 +155,10 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_user_delete_model(
-            cls, request, model_name, connection=None):
+            cls, request, object, connection=None):
         return await cls.create_record(
             request,
-            message="User deleted '{}'".format(model_name),
+            object=object,
             type=UserActionLogEntryType.crud,
             subtype=UserActionLogEntrySubType.delete,
             connection=connection)
