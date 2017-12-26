@@ -1,5 +1,6 @@
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
+from django.contrib.contenttypes.models import ContentType
 from .enums import UserActionLogEntryType, UserActionLogEntrySubType
 
 
@@ -41,12 +42,16 @@ class BaseUserActionLogEntry(Model):
             peername = request.transport.get_extra_info('peername')
             if peername is not None:
                 rec_data['ip_address'], _ = peername
-            if hasattr(request, 'user') and rec_data['user_id'] is None:
-                rec_data['user_id'] = request.user.id
+            if hasattr(request, 'user'):
+                if rec_data['user_id'] is None:
+                    rec_data['user_id'] = request.user.id
+                if type == UserActionLogEntryType.auth and object is None:
+                    object = request.user
         if object is not None:
             rec_data['object_id'] = str(object.pk)
-            rec_data['object_repr'] = repr(object)
-            rec_data['content_type_id'] = 28
+            rec_data['object_repr'] = repr(object)[:200]
+            rec_data['content_type_id'] = await cls.app.m.django_content_type.get_id_by_amodel_name(
+                object.__class__.__name__, connection=connection)
         return rec_data
 
     @classmethod
@@ -154,3 +159,18 @@ class BaseUserActionLogEntry(Model):
             type=UserActionLogEntryType.crud,
             subtype=UserActionLogEntrySubType.delete,
             connection=connection)
+
+
+class DjangoContentType(Model):
+
+    table = BaseUserActionLogEntry.get_table_from_django(ContentType)
+
+    @classmethod
+    @method_connect_once
+    async def get_id_by_amodel_name(cls, name, connection=None):
+        name = name.lower()
+        name = name.replace('_', '')
+        where = [cls.table.c.model == name]
+        result = await cls.get_one(*where, connection=connection, silent=True)
+        if result is not None:
+            return result.id
