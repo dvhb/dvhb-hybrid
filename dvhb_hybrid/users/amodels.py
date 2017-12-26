@@ -110,6 +110,13 @@ class AbstractUser(Model):
         self.last_login = utils.now()
         await self.save(fields=['last_login'], connection=connection)
 
+    def __repr__(self):
+        return \
+            "{self.__class__.__name__}(" \
+            "id={self.id}, " \
+            "email='{self.email}')"\
+            .format(self=self)
+
 
 class BaseAbstractConfirmationRequest(Model):
     primary_key = 'uuid'

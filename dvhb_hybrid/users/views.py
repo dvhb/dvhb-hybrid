@@ -7,15 +7,17 @@ from dvhb_hybrid.permissions import permissions, gen_api_key
 from dvhb_hybrid.redis import redis_key
 
 
-async def login(request, email, password):
-    user = await request.app.models.user.get_user_by_email(email)
+@method_connect_once
+async def login(request, email, password, connection=None):
+    user = await request.app.models.user.get_user_by_email(email, connection=connection)
     if user:
         if not user.is_active:
             raise exceptions.HTTPConflict(reason="User disabled")
         elif check_password(password, user.password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
-            await user.on_login()
+            await user.on_login(connection=connection)
+            await request.app.m.user_action_log_entry.create_login(request, connection=connection)
             raise exceptions.HTTPOk(
                 uid=user.id,
                 headers={'Authorization': request.api_key},
@@ -29,6 +31,7 @@ async def login(request, email, password):
 async def logout(request, sessions):
     key = redis_key(request.app.name, request.api_key, 'session')
     await sessions.delete(key)
+    await request.app.m.user_action_log_entry.create_logout(request)
     raise exceptions.HTTPOk(content_type='application/json')
 
 
@@ -62,6 +65,8 @@ async def activate_user(request, activation_code, connection=None):
     # Generate and return API key
     await gen_api_key(user.id, request=request, auth='email')
     request.user = user
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_registration(request, connection=connection)
     raise exceptions.HTTPOk(
         uid=user.id,
         headers={'Authorization': request.api_key},
@@ -69,12 +74,14 @@ async def activate_user(request, activation_code, connection=None):
     )
 
 
+@method_connect_once
 @permissions
-async def change_password(request, old_password, new_password):
+async def change_password(request, old_password, new_password, connection=None):
     if not check_password(old_password, request.user.password):
         raise ValidationError(old_password=['Wrong password'])
     request.user['password'] = make_password(new_password)
-    await request.user.save(fields=['password'])
+    await request.user.save(fields=['password'], connection=connection)
+    await request.app.m.user_action_log_entry.create_change_password(request, connection=connection)
 
 
 @method_connect_once
@@ -109,6 +116,8 @@ async def confirm_deletion(request, confirmation_code, connection=None):
 
     # Change user status
     await user.delete_account(connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_deletion(request, connection=connection)
 
 
 @method_connect_once
@@ -134,11 +143,14 @@ async def get_profile(request):
     return await user.get_profile()
 
 
+@method_connect_once
 @permissions
-async def patch_profile(request, profile_data):
+async def patch_profile(request, profile_data, connection=None):
     user = request.user
-    await user.patch_profile(profile_data)
-    return await user.get_profile()
+    await user.patch_profile(profile_data, connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
+    return await user.get_profile(connection=connection)
 
 
 @method_connect_once
@@ -150,6 +162,8 @@ async def post_profile_picture(request, picture_file, connection=None):
     old_picture = user.picture
     user['picture'] = new_picture.image
     await user.save(fields=['picture'], connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
     if old_picture:
         await Image.delete_name(old_picture, connection=connection)
     user.prepare_image(new_picture)
@@ -166,6 +180,8 @@ async def delete_profile_picture(request, connection=None):
         raise exceptions.HTTPConflict(reason="No user picture has been set")
     user['picture'] = None
     await user.save(fields=['picture'], connection=connection)
+    # Add log entry
+    await request.app.m.user_action_log_entry.create_user_profile_update(request, connection=connection)
     await Image.delete_name(old_picture, connection=connection)
 
 
@@ -228,5 +244,13 @@ async def approve_email_change_request(request, confirmation_code, connection=No
                 and orig_address_request.is_confirmed() and new_address_request.is_confirmed():
             await request.app.m.user.change_email(
                 confirmation_request.user_id, confirmation_request.new_email, connection=connection)
+            # Add log entry
+            await request.app.m.user_action_log_entry.create_user_change_email_address(
+                request,
+                user_id=confirmation_request.user_id,
+                old_email=confirmation_request.orig_email,
+                new_email=confirmation_request.new_email,
+                confirmation_code=confirmation_code,
+                connection=connection)
 
         raise exceptions.HTTPOk(content_type='application/json')
