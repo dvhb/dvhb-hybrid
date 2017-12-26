@@ -20,7 +20,7 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_record(
-            cls, request, message, type, subtype, payload=None, user_id=None, object=None, connection=None):
+            cls, request, type, subtype, message=None, payload=None, user_id=None, object=None, connection=None):
         rec_data = await cls._prepare_data(
             request, message, type, subtype, payload, user_id, object, connection=connection)
         return await cls.create(**rec_data, connection=connection)
@@ -48,6 +48,9 @@ class BaseUserActionLogEntry(Model):
                 if type == UserActionLogEntryType.auth and object is None:
                     object = request.user
         if object is not None:
+            if message is None and type == UserActionLogEntryType.crud:
+                model_name = object.__class__.__name__
+                rec_data['message'] = 'User {}d {}'.format(subtype.value, model_name)
             rec_data['object_id'] = str(object.pk)
             rec_data['object_repr'] = repr(object)[:200]
             rec_data['content_type_id'] = await cls.app.m.django_content_type.get_id_by_amodel_name(
