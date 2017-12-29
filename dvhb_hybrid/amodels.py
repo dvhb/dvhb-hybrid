@@ -4,11 +4,16 @@ import json
 import logging
 import uuid
 from abc import ABCMeta
+from collections import defaultdict
 from operator import and_
 
 import sqlalchemy as sa
+from django.db.models.fields import UUIDField
+from django.contrib.postgres.fields.jsonb import JSONField
+from django.db.models.fields.related import ManyToManyField
+from django.db.models.fields.reverse_related import ManyToManyRel
 from functools import reduce
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
@@ -98,6 +103,13 @@ class MetaModel(ABCMeta):
         name = utils.convert_class_name(name)
         cls.models[name] = cls
         return cls
+
+    def __getattr__(cls, attr):
+        if hasattr(cls, 'relationships') and attr in cls.relationships:
+            rel = cls.relationships[attr](cls.app)
+            setattr(cls, attr, rel)
+            return rel
+        raise AttributeError('%r has no attribute %r' % (cls, attr))
 
 
 class Model(dict, metaclass=MetaModel):
@@ -282,21 +294,11 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     def get_table_from_django(cls, model, *jsonb, **field_type):
-        options = model._meta
-        fields = []
-        for f in options.get_fields():
-            i = f.name
-            if i in jsonb:
-                fields.append((i, JSONB))
-            elif i in field_type:
-                fields.append((i, field_type[i]))
-            elif f.many_to_one:
-                fields.append((f.column,))
-            elif f.related_model is not None:
-                continue
-            else:
-                fields.append((i,))
-        return sa.table(options.db_table, *[sa.column(*f) for f in fields])
+        """Deprecated, use @derive_from_django instead"""
+        for i in jsonb:
+            field_type[i] = JSONB
+        table, _ = _derive_from_django(model, **field_type)
+        return table
 
     @classmethod
     @method_connect_once
@@ -554,7 +556,7 @@ class AppModels:
             sub_class = Model.models[item].factory(self.app)
             setattr(self, item, sub_class)
             return sub_class
-        raise AttributeError(item)
+        raise AttributeError('%r has no attribute %r' % (self, item))
 
     @staticmethod
     def import_all_models(apps_path):
@@ -565,3 +567,129 @@ class AppModels:
     def import_all_models_from_packages(package):
         """Import all the models from package"""
         utils.import_modules_from_packages(package, 'amodels')
+
+
+DJANGO_SA_TYPES_MAP = {
+    JSONField: JSONB,
+    UUIDField: UUID
+    # TODO: add more fields
+}
+
+
+def _derive_from_django(model, **field_types):
+    options = model._meta
+    fields = []
+    rels = {}
+    for f in options.get_fields():
+        i = f.name
+        if i in field_types:
+            fields.append((i, field_types[i]))
+        elif f.is_relation:
+            if f.many_to_many:
+                rels[i] = ManyToManyRelationship.create_from_django_field(f)
+            elif f.many_to_one:
+                # TODO: Add ManyToOneRelationship to rels
+                fields.append((f.column,))
+            elif f.one_to_many:
+                pass  # TODO: Add OneToManyRelationship to rels
+            elif f.one_to_one:
+                # TODO: Add OneToOneRelationship to rels
+                if not f.auto_created:
+                    fields.append((f.column,))
+            else:
+                raise ValueError('Unknown relation: {}'.format(i))
+        else:
+            ftype = type(f)
+            if ftype in DJANGO_SA_TYPES_MAP:
+                fields.append((i, DJANGO_SA_TYPES_MAP[ftype]))
+            else:
+                fields.append((i, ))
+    table = sa.table(options.db_table, *[sa.column(*f) for f in fields])
+    return table, rels
+
+
+def derive_from_django(dj_model, **field_types):
+    def wrapper(amodel):
+        table, rels = _derive_from_django(dj_model, **field_types)
+        amodel.table = table
+        amodel.relationships = rels
+        return amodel
+    return wrapper
+
+
+class ManyToManyRelationship:
+    def __init__(self, app, model, source_field, target_field, target_model):
+        self.app = app
+        self.model = model
+        self.source_field = source_field
+        self.target_field = target_field
+        self.target_model = target_model
+
+    @classmethod
+    def create_from_django_field(cls, field):
+        if isinstance(field, ManyToManyField):
+            dj_model = field.remote_field.through
+            source_field = field.m2m_column_name()
+            target_field = field.m2m_reverse_name()
+        elif isinstance(field, ManyToManyRel):
+            dj_model = field.through
+            source_field = field.remote_field.m2m_reverse_name()
+            target_field = field.remote_field.m2m_column_name()
+        else:
+            raise TypeError('Unknown many to many field: %r' % field)
+
+        model = type(dj_model.__name__, (Model,), {})
+        model.table = model.get_table_from_django(dj_model)
+        # Note that async model's name should equal to corresponding django model's name
+        target_model_name = utils.convert_class_name(field.related_model.__name__)
+
+        def m2m_factory(app):
+            m = model.factory(app)
+            target_model = app.m[target_model_name]
+            return cls(app, m, source_field, target_field, target_model)
+
+        return m2m_factory
+
+    def _get_source_where_condition(self, source):
+        col = self.model.table.c[self.source_field]
+        if isinstance(source, (list, tuple, set)):
+            where = col.in_(source)
+        else:
+            where = col == source
+        return where
+
+    @method_connect_once
+    async def _get_source_links(self, source, *, connection=None):
+        where = self._get_source_where_condition(source)
+        return await self.model.get_list(where, connection=connection)
+
+    @method_connect_once
+    async def _get_targets(self, links, *, as_dict=False, connection=None):
+        target_ids = [i[self.target_field] for i in links]
+        pk_name = self.target_model.primary_key
+        pk = self.target_model.table.c[pk_name]
+        targets = await self.target_model.get_list(pk.in_(target_ids), connection=connection)
+        if as_dict:
+            targets = {i[pk_name]: i for i in targets}
+        return targets
+
+    @method_connect_once
+    async def get_for_one(self, source, *, connection=None):
+        links = await self._get_source_links(source, connection=connection)
+        return await self._get_targets(links, connection=connection)
+
+    @method_connect_once
+    async def get_for_list(self, source, *, connection=None):
+        links = await self._get_source_links(source, connection=connection)
+        targets = await self._get_targets(links, as_dict=True, connection=connection)
+        result = defaultdict(list)
+        for i in links:
+            source_key = i[self.source_field]
+            target_key = i[self.target_field]
+            result[source_key].append(targets[target_key])
+        return dict(result)
+
+    @method_connect_once
+    async def delete(self, source, *, connection=None):
+        where = self._get_source_where_condition(source)
+        await self.model.delete_where(where, connection=connection)
