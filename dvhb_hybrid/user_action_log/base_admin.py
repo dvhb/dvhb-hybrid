@@ -8,6 +8,7 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
     """
     Abstract action log entry admin class
     """
+    date_hierarchy = 'created_at'
 
     list_display = [
         'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'object_link'
