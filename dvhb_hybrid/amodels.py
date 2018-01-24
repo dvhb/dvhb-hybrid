@@ -168,7 +168,7 @@ class Model(dict, metaclass=MetaModel):
         result = []
         for f in fields:
             if isinstance(f, str):
-                # table.c returns an instance of ColumnCollection 
+                # table.c returns an instance of ColumnCollection
                 # and it has __getitem__ method to get column by it name.
                 f = t[f]
             result.append(f)
