@@ -81,7 +81,7 @@ def permissions(arg):
                         break
                 else:
                     raise NotImplementedError('request not found')
-            await get_current_user(request)
+            await get_current_user(request, connection=kwargs.get('connection'))
             return await view(*args, **kwargs)
         return wrapper
     if not callable(arg):
