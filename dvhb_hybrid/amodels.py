@@ -616,12 +616,11 @@ def derive_from_django(dj_model, **field_types):
 
 
 class ManyToManyRelationship:
-    def __init__(self, app, model, source_field, target_field, target_model):
-        self.app = app
+    def __init__(self, model, target_model, source_field, target_field):
         self.model = model
+        self.target_model = target_model
         self.source_field = source_field
         self.target_field = target_field
-        self.target_model = target_model
 
     @classmethod
     def create_from_django_field(cls, field):
@@ -636,15 +635,22 @@ class ManyToManyRelationship:
         else:
             raise TypeError('Unknown many to many field: %r' % field)
 
-        model = type(dj_model.__name__, (Model,), {})
-        model.table = model.get_table_from_django(dj_model)
-        # Note that async model's name should equal to corresponding django model's name
-        target_model_name = utils.convert_class_name(field.related_model.__name__)
-
         def m2m_factory(app):
-            m = model.factory(app)
-            target_model = app.m[target_model_name]
-            return cls(app, m, source_field, target_field, target_model)
+            model_name = utils.convert_class_name(dj_model.__name__)
+            if hasattr(app.m, model_name):
+                # Get existing relationship model
+                model = getattr(app.m, model_name)
+            else:
+                # Create new relationship model
+                model = type(dj_model.__name__, (Model,), {})
+                model.table = model.get_table_from_django(dj_model)
+                model = model.factory(app)
+
+            # Note that async model's name should equal to corresponding django model's name
+            target_model_name = utils.convert_class_name(field.related_model.__name__)
+            target_model = getattr(app.m, target_model_name)
+
+            return cls(model, target_model, source_field, target_field)
 
         return m2m_factory
 
