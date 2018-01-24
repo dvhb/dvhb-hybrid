@@ -104,13 +104,6 @@ class MetaModel(ABCMeta):
         cls.models[name] = cls
         return cls
 
-    def __getattr__(cls, attr):
-        if hasattr(cls, 'relationships') and attr in cls.relationships:
-            rel = cls.relationships[attr](cls.app)
-            setattr(cls, attr, rel)
-            return rel
-        raise AttributeError('%r has no attribute %r' % (cls, attr))
-
 
 class Model(dict, metaclass=MetaModel):
     models = {}
@@ -125,7 +118,10 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     def factory(cls, app):
-        return type(cls.__name__, (cls,), {'app': app})
+        attrs = {'app': app}
+        if hasattr(cls, 'relationships'):
+            attrs.update({k: v(app) for k, v in cls.relationships.items()})
+        return type(cls.__name__, (cls,), attrs)
 
     def copy_object(self):
         cls = type(self)
