@@ -318,6 +318,12 @@ class Model(dict, metaclass=MetaModel):
         if args:
             sql = sql.where(reduce(and_, args))
 
+        async def real_count():
+            return await cls._pg_scalar(sql=sql, connection=connection)
+
+        if expire == 0:
+            return await real_count()
+
         if not postfix:
             postfix = utils.get_hash(
                 str(sql.compile(compile_kwargs={"literal_binds": True})))
@@ -329,7 +335,7 @@ class Model(dict, metaclass=MetaModel):
         if count is not None:
             return int(count)
 
-        count = await cls._pg_scalar(sql=sql, connection=connection)
+        count = await real_count()
         await redis.set(key, count)
         await redis.expire(key, expire)
 
