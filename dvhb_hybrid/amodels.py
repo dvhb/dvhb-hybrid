@@ -569,7 +569,7 @@ class AppModels:
 
 DJANGO_SA_TYPES_MAP = {
     JSONField: JSONB,
-    UUIDField: UUID
+    UUIDField: UUID(as_uuid=True)
     # TODO: add more fields
 }
 
