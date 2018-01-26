@@ -37,7 +37,7 @@ class BaseUserActionLogEntry(models.Model):
     )
     payload = JSONField(_('additional data'), null=True)
 
-    content_type = models.ForeignKey(ContentType, blank=True, null=True)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=True, null=True)
     object_id = models.TextField(_('object id'), blank=True, null=True)
     object_repr = models.CharField(_('object repr'), blank=True, null=True, max_length=200)
 
