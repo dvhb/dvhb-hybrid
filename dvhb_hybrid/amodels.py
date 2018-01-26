@@ -10,7 +10,7 @@ from operator import and_
 import sqlalchemy as sa
 from django.db.models.fields import UUIDField
 from django.contrib.postgres.fields.jsonb import JSONField
-from django.db.models.fields.related import ManyToManyField
+from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel
 from functools import reduce
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -580,6 +580,22 @@ DJANGO_SA_TYPES_MAP = {
 }
 
 
+def _convert_column(col):
+    """
+    Converts Django column to SQLAlchemy
+    """
+    result = []
+    ctype = type(col)
+    if ctype is ForeignKey or ctype is OneToOneField:
+        result.append(col.column)
+        ctype = type(col.target_field)
+    else:
+        result.append(col.name)
+    if ctype in DJANGO_SA_TYPES_MAP:
+        result.append(DJANGO_SA_TYPES_MAP[ctype])
+    return tuple(result)
+
+
 def _derive_from_django(model, **field_types):
     options = model._meta
     fields = []
@@ -593,21 +609,17 @@ def _derive_from_django(model, **field_types):
                 rels[i] = ManyToManyRelationship.create_from_django_field(f)
             elif f.many_to_one:
                 # TODO: Add ManyToOneRelationship to rels
-                fields.append((f.column,))
+                fields.append(_convert_column(f))
             elif f.one_to_many:
                 pass  # TODO: Add OneToManyRelationship to rels
             elif f.one_to_one:
                 # TODO: Add OneToOneRelationship to rels
                 if not f.auto_created:
-                    fields.append((f.column,))
+                    fields.append(_convert_column(f))
             else:
                 raise ValueError('Unknown relation: {}'.format(i))
         else:
-            ftype = type(f)
-            if ftype in DJANGO_SA_TYPES_MAP:
-                fields.append((i, DJANGO_SA_TYPES_MAP[ftype]))
-            else:
-                fields.append((i, ))
+            fields.append(_convert_column(f))
     table = sa.table(options.db_table, *[sa.column(*f) for f in fields])
     return table, rels
 
