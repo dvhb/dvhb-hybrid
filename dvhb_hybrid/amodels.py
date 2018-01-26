@@ -321,8 +321,7 @@ class Model(dict, metaclass=MetaModel):
             return await real_count()
 
         if not postfix:
-            postfix = utils.get_hash(
-                str(sql.compile(compile_kwargs={"literal_binds": True})))
+            postfix = _hash_stmt(sql)
 
         key = cls.app.name + ':count:' if cls.app and hasattr(cls.app, 'name') else 'count:'
         key += postfix
@@ -346,8 +345,7 @@ class Model(dict, metaclass=MetaModel):
         sql = sa.select([func.sum(cls.table.c[column])]).where(where)
 
         if not postfix:
-            postfix = utils.get_hash(
-                str(sql.compile(compile_kwargs={"literal_binds": True})))
+            postfix = _hash_stmt(sql)
 
         key = cls.app.name + ':aggregate:sum:' if cls.app and hasattr(cls.app, 'name') else 'aggregate:sum:'
         key += postfix
@@ -571,6 +569,12 @@ class AppModels:
     def import_all_models_from_packages(package):
         """Import all the models from package"""
         utils.import_modules_from_packages(package, 'amodels')
+
+
+def _hash_stmt(stmt):
+    compiled = stmt.compile()
+    msg = compiled.string + repr(compiled.params)
+    return utils.get_hash(msg)
 
 
 DJANGO_SA_TYPES_MAP = {
