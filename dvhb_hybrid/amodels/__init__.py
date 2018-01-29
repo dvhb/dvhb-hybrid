@@ -1,9 +1,7 @@
-import logging
-
 from .convert import derive_from_django
 from .decorators import method_connect_once, method_redis_once
 from .model import Model
-from .. import sql_literals, utils
+from .. import utils
 
 
 __all__ = [
@@ -13,33 +11,6 @@ __all__ = [
     'method_connect_once',
     'method_redis_once'
 ]
-
-
-class ConnectionLogger:
-    logger = logging.getLogger('common.db')
-
-    def __init__(self, connection):
-        self._connection = connection
-
-    def log(self, sql):
-        if not self.logger.hasHandlers():
-            return
-        elif isinstance(sql, str):
-            s = sql
-        else:
-            s = sql.compile(
-                dialect=sql_literals.LiteralDialect(),
-                compile_kwargs={"literal_binds": True},
-            )
-        self.logger.debug(s)
-
-    def execute(self, sql, *args, **kwargs):
-        self.log(sql)
-        return self._connection.execute(sql, *args, **kwargs)
-
-    def scalar(self, sql, *args, **kwargs):
-        self.log(sql)
-        return self._connection.scalar(sql, *args, **kwargs)
 
 
 class AppModels:
