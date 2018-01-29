@@ -18,6 +18,7 @@ from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
 from .. import utils, exceptions, aviews, sql_literals
+from ..utils import get_app_from_parameters
 
 
 class ConnectionLogger:
@@ -45,16 +46,6 @@ class ConnectionLogger:
     def scalar(self, sql, *args, **kwargs):
         self.log(sql)
         return self._connection.scalar(sql, *args, **kwargs)
-
-
-def get_app_from_parameters(*args, **kwargs):
-    if kwargs.get('request') is not None:
-        return kwargs['request'].app
-    for i in args:
-        if hasattr(i, 'app'):
-            return i.app
-        elif hasattr(i, 'request'):
-            return i.request.app
 
 
 def method_connect_once(arg):
