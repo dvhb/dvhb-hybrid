@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
-from . import utils, exceptions, aviews, sql_literals
+from .. import utils, exceptions, aviews, sql_literals
 
 
 class ConnectionLogger:
