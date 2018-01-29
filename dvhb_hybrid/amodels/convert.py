@@ -6,7 +6,7 @@ from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOn
 from django.db.models.fields.reverse_related import ManyToManyRel
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from . import Model
+from .model import Model
 from .relations import ManyToManyRelationship
 from ..utils import convert_class_name
 
@@ -95,3 +95,12 @@ def convert_model(model, **field_types):
             fields.append(convert_column(f))
     table = sa.table(options.db_table, *[sa.column(*f) for f in fields])
     return table, rels
+
+
+def derive_from_django(dj_model, **field_types):
+    def wrapper(amodel):
+        table, rels = convert_model(dj_model, **field_types)
+        amodel.table = table
+        amodel.relationships = rels
+        return amodel
+    return wrapper

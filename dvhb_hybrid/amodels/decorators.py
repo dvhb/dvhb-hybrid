@@ -1,6 +1,5 @@
 import functools
 
-from .convert import convert_model
 from ..utils import get_app_from_parameters
 
 
@@ -42,12 +41,3 @@ def method_redis_once(arg):
         return with_arg
 
     return with_arg(arg)
-
-
-def derive_from_django(dj_model, **field_types):
-    def wrapper(amodel):
-        table, rels = convert_model(dj_model, **field_types)
-        amodel.table = table
-        amodel.relationships = rels
-        return amodel
-    return wrapper
