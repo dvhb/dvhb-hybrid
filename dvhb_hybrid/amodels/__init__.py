@@ -3,21 +3,25 @@ import json
 import logging
 import uuid
 from abc import ABCMeta
-from collections import defaultdict
 from operator import and_
 
 import sqlalchemy as sa
-from django.db.models.fields import UUIDField
-from django.contrib.postgres.fields.jsonb import JSONField
-from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from django.db.models.fields.reverse_related import ManyToManyRel
 from functools import reduce
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
-from .decorators import method_connect_once, method_redis_once
+from .decorators import derive_from_django, method_connect_once, method_redis_once
 from .. import utils, exceptions, aviews, sql_literals
+
+
+__all__ = [
+    'AppModels',
+    'Model',
+    'derive_from_django',
+    'method_connect_once',
+    'method_redis_once'
+]
 
 
 class ConnectionLogger:
@@ -243,9 +247,10 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     def get_table_from_django(cls, model, *jsonb, **field_type):
         """Deprecated, use @derive_from_django instead"""
+        from .convert import convert_model
         for i in jsonb:
             field_type[i] = JSONB
-        table, _ = _derive_from_django(model, **field_type)
+        table, _ = convert_model(model, **field_type)
         return table
 
     @classmethod
@@ -525,147 +530,3 @@ def _hash_stmt(stmt):
     compiled = stmt.compile()
     msg = compiled.string + repr(compiled.params)
     return utils.get_hash(msg)
-
-
-DJANGO_SA_TYPES_MAP = {
-    JSONField: JSONB,
-    UUIDField: UUID(as_uuid=True)
-    # TODO: add more fields
-}
-
-
-def _convert_column(col):
-    """
-    Converts Django column to SQLAlchemy
-    """
-    result = []
-    ctype = type(col)
-    if ctype is ForeignKey or ctype is OneToOneField:
-        result.append(col.column)
-        ctype = type(col.target_field)
-    else:
-        result.append(col.name)
-    if ctype in DJANGO_SA_TYPES_MAP:
-        result.append(DJANGO_SA_TYPES_MAP[ctype])
-    return tuple(result)
-
-
-def _derive_from_django(model, **field_types):
-    options = model._meta
-    fields = []
-    rels = {}
-    for f in options.get_fields():
-        i = f.name
-        if i in field_types:
-            fields.append((i, field_types[i]))
-        elif f.is_relation:
-            if f.many_to_many:
-                rels[i] = ManyToManyRelationship.create_from_django_field(f)
-            elif f.many_to_one:
-                # TODO: Add ManyToOneRelationship to rels
-                fields.append(_convert_column(f))
-            elif f.one_to_many:
-                pass  # TODO: Add OneToManyRelationship to rels
-            elif f.one_to_one:
-                # TODO: Add OneToOneRelationship to rels
-                if not f.auto_created:
-                    fields.append(_convert_column(f))
-            else:
-                raise ValueError('Unknown relation: {}'.format(i))
-        else:
-            fields.append(_convert_column(f))
-    table = sa.table(options.db_table, *[sa.column(*f) for f in fields])
-    return table, rels
-
-
-def derive_from_django(dj_model, **field_types):
-    def wrapper(amodel):
-        table, rels = _derive_from_django(dj_model, **field_types)
-        amodel.table = table
-        amodel.relationships = rels
-        return amodel
-    return wrapper
-
-
-class ManyToManyRelationship:
-    def __init__(self, model, target_model, source_field, target_field):
-        self.model = model
-        self.target_model = target_model
-        self.source_field = source_field
-        self.target_field = target_field
-
-    @classmethod
-    def create_from_django_field(cls, field):
-        if isinstance(field, ManyToManyField):
-            dj_model = field.remote_field.through
-            source_field = field.m2m_column_name()
-            target_field = field.m2m_reverse_name()
-        elif isinstance(field, ManyToManyRel):
-            dj_model = field.through
-            source_field = field.remote_field.m2m_reverse_name()
-            target_field = field.remote_field.m2m_column_name()
-        else:
-            raise TypeError('Unknown many to many field: %r' % field)
-
-        def m2m_factory(app):
-            model_name = utils.convert_class_name(dj_model.__name__)
-            if hasattr(app.m, model_name):
-                # Get existing relationship model
-                model = getattr(app.m, model_name)
-            else:
-                # Create new relationship model
-                model = type(dj_model.__name__, (Model,), {})
-                model.table = model.get_table_from_django(dj_model)
-                model = model.factory(app)
-
-            # Note that async model's name should equal to corresponding django model's name
-            target_model_name = utils.convert_class_name(field.related_model.__name__)
-            target_model = getattr(app.m, target_model_name)
-
-            return cls(model, target_model, source_field, target_field)
-
-        return m2m_factory
-
-    def _get_source_where_condition(self, source):
-        col = self.model.table.c[self.source_field]
-        if isinstance(source, (list, tuple, set)):
-            where = col.in_(source)
-        else:
-            where = col == source
-        return where
-
-    @method_connect_once
-    async def _get_source_links(self, source, *, connection=None):
-        where = self._get_source_where_condition(source)
-        return await self.model.get_list(where, connection=connection)
-
-    @method_connect_once
-    async def _get_targets(self, links, *, as_dict=False, connection=None):
-        target_ids = [i[self.target_field] for i in links]
-        pk_name = self.target_model.primary_key
-        pk = self.target_model.table.c[pk_name]
-        targets = await self.target_model.get_list(pk.in_(target_ids), connection=connection)
-        if as_dict:
-            targets = {i[pk_name]: i for i in targets}
-        return targets
-
-    @method_connect_once
-    async def get_for_one(self, source, *, connection=None):
-        links = await self._get_source_links(source, connection=connection)
-        return await self._get_targets(links, connection=connection)
-
-    @method_connect_once
-    async def get_for_list(self, source, *, connection=None):
-        links = await self._get_source_links(source, connection=connection)
-        targets = await self._get_targets(links, as_dict=True, connection=connection)
-        result = defaultdict(list)
-        for i in links:
-            source_key = i[self.source_field]
-            target_key = i[self.target_field]
-            result[source_key].append(targets[target_key])
-        return dict(result)
-
-    @method_connect_once
-    async def delete(self, source, *, connection=None):
-        where = self._get_source_where_condition(source)
-        await self.model.delete_where(where, connection=connection)
