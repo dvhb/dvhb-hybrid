@@ -23,12 +23,12 @@ def convert_column(col):
     Converts Django column to SQLAlchemy
     """
     result = []
-    ctype = type(col)
-    if ctype is ForeignKey or ctype is OneToOneField:
+    if isinstance(col, (ForeignKey, OneToOneField)):
         result.append(col.column)
         ctype = type(col.target_field)
     else:
         result.append(col.name)
+        ctype = type(col)
     if ctype in DJANGO_SA_TYPES_MAP:
         result.append(DJANGO_SA_TYPES_MAP[ctype])
     return tuple(result)
