@@ -1,37 +1,110 @@
-import sqlalchemy as sa
+import logging
 
-from django.contrib.postgres.fields.jsonb import JSONField
-from django.db.models.fields import UUIDField
-from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from django.db.models.fields.reverse_related import ManyToManyRel
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+import sqlalchemy as sa
+import sqlalchemy.types as sa_types
+
+from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel, OneToOneField
+try:
+    from geoalchemy2.types import Geometry
+except ImportError:
+    def Geometry(*args, **kwargs):
+        return sa_types.NullType()
+from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY, JSONB as SA_JSONB, UUID as SA_UUID
 
 from .model import Model
 from .relations import ManyToManyRelationship
 from ..utils import convert_class_name
 
 
-DJANGO_SA_TYPES_MAP = {
-    JSONField: JSONB,
-    UUIDField: UUID(as_uuid=True)
-    # TODO: add more fields
-}
+logger = logging.getLogger(__name__)
 
 
-def convert_column(col):
+class FieldConverter:
     """
-    Converts Django column to SQLAlchemy
+    Converts Django field to SQLAlchemy column clause
+
+    .. code-block::python
+
+        converter = FieldConverter()
+        sa_column = converter.convert(field)
+
     """
-    result = []
-    if isinstance(col, (ForeignKey, OneToOneField)):
-        result.append(col.column)
-        ctype = type(col.target_field)
-    else:
-        result.append(col.name)
-        ctype = type(col)
-    if ctype in DJANGO_SA_TYPES_MAP:
-        result.append(DJANGO_SA_TYPES_MAP[ctype])
-    return tuple(result)
+    def __init__(self):
+        self._types = {
+            # Django internal type => SQLAlchemy type
+            'ArrayField': SA_ARRAY,
+            'AutoField': sa_types.Integer,
+            'BigAutoField': sa_types.BigInteger,
+            'BigIntegerField': sa_types.BigInteger,
+            'BooleanField': sa_types.Boolean,
+            'CharField': sa_types.String,
+            'DateField': sa_types.Date,
+            'DateTimeField': sa_types.DateTime,
+            'DecimalField': sa_types.Numeric,
+            'DurationField': sa_types.Interval,
+            'FileField': sa_types.String,
+            'FilePathField': sa_types.String,
+            'FloatField': sa_types.Float,
+            'GenericIPAddressField': sa_types.String,
+            'IntegerField': sa_types.Integer,
+            'JSONField': SA_JSONB,
+            'NullBooleanField': sa_types.Boolean,
+            'PointField': Geometry,
+            'PositiveIntegerField': sa_types.Integer,
+            'PositiveSmallIntegerField': sa_types.SmallInteger,
+            'SlugField': sa_types.String,
+            'SmallIntegerField': sa_types.SmallInteger,
+            'TextField': sa_types.Text,
+            'TimeField': sa_types.Time,
+            'UUIDField': SA_UUID,
+            # TODO: Add missing GIS fields
+        }
+
+    def _convert_type(self, dj_field, sa_type):
+        kwargs = {}
+        if sa_type is SA_ARRAY:
+            internal_type = dj_field.base_field.get_internal_type()
+            kwargs['item_type'] = self._types.get(internal_type)
+            if kwargs['item_type'] is None:
+                raise ConversionError(
+                    'Unable convert array: '
+                    'item type "%s" not found' % internal_type
+                )
+        elif sa_type is Geometry:
+            kwargs['geometry_type'] = 'POINT'
+            kwargs['srid'] = dj_field.srid
+        elif sa_type is sa_types.Numeric:
+            kwargs['scale'] = dj_field.decimal_places,
+            kwargs['precision'] = dj_field.max_digits
+        elif sa_type in (sa_types.String, sa_types.Text):
+            kwargs['length'] = dj_field.max_length
+        elif sa_type is SA_UUID:
+            kwargs['as_uuid'] = True
+        return sa_type(**kwargs)
+
+    def convert(self, dj_field):
+        result = []
+        if isinstance(dj_field, (ForeignKey, OneToOneField)):
+            result.append(dj_field.column)
+            convert_from = dj_field.target_field
+        else:
+            result.append(dj_field.name)
+            convert_from = dj_field
+        internal_type = convert_from.get_internal_type()
+        convert_to = self._types.get(internal_type)
+        if convert_to is not None:
+            result.append(self._convert_type(convert_from, convert_to))
+        else:
+            logger.info(
+                'Not found corresponding '
+                'SQLAlchemy type for "%s"(%r)',
+                internal_type,
+                dj_field
+            )
+        return sa.column(*result)
+
+
+FIELD_CONVERTER = FieldConverter()
 
 
 def convert_m2m(field):
@@ -44,7 +117,7 @@ def convert_m2m(field):
         source_field = field.remote_field.m2m_reverse_name()
         target_field = field.remote_field.m2m_column_name()
     else:
-        raise TypeError('Unknown many to many field: %r' % field)
+        raise ConversionError('Unknown many to many field: %r' % field)
 
     def m2m_factory(app):
         model_name = convert_class_name(dj_model.__name__)
@@ -76,25 +149,24 @@ def convert_model(model, **field_types):
     for f in options.get_fields():
         i = f.name
         if i in field_types:
-            fields.append((i, field_types[i]))
+            fields.append(sa.column(i, field_types[i]))
         elif f.is_relation:
             if f.many_to_many:
                 rels[i] = convert_m2m(f)
             elif f.many_to_one:
                 # TODO: Add ManyToOneRelationship to rels
-                fields.append(convert_column(f))
+                fields.append(FIELD_CONVERTER.convert(f))
             elif f.one_to_many:
                 pass  # TODO: Add OneToManyRelationship to rels
             elif f.one_to_one:
                 # TODO: Add OneToOneRelationship to rels
                 if not f.auto_created:
-                    fields.append(convert_column(f))
+                    fields.append(FIELD_CONVERTER.convert(f))
             else:
-                raise ValueError('Unknown relation: {}'.format(i))
+                raise ConversionError('Unknown relation: {}'.format(i))
         else:
-            fields.append(convert_column(f))
-    table = sa.table(options.db_table, *[sa.column(*f) for f in fields])
-    return table, rels
+            fields.append(FIELD_CONVERTER.convert(f))
+    return sa.table(options.db_table, *fields), rels
 
 
 def derive_from_django(dj_model, **field_types):
@@ -104,3 +176,7 @@ def derive_from_django(dj_model, **field_types):
         amodel.relationships = rels
         return amodel
     return wrapper
+
+
+class ConversionError(Exception):
+    pass
