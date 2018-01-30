@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.utils.html import escape
 from .enums import UserActionLogEntrySubType
 
@@ -42,16 +42,18 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
         ct = obj.content_type
         if ct is None:
             return
+        # Fallback result (no reverse link found/object removed)
+        link = escape(obj.object_repr)
         # Object has been removed
-        if obj.subtype == UserActionLogEntrySubType.delete:
-            link = escape(obj.object_repr)
-        else:
-            if obj.object_id is None:
-                return
-            link = u'<a href="%s">%s</a>' % (
-                reverse('admin:%s_%s_change' % (ct.app_label, ct.model), args=[obj.object_id]),
-                escape(obj.object_repr),
-            )
+        if obj.subtype != UserActionLogEntrySubType.delete and obj.object_id is not None:
+            try:
+                link = u'<a href="%s">%s</a>' % (
+                    reverse('admin:%s_%s_change' % (ct.app_label, ct.model), args=[obj.object_id]),
+                    escape(obj.object_repr),
+                )
+            except NoReverseMatch:
+                pass
+
         return link
 
     object_link.allow_tags = True
