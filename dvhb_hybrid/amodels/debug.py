@@ -30,8 +30,7 @@ class ConnectionLogger:
 
 class DebugCompiler(postgresql.dialect.statement_compiler):
     def render_literal_value(self, value, type_):
-        processor = type_._cached_bind_processor(self.dialect)
-        return processor(value) if processor else repr(value)
+        return repr(value)
 
     def visit_bindparam(self, bindparam, *args, **kwargs):
         try:
