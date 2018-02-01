@@ -134,7 +134,7 @@ def convert_m2m(field):
         target_model_name = convert_class_name(field.related_model.__name__)
         target_model = getattr(app.m, target_model_name)
 
-        return ManyToManyRelationship(model, target_model, source_field, target_field)
+        return ManyToManyRelationship(app, model, target_model, source_field, target_field)
 
     return m2m_factory
 
