@@ -16,6 +16,10 @@ from .decorators import method_connect_once, method_redis_once
 from .. import utils, exceptions, aviews
 
 
+CACHE_CATEGORY_COUNT = 'count'
+CACHE_CATEGORY_SUM = 'aggregate:sum'
+
+
 class MetaModel(ABCMeta):
     def __new__(mcls, name, bases, namespace):
         cls = ABCMeta.__new__(mcls, name, bases, namespace)
@@ -38,6 +42,17 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     def factory(cls, app):
         return type(cls.__name__, (cls,), {'app': app})
+
+    @classmethod
+    def get_cache_key(cls, *args):
+        parts = []
+        if hasattr(cls.app, 'name'):
+            parts.append(cls.app.name)
+        else:
+            parts.append(cls.app.__class__.__module__)
+        parts.append(cls.__name__)
+        parts.extend(args)
+        return ':'.join(parts)
 
     def copy_object(self):
         cls = type(self)
@@ -240,8 +255,7 @@ class Model(dict, metaclass=MetaModel):
         if not postfix:
             postfix = _hash_stmt(sql)
 
-        key = cls.app.name + ':count:' if cls.app and hasattr(cls.app, 'name') else 'count:'
-        key += postfix
+        key = cls.get_cache_key(CACHE_CATEGORY_COUNT, postfix)
 
         count = await redis.get(key)
         if count is not None:
@@ -264,8 +278,7 @@ class Model(dict, metaclass=MetaModel):
         if not postfix:
             postfix = _hash_stmt(sql)
 
-        key = cls.app.name + ':aggregate:sum:' if cls.app and hasattr(cls.app, 'name') else 'aggregate:sum:'
-        key += postfix
+        key = cls.get_cache_key(CACHE_CATEGORY_SUM, postfix)
 
         if delay:
             count = await redis.get(key)
