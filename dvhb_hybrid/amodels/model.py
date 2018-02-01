@@ -37,10 +37,7 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     def factory(cls, app):
-        attrs = {'app': app}
-        if hasattr(cls, 'relationships'):
-            attrs.update({k: v(app) for k, v in cls.relationships.items()})
-        return type(cls.__name__, (cls,), attrs)
+        return type(cls.__name__, (cls,), {'app': app})
 
     def copy_object(self):
         cls = type(self)
