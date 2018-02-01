@@ -4,7 +4,8 @@ from .decorators import method_connect_once
 
 
 class ManyToManyRelationship:
-    def __init__(self, model, target_model, source_field, target_field):
+    def __init__(self, app, model, target_model, source_field, target_field):
+        self.app = app  # required for method_connect_once
         self.model = model
         self.target_model = target_model
         self.source_field = source_field
