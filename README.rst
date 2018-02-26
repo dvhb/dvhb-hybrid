@@ -9,11 +9,10 @@ Package to create hybrid django and asyncio applications.
 
 Features
 --------
-
-- Define your database schema using Django models.
-- Use Django migration to propagating changes you make to your models in your database schema.
+- Defines your database schema using Django models.
+- Uses Django migration to propagating changes you make to your models in your database schema.
 - Uses powerful Django administration to manage your application data.
-- Allow easily creates a REST API based on aiohttp and aiohttp-apiset.
+- Allows easily creating a REST API based on aiohttp and aiohttp-apiset.
 - Mailer application.
 
 

@@ -1,7 +1,8 @@
 Tutorial
 ========
 
-You can use this tutorial to start new project or integrate aiohttp application to your Django project.
+You can use this tutorial to start a new project or
+integrate aiohttp application into your Django project.
 
 Start project
 -------------
@@ -17,7 +18,7 @@ Start you project using `django-admin startproject` command:
     $ pip install django aioworkers
     $ django-admin startproject tutorial .
 
-Project structure will be look like this:
+Project structure will look like this:
 
 .. code-block:: none
 
@@ -39,17 +40,17 @@ Install dvhb-hybrid:
 Create an application
 ---------------------
 
-Generally Django project consist of few applications.
+Generally, Django project consists of a few applications.
 
-For instance we need to create a method `GET /users` which returns a list of users of the application.
-So create a `users` django application and place it as subpackage of `tutorial` package:
+For instance, we need to create a `GET /users` method which returns a list of the application’s users.
+So create a `users` django application and place it as a subpackage of the `tutorial` package:
 
 .. code-block:: shell
 
     $ mkdir tutorial/users
     $ django-admin startapp users tutorial/users
 
-Now we can declare `User` model in `users/models.py` by extending `django.contrib.auth.models.AbstractUser`:
+Now we can declare the `User` model in `users/models.py` by extending `django.contrib.auth.models.AbstractUser`:
 
 .. code-block:: python
 
@@ -60,8 +61,8 @@ Now we can declare `User` model in `users/models.py` by extending `django.contri
         pass
 
 
-There need to create a `tutorial/users/amodels.py` with `User` model based on `dvhb_hybrid.amodels.Model`.
-It needs to work with model from asyncio.
+It’s necessary to create a `tutorial/users/amodels.py` with `User` model based on `dvhb_hybrid.amodels.Model`.
+It needs to work with the model from asyncio.
 This model will be loaded by `dvhb_hybrid.amodels.AppModels` and used to access the data from async functions.
 
 .. code-block:: python
@@ -75,7 +76,7 @@ This model will be loaded by `dvhb_hybrid.amodels.AppModels` and used to access 
         table = Model.get_table_from_django(DjangoUser)
 
 
-Let's add an async function which will be used our model in module `tutorial/users/views.py`:
+Let’s add an async function which will be using our model in module `tutorial/users/views.py`:
 
 .. code-block:: python
 
@@ -108,12 +109,12 @@ our endpoint as swagger spec here `tutorial/users/users_api.yaml`:
 Configuring of project
 ----------------------
 
-You can configure project any way you like.
-But we suggest to use common config for you Django Admin and aiohttp application.
-It allow you to avoid duplication of parameters.
+You can configure the project in any way you like.
+But we suggest to use common config for your Django Admin and aiohttp application.
+It allows you to avoid duplication of parameters.
 
-For instance application can be configured using `load_conf` function from `aioworkers.config`.
-Create a `config.yaml` in the base folder and specify database configuration
+For instance, an application can be configured using `load_conf` function from `aioworkers.config`.
+Create a `config.yaml` in the base folder and specify the database configuration
 and some other parameters required by `aioworkers`:
 
 .. code-block:: yaml
@@ -163,7 +164,7 @@ Add our `users` application to `settings.py`:
     ...
 
 
-Create DB, make migrations and migrate it:
+Create DB, make the migrations and migrate it:
 
 .. code-block:: shell
 
@@ -177,7 +178,7 @@ Now you can create a super user for your application:
 
     $ python manage.py createsuperuser --username admin --email admin@example.com
 
-Run Django Administration and login here using username and password specified in previous step:
+Run Django Administration and login here using the username and password specified in previous step:
 
 .. code-block:: shell
 
@@ -256,7 +257,7 @@ Create `tutorial/app.py`:
 
     $ python -m aioworkers -c config.yaml
 
-This will run application on `localhost:8080` with Swagger UI here `http://localhost:8080/apidoc/`.
+This will run the application on `localhost:8080` with Swagger UI here `http://localhost:8080/apidoc/`.
 
 Test API via curl:
 
@@ -265,7 +266,7 @@ Test API via curl:
     $ curl -X GET http://localhost:8080/api/users
     [{"username": "admin", "email": "admin@example.com"}]
 
-Final project structure will be looked like this:
+Final project structure will look like this:
 
 .. code-block:: none
 
