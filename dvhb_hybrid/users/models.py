@@ -81,6 +81,13 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         return self.first_name
 
 
+class UserOAuthMixin(models.Model):
+    oauth_provider = models.CharField(_('OAuth provider'), max_length=32, blank=True, null=True)
+    oauth_id = models.CharField(_('OAuth ID'), max_length=32, blank=True, null=True)
+    class Meta:
+        abstract = True
+
+
 class BaseAbstractConfirmationRequest(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     # Email address the request is sent to
