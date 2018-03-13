@@ -34,8 +34,10 @@ class UserForm(UserChangeForm):
             # Validate picture dimensions
             max_width = max_height = 1024
             if w > max_width or h > max_height:
-                raise forms.ValidationError(
-                    _('Please use an image that is %sx%s pixels or smaller.' % (max_width, max_height)))
+                raise forms.ValidationError(_(
+                    'Please use an image that is '
+                    '%(max_width)sx%(max_height)s pixels or smaller.'
+                ) % {'max_width': max_width, 'max_height': max_height})
 
             # Validate file size
             if len(picture) > (500 * 1024):
