@@ -37,5 +37,6 @@ setup(
         'sqlalchemy',
         'pyyaml',
         'Pillow',
+        'Babel',
     ]
 )
