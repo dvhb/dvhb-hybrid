@@ -293,9 +293,21 @@ responses:
     schema:
       type: object
       properties:
-        uid:
-          type: string
-          description: ID of user
-          required: true
+        status:
+          type: integer
+          description: Response HTTP code
+        data:
+          type: object
+          properties:
+            uid:
+              type: string
+              description: ID of the user
+          required:
+          - uid
+      required:
+      - status
+      - data
       example:
-        uid: 1
+        status: 200
+        data:
+          uid: 1

@@ -1,14 +1,14 @@
+from aiohttp.web import json_response
+from aiohttp.web_exceptions import HTTPNotFound, HTTPConflict, HTTPUnauthorized
 from aiohttp_apiset.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 
-from dvhb_hybrid import exceptions
 from dvhb_hybrid.amodels import method_redis_once, method_connect_once
 from dvhb_hybrid.decorators import recaptcha
 from dvhb_hybrid.permissions import permissions, gen_api_key
 from dvhb_hybrid.redis import redis_key
 
 from .oauth import UserOAuthView
-
 
 __all__ = ['UserOAuthView']
 
@@ -18,18 +18,15 @@ async def login(request, email, password, connection=None):
     user = await request.app.models.user.get_user_by_email(email, connection=connection)
     if user:
         if not user.is_active:
-            raise exceptions.HTTPConflict(reason="User disabled")
+            raise HTTPConflict(reason="User disabled")
         elif check_password(password, user.password):
             await gen_api_key(user.id, request=request, auth='email')
             request.user = user
             await user.on_login(connection=connection)
             await request.app.m.user_action_log_entry.create_login(request, connection=connection)
-            raise exceptions.HTTPOk(
-                uid=user.id,
-                headers={'Authorization': request.api_key},
-                content_type='application/json'
-            )
-    raise exceptions.HTTPUnauthorized(reason="Login incorrect")
+            response = dict(status=200, data=dict(uid=user.id))
+            return json_response(response, headers={'Authorization': request.api_key})
+    raise HTTPUnauthorized(reason="Login incorrect")
 
 
 @method_redis_once('sessions')
@@ -38,7 +35,7 @@ async def logout(request, sessions):
     key = redis_key(request.app.name, request.api_key, 'session')
     await sessions.delete(key)
     await request.app.m.user_action_log_entry.create_logout(request)
-    raise exceptions.HTTPOk(content_type='application/json')
+    return {'status': 200}
 
 
 @method_connect_once
@@ -46,7 +43,7 @@ async def logout(request, sessions):
 async def create_user(request, user, connection=None):
     user_exists = await request.app.models.user.get_user_by_email(user['email'], connection=connection)
     if user_exists:
-        raise exceptions.HTTPConflict(reason='User with this email already exists.')
+        raise HTTPConflict(reason='User with this email already exists.')
     lang_code = user.get('lang_code', 'en')
     user = await request.app.models.user.create(
         email=user['email'], password=make_password(user['password']), connection=connection)
@@ -60,7 +57,7 @@ async def activate_user(request, activation_code, connection=None):
     activation_request = await request.app.models.user_activation_request.get_one(
         activation_code, connection=connection)
     if activation_request.is_confirmed():
-        raise exceptions.HTTPConflict(reason="Account have been activated already")
+        raise HTTPConflict(reason="Account have been activated already")
     # Change activation request status
     await activation_request.confirm(connection=connection)
 
@@ -73,11 +70,8 @@ async def activate_user(request, activation_code, connection=None):
     request.user = user
     # Add log entry
     await request.app.m.user_action_log_entry.create_user_registration(request, connection=connection)
-    raise exceptions.HTTPOk(
-        uid=user.id,
-        headers={'Authorization': request.api_key},
-        content_type='application/json'
-    )
+    response = dict(status=200, data=dict(uid=user.id))
+    return json_response(response, headers={'Authorization': request.api_key})
 
 
 @method_connect_once
@@ -97,7 +91,7 @@ async def request_deletion(request, lang_code, connection=None):
     deletion_request = await request.app.models.user_profile_delete_request.get_by_email(
         user.email, connection=connection)
     if deletion_request:
-        raise exceptions.HTTPConflict(reason="Account removing have been requested already")
+        raise HTTPConflict(reason="Account removing have been requested already")
 
     deletion_request = await request.app.models.user_profile_delete_request.send(
         user, lang_code=lang_code, connection=connection)
@@ -111,11 +105,11 @@ async def confirm_deletion(request, confirmation_code, connection=None):
     deletion_request = await request.app.models.user_profile_delete_request.get_one(
         confirmation_code, connection=connection)
     if deletion_request.user_id != user.pk:
-        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+        raise HTTPConflict(reason='Confirmation code does not match to user')
     if deletion_request.is_confirmed():
-        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+        raise HTTPConflict(reason="Account removing have been confirmed already")
     if deletion_request.is_cancelled():
-        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
+        raise HTTPConflict(reason="Account removing have been cancelled already")
 
     # Change request status
     await deletion_request.confirm(connection=connection)
@@ -133,11 +127,11 @@ async def cancel_deletion(request, confirmation_code, connection=None):
     deletion_request = await request.app.models.user_profile_delete_request.get_one(
         confirmation_code, connection=connection)
     if deletion_request.user_id != user.pk:
-        raise exceptions.HTTPConflict(reason='Confirmation code does not match to user')
+        raise HTTPConflict(reason='Confirmation code does not match to user')
     if deletion_request.is_confirmed():
-        raise exceptions.HTTPConflict(reason="Account removing have been confirmed already")
+        raise HTTPConflict(reason="Account removing have been confirmed already")
     if deletion_request.is_cancelled():
-        raise exceptions.HTTPConflict(reason="Account removing have been cancelled already")
+        raise HTTPConflict(reason="Account removing have been cancelled already")
 
     # Change request status
     await deletion_request.cancel(connection=connection)
@@ -183,7 +177,7 @@ async def delete_profile_picture(request, connection=None):
     Image = request.app.m.image
     old_picture = user.picture
     if not old_picture:
-        raise exceptions.HTTPConflict(reason="No user picture has been set")
+        raise HTTPConflict(reason="No user picture has been set")
     user['picture'] = None
     await user.save(fields=['picture'], connection=connection)
     # Add log entry
@@ -209,14 +203,14 @@ async def send_email_change_request(request, new_email_address, lang_code, conne
 
     # Change to this address has been requested already
     if orig_address_request is not None and orig_address_request.user_id == user.pk:
-        raise exceptions.HTTPConflict(reason="Email change to this address requested already")
+        raise HTTPConflict(reason="Email change to this address requested already")
     if new_address_request is not None and new_address_request.user_id == user.pk:
-        raise exceptions.HTTPConflict(reason="Email change to this address requested already")
+        raise HTTPConflict(reason="Email change to this address requested already")
 
     # Create and send confirmation request for both original and new email addresses
     await orig_m.send(user, new_email_address, lang_code, connection=connection)
     await new_m.send(user, new_email_address, lang_code, connection=connection)
-    raise exceptions.HTTPOk(content_type='application/json')
+    return {'status': 200}
 
 
 @method_connect_once
@@ -232,11 +226,11 @@ async def approve_email_change_request(request, confirmation_code, connection=No
 
     # Confirmation code not found for both addresses
     if confirmation_request is None:
-        raise exceptions.HTTPNotFound(reason="No such confirmation code")
+        raise HTTPNotFound(reason="No such confirmation code")
     else:
         # It is confirmed already
         if confirmation_request.is_confirmed():
-            raise exceptions.HTTPConflict(reason="Confirmation already obtained")
+            raise HTTPConflict(reason="Confirmation already obtained")
         # Change confirmation request status
         await confirmation_request.confirm(connection=connection)
 
@@ -259,4 +253,4 @@ async def approve_email_change_request(request, confirmation_code, connection=No
                 confirmation_code=confirmation_code,
                 connection=connection)
 
-        raise exceptions.HTTPOk(content_type='application/json')
+        return {'status': 200}
