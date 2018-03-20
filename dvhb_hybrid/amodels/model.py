@@ -12,6 +12,12 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy import func
 
+try:
+    from modeltranslation import translator as dtrans
+except ImportError:
+    dtrans = None
+
+
 from .decorators import method_connect_once, method_redis_once
 from .. import utils, exceptions, aviews
 
@@ -38,6 +44,7 @@ class Model(dict, metaclass=MetaModel):
     fields_readonly = ()
     fields_list = ()
     fields_one = None
+    fields_localized = None
 
     @classmethod
     def factory(cls, app):
@@ -469,6 +476,25 @@ class Model(dict, metaclass=MetaModel):
         if data:
             self.update(data)
             return await self.save(fields=data.keys(), connection=connection)
+
+    @staticmethod
+    def get_fields_localized_from_django(django_model):
+        if dtrans:
+            try:
+                return list(dtrans.translator.get_options_for_model(django_model).fields.keys())
+            except dtrans.NotRegistered:
+                pass
+
+    @classmethod
+    def localize(cls, obj, locale):
+        if not cls.fields_localized:
+            return
+        for field in cls.fields_localized:
+            if field not in obj:
+                continue
+            value = obj.get('{}_{}'.format(field, locale))
+            if value:
+                obj[field] = value
 
 
 def _hash_stmt(stmt):
