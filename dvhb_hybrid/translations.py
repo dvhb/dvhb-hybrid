@@ -1,5 +1,7 @@
 import os
 
+from collections import Sequence
+
 from babel.support import Translations as BaseTranslations
 
 
@@ -22,3 +24,15 @@ def load_translations(root, domain):
         if lang != i:
             result[lang] = result[i]
     return result
+
+
+class Localizer:
+    def __init__(self, lang):
+        self.lang = lang
+
+    def __call__(self, obj):
+        if isinstance(obj, Sequence):
+            for i in obj:
+                i.localize(i, self.lang)
+        else:
+            obj.localize(obj, self.lang)

@@ -2,6 +2,8 @@ import logging
 
 from babel import Locale
 
+from dvhb_hybrid.translations import Localizer
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ class LocaleMiddleware:
             translations = self._lookup_translations(locale)
             request['locale'] = locale
             request['gettext'] = translations
+            lang_code = translations.info()['language'].split('_')[0]
+            request['l10n'] = Localizer(lang_code)
             return await next_handler(request)
         return handler
 
