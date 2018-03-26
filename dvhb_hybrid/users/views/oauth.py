@@ -1,3 +1,5 @@
+import logging
+
 import aioauth_client
 from aiohttp.web_exceptions import HTTPNotFound, HTTPFound
 from django.contrib.auth.hashers import make_password
@@ -6,6 +8,8 @@ from yarl import URL
 
 from dvhb_hybrid.amodels import method_connect_once
 from dvhb_hybrid.permissions import gen_api_key
+
+logger = logging.getLogger(__name__)
 
 # Prevent limiting data to fields defined in aioauth_client.User
 aioauth_client.User = lambda **kwargs: kwargs
@@ -17,12 +21,15 @@ class UserOAuthView:
     def model(self):
         return self.request.app.m.user
 
-    async def _on_login_successful(self, user):
+    async def _on_login_successful(self, user, connection):
         conf = self.request.app.config.social
         await gen_api_key(user.id, request=self.request)
-        url = URL(conf.url.success).with_query(api_key=self.request.session)
+        self.request.user = user
+        await self.request.app.m.user_action_log_entry.create_login(self.request, connection=connection)
+        url = URL(conf.url.success)
+        logger.debug("User '%s' logged in via oauth", user.email)
         # Redirect to our login success page
-        raise HTTPFound(url)
+        raise HTTPFound(url, headers={'Authorization': self.request.api_key})
 
     @method_connect_once
     async def oauth_handler(self, request, provider, access_token=None, connection=None):
@@ -63,7 +70,7 @@ class UserOAuthView:
                 # Redirect to our activation page
                 return HTTPFound(conf.url.need_activate)
             else:
-                await self._on_login_successful(user)
+                await self._on_login_successful(user, connection)
 
         # No email address obtained
         if not user_info.get('email'):
@@ -86,4 +93,4 @@ class UserOAuthView:
         await user.save_oauth_info(provider, user_info['id'], connection=connection)
         await user.patch_profile(user_info, connection=connection)
 
-        await self._on_login_successful(user)
+        await self._on_login_successful(user, connection)
