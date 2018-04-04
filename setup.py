@@ -30,6 +30,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'django',
+        'django-imagekit',
         'psycopg2',
         'aiopg',
         'aioredis',
