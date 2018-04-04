@@ -32,11 +32,14 @@ setup(
         'django',
         'psycopg2',
         'aiopg',
+        'aioredis',
         'aioworkers',
+        'aiohttp_jinja2',
         'aiohttp_apiset',
         'sqlalchemy',
         'pyyaml',
         'Pillow',
+        'openpyxl',
         'Babel',
     ]
 )
