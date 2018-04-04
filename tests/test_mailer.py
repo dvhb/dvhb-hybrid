@@ -5,7 +5,7 @@ from django.core import mail
 
 
 @pytest.mark.django_db
-async def test_mailer(app,  cli):
+async def test_mailer(app, cli):
     # Запускаем приложение
     await cli()
     email = 'user@example.com'

@@ -43,9 +43,11 @@ class BaseMailer(Worker):
         conf = MergeDict(conf)
         conf.name = 'mailer'
         m = cls(conf, context=context, loop=app.loop)
+
         async def start(app):
             await m.init()
             await m.start()
+
         app.on_startup.append(start)
         app.on_shutdown.append(lambda x: m.stop())
 
