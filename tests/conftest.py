@@ -34,7 +34,7 @@ def app(loop):
     from dvhb_hybrid.amodels import AppModels
 
     async def startup_database(app):
-        app['db'] = await aiopg.sa.create_engine(database='test_dvhb_hybrid_app', loop=loop)
+        app['db'] = await aiopg.sa.create_engine(database='test_dvhb_hybrid', loop=loop)
 
     async def cleanup_database(app):
         async with app['db']:
@@ -66,6 +66,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
     """
     Creates and initializes test DB
     """
+
     names = []
     for i in BASE_DIR.glob('*/fixtures/*yaml'):
         names.append(i.with_suffix('').name)

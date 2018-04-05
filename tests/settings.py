@@ -10,14 +10,14 @@ INSTALLED_APPS = [
     'dvhb_hybrid.mailer',
     'dvhb_hybrid.users',
     'dvhb_hybrid.user_action_log',
-    # 'tests'
+    'tests'
 ]
 
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'test_hybrid',
+        'NAME': 'test_dvhb_hybrid',
     }
 }
 
