@@ -59,8 +59,9 @@ def django_db_setup(django_db_setup, django_db_blocker):
     names = []
     for i in BASE_DIR.glob('*/fixtures/*yaml'):
         names.append(i.with_suffix('').name)
-    with django_db_blocker.unblock():
-        call_command('loaddata', *names)
+    if names:
+        with django_db_blocker.unblock():
+            call_command('loaddata', *names)
 
 
 @pytest.fixture

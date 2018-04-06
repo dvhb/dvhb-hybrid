@@ -1,15 +1,16 @@
-import importlib
-import pkgutil
 import functools
 import hashlib
+import importlib
 import json
 import os
+import pkgutil
 import re
 import time
 import uuid
 import zlib
 
 import aiohttp
+from django.core.management import call_command
 from django.utils import timezone
 
 from .aviews import JsonEncoder
@@ -176,3 +177,11 @@ def get_app_from_parameters(*args, **kwargs):
             return i.app
         elif hasattr(i, 'request'):
             return i.request.app
+
+
+def load_db_fixtures(base_dir):
+    names = []
+    for i in base_dir.glob('*/fixtures/*yaml'):
+        names.append(i.with_suffix('').name)
+    if names:
+        call_command('loaddata', *names)
