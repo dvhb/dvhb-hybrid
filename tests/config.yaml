@@ -1,0 +1,17 @@
+app:
+  name: &appname test_dvhb_hybrid
+
+
+redis:
+  default:
+    host: 127.0.0.1
+    port: 6379
+    db: 0
+    prefix: *appname
+    minsize: 5
+    maxsize: 10
+
+
+databases:
+  default:
+    database: *appname
