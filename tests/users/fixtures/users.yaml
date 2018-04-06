@@ -1,4 +1,4 @@
-- model: users.user
+- model: tests.user
   pk: 1
   fields:
     first_name: 'Admin'
@@ -11,7 +11,7 @@
     groups: []
     user_permissions: []
     password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
-- model: users.user
+- model: tests.user
   pk: 2
   fields:
     first_name: 'Staff'
@@ -24,7 +24,7 @@
     groups: []
     user_permissions: []
     password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
-- model: users.user
+- model: tests.user
   pk: 3
   fields:
     first_name: 'User'
@@ -37,7 +37,7 @@
     groups: []
     user_permissions: []
     password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
-- model: users.user
+- model: tests.user
   pk: 4
   fields:
     first_name: 'Disabled user'
@@ -50,7 +50,7 @@
     groups: []
     user_permissions: []
     password: pbkdf2_sha256$30000$F9Vk08nLomaF$OTcFdAV+9i04de0T3EY84jUxTy5JIqsUCZ0HxWuPi6s=
-- model: users.user
+- model: tests.user
   pk: 5
   fields:
     first_name: 'User for change password tests'
