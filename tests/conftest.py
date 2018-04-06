@@ -1,3 +1,4 @@
+import logging
 import aiopg.sa
 import pytest
 from aiohttp.web import Application
@@ -9,19 +10,7 @@ from dvhb_hybrid import BASE_DIR
 from dvhb_hybrid.utils import import_class
 
 
-SECRET_KEY = '123'
-INSTALLED_APPS = [
-    'django.contrib.contenttypes',
-    'django.contrib.auth',
-    'dvhb_hybrid.users',
-    'dvhb_hybrid.mailer',
-]
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dvhb_hybrid_app',
-    }
-}
+logger = logging.getLogger(__name__)
 
 
 def pytest_configure():
@@ -72,3 +61,30 @@ def django_db_setup(django_db_setup, django_db_blocker):
         names.append(i.with_suffix('').name)
     with django_db_blocker.unblock():
         call_command('loaddata', *names)
+
+
+@pytest.fixture
+def make_request(app, test_client):
+    async def wrapper(
+            url, url_params={}, url_query={}, method='post', client=None, json=None, data=None, expected_status=None,
+            decode_json=True, cookies={}):
+        client = client or await test_client(app)
+        if cookies:
+            client.session.cookie_jar.update_cookies(cookies)
+        method_fn = getattr(client, method)
+        if url_params or url_query:
+            url = app.router[url].url_for(**url_params)
+            if url_query:
+                url = url.with_query(**url_query)
+        response = await method_fn(url, json=json, data=data)
+        if expected_status:
+            assert response.status == expected_status, await response.text()
+        if decode_json:
+            try:
+                return await response.json()
+            except Exception as e:
+                logger.error("Failed to decode JSON from response text '%s' (%s)", await response.text(), e)
+                raise
+        else:
+            return await response.read()
+    return wrapper
