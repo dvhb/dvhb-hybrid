@@ -1,45 +1,53 @@
 import logging
-import aiopg.sa
 import pytest
-from aiohttp.web import Application
+from aioworkers.core.context import Context, GroupResolver
 
 import django
 from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
+from dvhb_hybrid.tests import AuthClient
 from dvhb_hybrid.utils import import_class
 
+from .settings import config
 
 logger = logging.getLogger(__name__)
+pytest_plugins = ['dvhb_hybrid.tests']
 
 
 def pytest_configure():
     django.setup()
 
 
+class TestClient(AuthClient):
+    base_path = '/api/1'
+
+    async def ensure_user(self, new_user=False, **kwargs):
+        pass
+
+
 @pytest.fixture
-def app(loop):
-    import dvhb_hybrid
-    from dvhb_hybrid.amodels import AppModels
+def client_class():
+    return TestClient
 
-    async def startup_database(app):
-        app['db'] = await aiopg.sa.create_engine(database='test_dvhb_hybrid', loop=loop)
 
-    async def cleanup_database(app):
-        async with app['db']:
-            pass
+@pytest.fixture
+def groups():
+    return dict(
+        include={'web'},
+    )
 
-    application = Application(loop=loop)
-    application.on_startup.append(startup_database)
-    application.on_cleanup.append(cleanup_database)
 
-    AppModels.import_all_models_from_packages(dvhb_hybrid)
-    application.models = application.m = AppModels(application)
+@pytest.fixture
+def context(loop, groups):
+    gr = GroupResolver(**groups)
+    with Context(config=config, loop=loop, group_resolver=gr) as ctx:
+        yield ctx
 
-    Mailer = import_class('dvhb_hybrid.mailer.django.Mailer')
-    Mailer.setup(application, {'from_email': 'no-replay@dvhb.ru'})
 
-    return application
+@pytest.fixture
+def app(context):
+    return context.app
 
 
 @pytest.fixture

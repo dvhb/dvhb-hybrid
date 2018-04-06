@@ -1,5 +1,6 @@
 app:
   name: &appname test_dvhb_hybrid
+  cls: tests.app.Application
 
 
 redis:
