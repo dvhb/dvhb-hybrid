@@ -3,10 +3,10 @@ from uuid import uuid4
 
 import aiopg.sa
 import pytest
-import sqlalchemy as sa
 
 from dvhb_hybrid import exceptions
-from dvhb_hybrid.amodels import Model
+from dvhb_hybrid.amodels import Model, derive_from_django
+from . import models
 
 
 @pytest.fixture
@@ -16,13 +16,9 @@ def db_factory(loop):
     )
 
 
+@derive_from_django(models.Test)
 class Model1(Model):
-    table = sa.table(
-        'test',
-        sa.column('id', sa.Integer),
-        sa.column('text', sa.Text),
-        sa.column('data', sa.JSON),
-    )
+    pass
 
 
 @pytest.fixture
@@ -56,7 +52,7 @@ async def test_get_one(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        obj = await model.create(text='123')
+        obj = await model.create(text='123', data=None)
         obj2 = await model.get_one(obj.pk, fields=['id', 'text'])
         assert obj.pk == obj2.pk
         with pytest.raises(exceptions.NotFound):
@@ -68,7 +64,7 @@ async def test_count(db_factory, mocker):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        await model.create(text='123')
+        await model.create(text='123', data=None)
         assert await model.get_count(
             redis=mocker.Mock(
                 get=asyncio.coroutine(lambda x: None),
@@ -83,7 +79,7 @@ async def test_save(db_factory):
     model = Model1.factory(app)
     async with db_factory as db:
         app['db'] = db
-        obj = model(text='123')
+        obj = model(text='123', data=None)
         obj.text = '321'
         await obj.save()
         assert obj.pk
@@ -100,11 +96,11 @@ async def test_get_or_create(db_factory):
         t = str(uuid4())
         obj, created = await model.get_or_create(
             model.table.c.text == t,
-            defaults={'text': t})
+            defaults={'text': t, 'data': None})
         assert created
         obj, created = await model.get_or_create(
             model.table.c.text == t,
-            defaults={'text': t})
+            defaults={'text': t, 'data': None})
         assert not created
 
 
