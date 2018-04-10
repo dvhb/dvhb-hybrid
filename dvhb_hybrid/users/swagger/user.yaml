@@ -62,9 +62,9 @@ paths:
           description: OK
 
   '/activate':
-     $name: dvhb_hybrid.user:activate
-     post:
-      $handler: dvhb_hybrid.users.views.activate_user
+    $name: dvhb_hybrid.user:activate
+    post:
+      operationId: user_activate
       tags:
         - user
       summary: Activate user account
