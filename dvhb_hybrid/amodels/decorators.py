@@ -1,7 +1,26 @@
+import asyncio
 import functools
+from weakref import WeakKeyDictionary
 
 from .debug import ConnectionLogger
 from ..utils import get_app_from_parameters
+
+
+class Guard:
+    tasks = {}
+
+    def __init__(self, key, loop):
+        self._key = key
+        self._task = asyncio.Task.current_task(loop=loop)
+        self._d = self.tasks.setdefault(key, WeakKeyDictionary())
+
+    def __enter__(self):
+        if self._task in self._d:
+            raise BlockingIOError('Repeated acquire %s' % self._key)
+        self._d[self._task] = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        del self._d[self._task]
 
 
 def method_connect_once(arg):
@@ -10,9 +29,10 @@ def method_connect_once(arg):
         async def wrapper(*args, **kwargs):
             if kwargs.get('connection') is None:
                 app = get_app_from_parameters(*args, **kwargs)
-                async with app['db'].acquire() as connection:
-                    kwargs['connection'] = ConnectionLogger(connection)
-                    return await func(*args, **kwargs)
+                with Guard('pg', app.loop):
+                    async with app['db'].acquire() as connection:
+                        kwargs['connection'] = ConnectionLogger(connection)
+                        return await func(*args, **kwargs)
             else:
                 return await func(*args, **kwargs)
         return wrapper
@@ -30,6 +50,7 @@ def method_redis_once(arg):
         async def wrapper(*args, **kwargs):
             if kwargs.get(redis) is None:
                 app = get_app_from_parameters(*args, **kwargs)
+                # TODO with Guard(redis, app.loop):
                 async with app[redis].get() as connection:
                     kwargs[redis] = connection
                     return await func(*args, **kwargs)
