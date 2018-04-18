@@ -1,5 +1,8 @@
+import asyncio
 import logging
+from functools import partial
 
+from asyncpgsa.connection import compile_query
 from sqlalchemy.dialects import postgresql
 
 
@@ -10,22 +13,19 @@ class ConnectionLogger:
         self._sa_connection = sa_connection
 
     def __getattr__(self, attr):
+        if attr in ('fetch', 'fetchval', 'fetchrow', 'execute'):
+            return partial(self._wrapper, attr)
         return getattr(self._sa_connection, attr)
 
-    def _log(self, query):
-        if not self._logger.hasHandlers():
-            return
-        if not isinstance(query, str):
-            query = repr_stmt(query)
-        self._logger.debug(query)
-
-    async def execute(self, query, *multiparams, **params):
-        self._log(query)
-        return await self._sa_connection.execute(query, *multiparams, **params)
-
-    async def scalar(self, query, *multiparams, **params):
-        self._log(query)
-        return await self._sa_connection.scalar(query, *multiparams, **params)
+    async def _wrapper(self, cmd, query, *multiparams, **params):
+        fetch = getattr(self._sa_connection, cmd)
+        coro = fetch(query, *multiparams, **params)
+        try:
+            return await asyncio.wait_for(coro, timeout=10)
+        except Exception as e:
+            q, p = compile_query(query)
+            self._logger.critical('SQL ERROR %s:\n%s\n%s', e, q, p)
+            raise
 
 
 class DebugCompiler(postgresql.dialect.statement_compiler):
