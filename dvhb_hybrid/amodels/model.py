@@ -129,8 +129,7 @@ class Model(dict, metaclass=MetaModel):
         else:
             sql = cls.table.select()
 
-        result = await connection.execute(sql.where(*args))
-        return await result.first()
+        return await connection.fetchrow(sql.where(*args))
 
     @classmethod
     @method_connect_once
@@ -192,11 +191,8 @@ class Model(dict, metaclass=MetaModel):
         elif sort:
             sql = sql.order_by(*sort)
 
-        result = await connection.execute(sql)
-        l = []
-        async for row in result:
-            l.append(cls(**row))
-        return l
+        result = await connection.fetch(sql)
+        return [cls(**row) for row in result]
 
     @classmethod
     @method_connect_once
@@ -240,7 +236,7 @@ class Model(dict, metaclass=MetaModel):
     @classmethod
     @method_connect_once
     async def _pg_scalar(cls, sql, connection=None):
-        return await connection.scalar(sql)
+        return await connection.fetchval(sql)
 
     @classmethod
     @method_redis_once
@@ -308,23 +304,29 @@ class Model(dict, metaclass=MetaModel):
         """Inserts new object"""
         pk = cls.table.c[cls.primary_key]
         cls.set_defaults(kwargs)
-        uid = await connection.scalar(
+        uid = await connection.fetchval(
             cls.table.insert().returning(pk).values(kwargs))
         kwargs[cls.primary_key] = uid
         return cls(**kwargs)
 
     @classmethod
     @method_connect_once
-    async def create_many(cls, objects, connection=None):
+    async def create_many(cls, objects, connection=None, returning=True):
         """Inserts many objects"""
-        # aiopg doesn't support executemany so create object via cycle
-        result = []
+        pk = cls.table.c[cls.primary_key]
+        sql = cls.table.insert()
+        if returning:
+            sql = sql.returning(pk)
         for obj in objects:
             cls.set_defaults(obj)
-            result.append(
-                await cls.create(**obj, connection=connection)
-            )
-        return result
+        sql = sql.values(objects)
+        if returning:
+            result = await connection.fetch(sql)
+            for pk, obj in zip(result, objects):
+                obj[cls.primary_key] = pk[cls.primary_key]
+            return [cls(**obj) for obj in objects]
+        else:
+            await connection.execute(sql)
 
     @method_connect_once
     async def save(self, *, fields=None, connection):
@@ -335,7 +337,7 @@ class Model(dict, metaclass=MetaModel):
         else:
             saved = False
         if not saved:
-            pk = await connection.scalar(
+            pk = await connection.fetchval(
                 self.table.insert().returning(pk_field).values(self))
             self[self.primary_key] = pk
             return pk
@@ -348,7 +350,7 @@ class Model(dict, metaclass=MetaModel):
                       if k not in self.fields_readonly}
         else:
             values = self
-        pk = await connection.scalar(
+        pk = await connection.fetchval(
             self.table.update()
             .where(pk_field == self.pk)
             .returning(pk_field)
@@ -402,7 +404,7 @@ class Model(dict, metaclass=MetaModel):
         elif not kwargs:
             raise ValueError('Need args or kwargs')
 
-        await connection.scalar(
+        await connection.fetchval(
             t.update().where(
                 t.c[self.primary_key] == self.pk
             ).values(
@@ -421,13 +423,13 @@ class Model(dict, metaclass=MetaModel):
 
         where = cls._where(where)
 
-        await connection.execute(
+        await connection.fetchval(
             t.delete().where(*where))
 
     @method_connect_once
     async def delete(self, connection=None):
         pk_field = self.table.c[self.primary_key]
-        await connection.execute(self.table.delete().where(pk_field == self.pk))
+        await connection.fetchval(self.table.delete().where(pk_field == self.pk))
 
     @classmethod
     @method_connect_once
@@ -443,7 +445,7 @@ class Model(dict, metaclass=MetaModel):
             if saved:
                 return saved, False
 
-        pk = await connection.scalar(
+        pk = await connection.fetchval(
             cls.table.insert().returning(pk_field).values(defaults))
         obj = cls(**defaults)
         obj.pk = pk
