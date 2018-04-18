@@ -142,10 +142,11 @@ class BaseMailer(Worker):
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
 
     async def send(self, mail_to, subject=None, body=None, *,
-                   context=None, connection=None, template=None,
+                   context=None, connection=None, template=None, db_connection=None,
                    attachments=None, save=True, lang_code='en', fallback_lang_code='en'):
         if template:
-            tr = await self.get_template_translation(template, lang_code, fallback_lang_code)
+            tr = await self.get_template_translation(
+                template, lang_code, fallback_lang_code, connection=db_connection)
             if not tr:
                 raise KeyError("No template named '{}' in DB".format(template))
             subject = tr['subject']
@@ -177,7 +178,8 @@ class BaseMailer(Worker):
         for recipient in mail_to:
             kwargs['mail_to'] = [recipient]
             if save:
-                message = await self.app.models.mail_message.create(**kwargs)
+                message = await self.app.models.mail_message.create(
+                    **kwargs, connection=db_connection)
             else:
                 message = self.app.models.mail_message(**kwargs)
 

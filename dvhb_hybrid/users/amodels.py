@@ -162,12 +162,13 @@ class BaseAbstractConfirmationRequest(Model):
         self.status = UserConfirmationRequestStatus.sent.value
         await self.save(fields=['status', 'updated_at'], connection=connection)
 
-    async def send_via_mailer(self):
+    @method_connect_once
+    async def send_via_mailer(self, connection=None):
         await self.app.mailer.send(
             self.email,
             template=self.template_name,
             context=self.get_template_context(),
-            lang_code=self.lang_code)
+            lang_code=self.lang_code, db_connection=connection)
 
     @classmethod
     @method_connect_once
@@ -178,7 +179,7 @@ class BaseAbstractConfirmationRequest(Model):
 
         confirmation_request = await cls.create(
             email=user.email, user_id=user.pk, lang_code=lang_code, connection=connection)
-        await confirmation_request.send_via_mailer()
+        await confirmation_request.send_via_mailer(connection=connection)
         return confirmation_request
 
     def get_status(self):
@@ -240,7 +241,7 @@ class AbstractUserChangeEmailOriginalAddressRequest(BaseAbstractConfirmationRequ
         confirmation_request = await cls.create(
             email=user.email, orig_email=user.email, new_email=new_email_address, user_id=user.pk,
             lang_code=lang_code, connection=connection)
-        await confirmation_request.send_via_mailer()
+        await confirmation_request.send_via_mailer(connection=connection)
         return confirmation_request
 
 
@@ -258,5 +259,5 @@ class AbstractUserChangeEmailNewAddressRequest(AbstractUserChangeEmailOriginalAd
         confirmation_request = await cls.create(
             email=new_email_address, orig_email=user.email, new_email=new_email_address, user_id=user.pk,
             lang_code=lang_code, connection=connection)
-        await confirmation_request.send_via_mailer()
+        await confirmation_request.send_via_mailer(connection=connection)
         return confirmation_request
