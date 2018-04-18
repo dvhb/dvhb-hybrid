@@ -53,7 +53,7 @@ async def get_current_user(request, *,
         return request.user
 
     user = await request.app.models.user.get_one(
-        user_id,
+        int(user_id),
         connection=connection,
         fields=fields,
         silent=True
