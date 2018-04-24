@@ -17,13 +17,20 @@ class DjangoConnection(base.BaseConnection):
     async def send_message(self, message):
         if not self._conn:
             raise ConnectionError()
-        msg = mail.EmailMessage(
+        kwargs = dict(
             subject=message.subject,
             body=message.body,
             from_email=self.conf['from_email'],
             to=message.mail_to,
             connection=self._conn,
         )
+        if message.html:
+            msg = mail.EmailMultiAlternatives(**kwargs)
+            await self.loop.run_in_executor(
+                self.executor, msg.attach_alternative,
+                message.html, "text/html")
+        else:
+            msg = mail.EmailMessage(**kwargs)
 
         def attach_files(message, attachments):
             if attachments:

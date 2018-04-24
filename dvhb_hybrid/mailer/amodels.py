@@ -1,5 +1,6 @@
-from dvhb_hybrid import utils
-from dvhb_hybrid.amodels import Model, method_connect_once
+from .. import utils
+from ..amodels import Model, method_connect_once
+from .template import FormatRender, Jinja2Render
 from .models import Message
 from .models import Template as DjangoTemplate
 from .models import TemplateTranslation as DjangoTemplateTranslation
@@ -23,7 +24,11 @@ class EmailTemplate(Model):
 
     @method_connect_once
     async def get_translation(self, lang_code='en', connection=None):
-        return await EmailTemplateTranslation.get_template_translation(self.id, lang_code, connection=connection)
+        trans = self.models['email_template_translation']
+        if trans.app is None:  # warm up
+            trans = trans.factory(self.app)
+        return await trans.get_template_translation(
+            self.id, lang_code, connection=connection)
 
 
 class EmailTemplateTranslation(Model):
@@ -38,7 +43,11 @@ class EmailTemplateTranslation(Model):
             silent=True)
 
     def as_dict(self):
-        return {
-            'subject': self.message_subject,
-            'body': self.message_body,
+        data = {
+            'subject': FormatRender(self.app, self.message_subject),
+            'body': FormatRender(self.app, self.message_body),
         }
+        html = self.file_html
+        if html:
+            data['html'] = Jinja2Render(self.app, template_name=html)
+        return data
