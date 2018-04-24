@@ -4,9 +4,9 @@ import uuid
 
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
-from dvhb_hybrid import utils
-from dvhb_hybrid.amodels import Model, method_connect_once
 
+from .. import utils
+from ..amodels import Model, method_connect_once
 from .enums import UserConfirmationRequestStatus
 
 
@@ -164,10 +164,12 @@ class BaseAbstractConfirmationRequest(Model):
 
     @method_connect_once
     async def send_via_mailer(self, connection=None):
+        context = self.get_template_context()
+        context['http_hostname'] = self.app.config.hostname
         await self.app.mailer.send(
             self.email,
             template=self.template_name,
-            context=self.get_template_context(),
+            context=context,
             lang_code=self.lang_code, db_connection=connection)
 
     @classmethod

@@ -1,14 +1,15 @@
 import asyncio
 import logging
+from collections import Mapping
 
 from aioworkers.core.config import MergeDict
 from aioworkers.core.context import Context
 from aioworkers.utils import module_path
 from aioworkers.worker.base import Worker
 
-from dvhb_hybrid.amodels import method_connect_once
+from ..amodels import method_connect_once
 from .. import utils
-from .template import load_all
+from .template import FormatRender, Jinja2Render, load_all, Render
 
 logger = logging.getLogger('mailer')
 
@@ -141,7 +142,7 @@ class BaseMailer(Worker):
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
 
-    async def send(self, mail_to, subject=None, body=None, *,
+    async def send(self, mail_to, subject=None, body=None, *, html=None,
                    context=None, connection=None, template=None, db_connection=None,
                    attachments=None, save=True, lang_code='en', fallback_lang_code='en'):
         if template:
@@ -151,32 +152,37 @@ class BaseMailer(Worker):
                 raise KeyError("No template named '{}' in DB".format(template))
             subject = tr['subject']
             body = tr['body']
+            if 'html' in tr:
+                html = tr['html']
 
         elif not subject or not body:
             raise ValueError()
 
-        if not isinstance(context, dict):
+        if not isinstance(context, Mapping):
             context = {}
+
         if isinstance(body, str):
-            body = body.format(**context)
-        else:
-            body = body.render(**context)
+            body = FormatRender(self.app, body)
         if isinstance(subject, str):
-            subject = subject.format(**context)
-        else:
-            subject = subject.render(**context)
+            subject = FormatRender(self.app, subject)
+        if isinstance(html, str):
+            html = Jinja2Render(self.app, from_string=html)
+        for i in (subject, body, html):
+            if i and not isinstance(i, Render):
+                raise TypeError('Unsupported type {}'.format(type(i)))
 
         if not isinstance(mail_to, list):
             mail_to = mail_to.split(',')
 
-        kwargs = dict(
-            body=body,
-            subject=subject,
-            template=template,
-            attachments=attachments,
-        )
         for recipient in mail_to:
-            kwargs['mail_to'] = [recipient]
+            kwargs = dict(
+                mail_to=[recipient],
+                body=body.render(context, mail_to=recipient),
+                subject=subject.render(context, mail_to=recipient),
+                template=template,
+                html=html and html.render(context, mail_to=recipient),
+                attachments=attachments,
+            )
             if save:
                 message = await self.app.models.mail_message.create(
                     **kwargs, connection=db_connection)
