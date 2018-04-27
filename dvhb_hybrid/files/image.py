@@ -126,7 +126,7 @@ async def photo_handler(request, uuid, width, height, retina):
         UUID(uuid)
     except ValueError:
         raise web.HTTPNotFound()
-    if width > 3000 or height > 2000:
+    if (width and width > 3000) or (height and height > 2000):
         raise web.HTTPNotFound()
     if retina:
         width, height = 2 * width, 2 * height
