@@ -1,3 +1,4 @@
+import functools
 import os
 
 
@@ -54,3 +55,32 @@ def convert_to_django_redis(config):
 
 def redis_to_settings(redis_dict):
     return {name: convert_to_django_redis(value) for name, value in redis_dict.items()}
+
+
+async def cleanup_ctx_redis(app, cfg_key='default', app_key='redis'):
+    import aioredis
+    cfg = app.context.config.redis[cfg_key].connection
+    pool = await aioredis.create_pool(
+        (cfg.host, cfg.port),
+        db=cfg.db,
+        minsize=cfg.minsize,
+        maxsize=cfg.maxsize,
+        loop=app.loop)
+    app[app_key] = pool
+    yield
+    pool.close()
+    await pool.wait_close()
+
+
+cleanup_ctx_redis_sessions = functools.partial(
+    cleanup_ctx_redis, app_key='sessions', cfg_key='sessions')
+
+
+async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
+    import asyncpgsa
+    from dvhb_hybrid.amodels import AppModels
+    dbparams = app.context.config.databases.get(cfg_key)
+    app.models = app.m = AppModels(app)
+    async with asyncpgsa.create_pool(**dbparams) as pool:
+        app[app_key] = pool
+        yield
