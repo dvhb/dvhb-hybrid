@@ -69,7 +69,7 @@ async def cleanup_ctx_redis(app, cfg_key='default', app_key='redis'):
     app[app_key] = pool
     yield
     pool.close()
-    await pool.wait_close()
+    await pool.wait_closed()
 
 
 cleanup_ctx_redis_sessions = functools.partial(
