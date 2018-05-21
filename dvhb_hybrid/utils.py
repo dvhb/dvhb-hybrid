@@ -176,3 +176,5 @@ def get_app_from_parameters(*args, **kwargs):
             return i.app
         elif hasattr(i, 'request'):
             return i.request.app
+        elif hasattr(i, '_context'):
+            return i._context.app
