@@ -91,13 +91,19 @@ class Model(dict, metaclass=MetaModel):
         self[key] = value
 
     @classmethod
-    def _where(cls, args):
-        if not args:
+    def _where(cls, args, kwargs=None):
+        c = cls.table.c
+        if not args and not kwargs:
             raise ValueError('Where where?')
         elif isinstance(args[0], (int, str, uuid.UUID)):
             first, *tail = args
-            args = [cls.table.c[cls.primary_key] == first]
+            args = [c[cls.primary_key] == first]
             args.extend(tail)
+        if kwargs:
+            for k, v in kwargs.items():
+                if k == 'pk':
+                    k = cls.primary_key
+                args.append(c[k] == v)
         return reduce(and_, args),
 
     @classmethod
@@ -117,8 +123,10 @@ class Model(dict, metaclass=MetaModel):
         pass
 
     @classmethod
-    async def _get_one(cls, *args, connection=None, fields=None):
-        args = cls._where(args)
+    async def _get_one(cls, *args, connection=None, fields=None, **kwargs):
+        if args or kwargs:
+            args = cls._where(args, kwargs)
+
         if fields:
             fields = cls.to_column(fields)
         elif cls.fields_one:
@@ -129,15 +137,18 @@ class Model(dict, metaclass=MetaModel):
         else:
             sql = cls.table.select()
 
-        return await connection.fetchrow(sql.where(*args))
+        if args:
+            sql = sql.where(*args)
+
+        return await connection.fetchrow(sql)
 
     @classmethod
     @method_connect_once
-    async def get_one(cls, *args, connection=None, fields=None, silent=False):
+    async def get_one(cls, *args, connection=None, fields=None, silent=False, **kwargs):
         """
         Extract by id
         """
-        r = await cls._get_one(*args, connection=connection, fields=fields)
+        r = await cls._get_one(*args, connection=connection, fields=fields, **kwargs)
         if r:
             return cls(**r)
         elif not silent:
@@ -153,7 +164,7 @@ class Model(dict, metaclass=MetaModel):
 
         if fields:
             r = await self._get_one(
-                *self._where([self.pk]),
+                self.pk,
                 connection=connection,
                 fields=fields)
             dict.update(self, r)
