@@ -95,11 +95,12 @@ class Model(dict, metaclass=MetaModel):
         c = cls.table.c
         if not args and not kwargs:
             raise ValueError('Where where?')
-        elif isinstance(args[0], (int, str, uuid.UUID)):
+        elif args and isinstance(args[0], (int, str, uuid.UUID)):
             first, *tail = args
             args = [c[cls.primary_key] == first]
             args.extend(tail)
         if kwargs:
+            args = args or []
             for k, v in kwargs.items():
                 if k == 'pk':
                     k = cls.primary_key
@@ -444,21 +445,27 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_connect_once
-    async def get_or_create(cls, *args, defaults=None, connection):
-        pk_field = getattr(cls.table.c, cls.primary_key)
-        if args:
+    async def get_or_create(cls, *args, defaults=None, connection, **kwargs):
+        if args or kwargs:
             pass
         elif cls.primary_key in defaults:
             args = (defaults[cls.primary_key],)
 
-        if args:
-            saved = await cls._get_one(*args, connection=connection)
+        if args or kwargs:
+            saved = await cls._get_one(
+                *args, connection=connection, **kwargs)
             if saved:
-                return saved, False
+                return cls(**saved), False
+
+        if defaults:
+            kwargs.update(defaults)
+        cls.set_defaults(kwargs)
 
         pk = await connection.fetchval(
-            cls.table.insert().returning(pk_field).values(defaults))
-        obj = cls(**defaults)
+            cls.table.insert().returning(
+                cls.table.c[cls.primary_key]
+            ).values(kwargs))
+        obj = cls(**kwargs)
         obj.pk = pk
         return obj, True
 
