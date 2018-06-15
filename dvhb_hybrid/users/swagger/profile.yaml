@@ -2,7 +2,7 @@ paths:
   '/profile':
     $name: dvhb_hybrid.user:profile
     get:
-      $handler: dvhb_hybrid.users.views.get_profile
+      operationId: user_get_profile
       tags:
       - user
       summary: Get profile
