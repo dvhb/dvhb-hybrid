@@ -1,8 +1,7 @@
 import json
 
 import pytest
-from aiohttp import hdrs, ClientSession
-from aiohttp import test_utils
+from aiohttp import ClientSession, hdrs, test_utils, web
 from aiohttp.web_exceptions import HTTPOk
 
 
@@ -93,8 +92,13 @@ def test_client(loop, client_class):
     """
     clients = []
 
-    async def go(app, **kwargs):
-        client = client_class(app, loop=loop, **kwargs)
+    async def go(app, server_kwargs=None, **kwargs):
+        if isinstance(app, web.Application):
+            server_kwargs = server_kwargs or {}
+            server = test_utils.TestServer(app, loop=loop, **server_kwargs)
+        else:
+            server = app
+        client = client_class(server, loop=loop, **kwargs)
         await client.start_server()
         clients.append(client)
         return client
