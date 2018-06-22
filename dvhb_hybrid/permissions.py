@@ -40,6 +40,9 @@ async def get_current_user(request, *,
                            sessions=None,
                            connection=None,
                            fields=None):
+    if hasattr(request, 'user'):
+        return request.user
+
     data = await get_session_data(request, sessions=sessions)
     if not data:
         raise exceptions.HTTPUnauthorized()
