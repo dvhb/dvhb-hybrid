@@ -21,7 +21,7 @@ def convert_to_djangodb(d, name, base_dir='/tmp'):
             k.upper(): v
             for k, v in d.items()
             if v}
-        if db.pop('gis', None):
+        if db.pop('GIS', None):
             db['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
         else:
             db['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
