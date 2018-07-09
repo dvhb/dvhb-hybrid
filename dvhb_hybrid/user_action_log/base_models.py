@@ -4,8 +4,8 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from dvhb_hybrid.utils import enum_to_choice
-from .enums import UserActionLogEntryType, UserActionLogEntrySubType
+from ..utils import enum_to_choice
+from .enums import UserActionLogEntryType, UserActionLogEntrySubType, UserActionLogStatus
 
 
 class BaseUserActionLogEntry(models.Model):
@@ -36,6 +36,11 @@ class BaseUserActionLogEntry(models.Model):
         choices=enum_to_choice(UserActionLogEntrySubType)
     )
     payload = JSONField(_('additional data'), null=True)
+    status = models.CharField(
+        _('action status'),
+        max_length=20, null=True, blank=True,
+        choices=enum_to_choice(UserActionLogStatus),
+    )
 
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=True, null=True)
     object_id = models.TextField(_('object id'), blank=True, null=True)

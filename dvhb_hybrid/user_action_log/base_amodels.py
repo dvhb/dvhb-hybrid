@@ -1,7 +1,7 @@
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
 from django.contrib.contenttypes.models import ContentType
-from .enums import UserActionLogEntryType, UserActionLogEntrySubType
+from .enums import UserActionLogEntryType, UserActionLogEntrySubType, UserActionLogStatus
 
 
 class BaseUserActionLogEntry(Model):
@@ -20,13 +20,13 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_record(
-            cls, request, type, subtype, message=None, payload=None, user_id=None, object=None, connection=None):
+            cls, request, type, subtype, message=None, payload=None, status=None, user_id=None, object=None, connection=None):
         rec_data = await cls._prepare_data(
-            request, message, type, subtype, payload, user_id, object, connection=connection)
+            request, message, type, subtype, payload, user_id, object, status, connection=connection)
         return await cls.create(**rec_data, connection=connection)
 
     @classmethod
-    async def _prepare_data(cls, request, message, type, subtype, payload, user_id, object, connection):
+    async def _prepare_data(cls, request, message, type, subtype, payload, user_id, object, status, connection):
         rec_data = dict(
             ip_address=None,
             message=message,
@@ -55,6 +55,8 @@ class BaseUserActionLogEntry(Model):
             rec_data['object_repr'] = repr(object)[:200]
             rec_data['content_type_id'] = await cls.app.m.django_content_type.get_id_by_amodel_name(
                 object.__class__.__name__, connection=connection)
+        if isinstance(status, UserActionLogStatus):
+            rec_data['status'] = status.value
         return rec_data
 
     @classmethod
@@ -79,9 +81,10 @@ class BaseUserActionLogEntry(Model):
 
     @classmethod
     @method_connect_once
-    async def create_change_password(cls, request, connection=None):
+    async def create_change_password(cls, request, user_id=None, connection=None):
         return await cls.create_record(
             request,
+            user_id=user_id,
             message="User changed password",
             type=UserActionLogEntryType.auth,
             subtype=UserActionLogEntrySubType.change_password,

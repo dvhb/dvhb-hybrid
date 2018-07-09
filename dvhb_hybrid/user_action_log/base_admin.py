@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import escape
-from .enums import UserActionLogEntrySubType
 from django.utils.safestring import mark_safe
+
+from .enums import UserActionLogEntrySubType
 
 
 class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
@@ -12,15 +13,16 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
 
     list_display = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'object_link'
+        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'object_link'
     ]
     readonly_fields = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'payload', 'content_type', 'object_id',
+        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'payload', 'content_type', 'object_id',
         'object_repr'
     ]
     list_filter = [
         'type',
         'subtype',
+        'status',
         ('created_at', admin.DateFieldListFilter)
     ]
     search_fields = [
@@ -58,4 +60,4 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
         return link
 
     object_link.admin_order_field = 'object_repr'
-    object_link.short_description = u'object'
+    object_link.short_description = 'object'
