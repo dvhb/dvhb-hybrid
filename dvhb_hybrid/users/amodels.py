@@ -45,8 +45,8 @@ class AbstractUser(Model):
 
     @classmethod
     @method_connect_once
-    def get_user_by_email(cls, email, connection=None):
-        return cls.get_one(cls.table.c.email == email, connection=connection, silent=True)
+    def get_user_by_email(cls, email, *, silent=True, connection=None):
+        return cls.get_one(cls.table.c.email == email, connection=connection, silent=silent)
 
     @method_connect_once
     async def activate(self, connection=None):
