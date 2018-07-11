@@ -101,7 +101,7 @@ class JWT(AbstractEntity):
     @web.middleware
     async def middleware(self, request, handler):
         token = request.headers.get('Authorization')
-        if token:
+        if token and token.startswith('Bearer '):
             token = token[len('Bearer '):]
         else:
             token = request.rel_url.query.get('token')
