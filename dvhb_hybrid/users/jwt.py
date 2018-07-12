@@ -19,11 +19,13 @@ async def user_login(request, email, password, connection=None):
         if not user.is_active:
             raise web.HTTPForbidden(reason="User disabled")
         elif check_password(password, user.password):
-            await models.user_action_log_entry.create_login(request, connection=connection)
+            await models.user_action_log_entry.create_login(
+                request, user_id=user.pk, connection=connection)
             token = request.app.context.jwt.generate(uid=user.id)
-            raise web.json_response(
+            return web.json_response(
                 {
                     'uid': user.id,
+                    'profile': await user.get_profile(connection=connection),
                     'token': token,
                 }, headers={'Authorization': 'Bearer %s' % token},
             )

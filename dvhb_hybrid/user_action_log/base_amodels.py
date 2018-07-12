@@ -61,10 +61,11 @@ class BaseUserActionLogEntry(Model):
 
     @classmethod
     @method_connect_once
-    async def create_login(cls, request, connection=None):
+    async def create_login(cls, request, user_id=None, connection=None):
         return await cls.create_record(
             request,
             message="User logged in",
+            user_id=user_id,
             type=UserActionLogEntryType.auth,
             subtype=UserActionLogEntrySubType.login,
             connection=connection)

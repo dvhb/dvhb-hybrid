@@ -11,8 +11,8 @@ paths:
       description: Returns token on success
 
       consumes:
-      - application/json
       - application/x-www-form-urlencoded
+      - application/json
 
       produces:
       - application/json
