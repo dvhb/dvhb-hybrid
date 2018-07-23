@@ -53,7 +53,7 @@ async def user_request_change_password(request, email, connection=None):
     url = URL(ctx.config.urls.user_change_password.format(token=token))
     url = ctx.config.http.get_url('url').join(url)
     await ctx.mailer.send(
-        mail_to=user.email, subject='Servier change email',
+        mail_to=user.email, subject='Change email',
         body='For changes password please follow %s' % url,
         db_connection=connection,
     )
@@ -103,7 +103,7 @@ class JWT(AbstractEntity):
     @web.middleware
     async def middleware(self, request, handler):
         token = request.headers.get('Authorization')
-        if token and token.startswith('Bearer '):
+        if token and token.startswith('Bearer'):
             token = token[len('Bearer '):]
         else:
             token = request.rel_url.query.get('token')
@@ -117,5 +117,5 @@ class JWT(AbstractEntity):
                 raise web.HTTPUnauthorized()
         else:
             payload = {}
-        request['session'] = payload
+        request.session = payload
         return await handler(request)
