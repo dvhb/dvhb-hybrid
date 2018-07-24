@@ -61,7 +61,7 @@ async def user_request_change_password(request, email, connection=None):
 
 @method_connect_once
 async def user_change_password_by_request(request, new_password, connection=None):
-    session = request['session']
+    session = request.session
     email = session.get('email')
     if not email or not session.get('log_id'):
         raise web.HTTPForbidden()
