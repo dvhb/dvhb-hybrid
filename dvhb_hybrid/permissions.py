@@ -68,28 +68,39 @@ async def get_current_user(request, *,
     return user
 
 
-def permissions(arg):
-    def with_arg(view):
+def get_request_from_args(args, kwargs):
+    if 'request' in kwargs:
+        request = kwargs['request']
+    else:
+        for arg in args:
+            if hasattr(arg, 'rel_url'):
+                request = arg
+                break
+            elif hasattr(arg, 'request'):
+                request = arg.request
+                break
+        else:
+            raise NotImplementedError('request not found')
+    return request
+
+
+def permissions(view=None, *, is_superuser=False):
+    def wrapper_outer(view):
         @functools.wraps(view)
         async def wrapper(*args, **kwargs):
-            if 'request' in kwargs:
-                request = kwargs['request']
-            else:
-                for arg in args:
-                    if hasattr(arg, 'rel_url'):
-                        request = arg
-                        break
-                    elif hasattr(arg, 'request'):
-                        request = arg.request
-                        break
-                else:
-                    raise NotImplementedError('request not found')
-            await get_current_user(request, connection=kwargs.get('connection'))
+            request = get_request_from_args(args, kwargs)
+            user = await get_current_user(request, connection=kwargs.get('connection'))
+            if is_superuser and not user.is_superuser:
+                raise exceptions.HTTPUnauthorized(reason='Not a superuser')
             return await view(*args, **kwargs)
         return wrapper
-    if not callable(arg):
-        return with_arg
-    return with_arg(arg)
+
+    # Decorator used without keyword arguments
+    if view:
+        return wrapper_outer(view)
+    # Decorator used with keyword arguments, so view=None
+    else:
+        return wrapper_outer
 
 
 @method_redis_once('sessions')
