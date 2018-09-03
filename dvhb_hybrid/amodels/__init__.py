@@ -1,6 +1,7 @@
 from .convert import derive_from_django
 from .decorators import method_connect_once, method_redis_once
 from .model import Model
+from .mptt_mixin import MPTTMixin
 from .. import utils
 
 
@@ -9,7 +10,8 @@ __all__ = [
     'Model',
     'derive_from_django',
     'method_connect_once',
-    'method_redis_once'
+    'method_redis_once',
+    'MPTTMixin',
 ]
 
 
