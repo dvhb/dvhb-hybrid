@@ -9,5 +9,5 @@ class MPTTTestModel(CreatedMixin, MPTTModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     parent = TreeForeignKey('self', null=True, blank=True)
 
-    class Meta:
-        managed = False
+    class MPTTMeta:
+        order_insertion_by = ['name']
