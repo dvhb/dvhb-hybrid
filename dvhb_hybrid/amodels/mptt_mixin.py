@@ -1,4 +1,4 @@
-from .decorators import method_connect_once
+from dvhb_hybrid.amodels import method_connect_once
 
 
 class MPTTMixin:
@@ -27,9 +27,13 @@ class MPTTMixin:
     def _column(cls, name):
         return getattr(cls.table.c, cls._field_name(name))
 
+    def _tree_id_condition(self):
+        return self._column('tree_id') == self.tree_id
+
     @method_connect_once
     async def get_ancestors(self, *, include_self=False, connection=None, **kwargs):
         where_args = [
+            self._tree_id_condition(),
             self.table.c.lft <= self.lft if include_self else self.table.c.lft < self.lft,
             self.table.c.rght >= self.rght if include_self else self.table.c.rght > self.rght,
         ]
@@ -39,12 +43,16 @@ class MPTTMixin:
     async def get_children(self, *, connection=None, **kwargs):
         if self.is_leaf_node():
             return []
-        where_args = [self._column('parent_id') == self.pk]
+        where_args = [
+            self._tree_id_condition(),
+            self._column('parent_id') == self.pk
+        ]
         return await super().get_list(*where_args, connection=connection, **kwargs)
 
     @method_connect_once
     async def get_descendants(self, include_self=False, *, connection=None, **kwargs):
         where_args = [
+            self._tree_id_condition(),
             self.table.c.lft >= self.lft if include_self else self.table.c.lft > self.lft,
             self.table.c.rght <= self.rght if include_self else self.table.c.rght < self.rght,
         ]
@@ -62,6 +70,7 @@ class MPTTMixin:
     @method_connect_once
     async def get_next_sibling(self, *, connection=None, **kwargs):
         where_args = [
+            self._tree_id_condition(),
             self.table.c.lft == self.rght + 1
         ]
         kwargs.setdefault('silent', True)
@@ -72,6 +81,7 @@ class MPTTMixin:
         if self.lft == 1:
             return
         where_args = [
+            self._tree_id_condition(),
             self.table.c.rght == self.lft - 1
         ]
         kwargs.setdefault('silent', True)
@@ -82,6 +92,7 @@ class MPTTMixin:
         if self.is_root_node():
             return self
         where_args = [
+            self._tree_id_condition(),
             self._column('parent_id').is_(None),
             self.table.c.lft < self.lft,
             self.table.c.rght > self.rght,
@@ -90,7 +101,10 @@ class MPTTMixin:
 
     @method_connect_once
     async def get_siblings(self, *, include_self=False, connection=None, **kwargs):
-        where_args = [self._column('parent_id') == self._field('parent_id')]
+        where_args = [
+            self._tree_id_condition(),
+            self._column('parent_id') == self._field('parent_id')
+        ]
         if not include_self:
             where_args.append(self._column('id') != self.pk)
         return await super().get_list(*where_args, connection=connection, **kwargs)
@@ -109,6 +123,15 @@ class MPTTMixin:
 
     async def move_to(target, position='first-child'):
         raise NotImplementedError
+
+    @classmethod
+    async def _get_tree_root_id(cls, tree_id, connection):
+        where = [
+            cls._column('parent_id').is_(None),
+            cls._column('tree_id') == tree_id
+        ]
+        data = await super().get_one(*where, fields=[cls.primary_key], connection=connection)
+        return data[cls.primary_key]
 
     @classmethod
     async def _fetch_child_ids(cls, parent_id, connection):
@@ -137,10 +160,12 @@ class MPTTMixin:
     @classmethod
     @method_connect_once
     async def rebuild(cls, *, connection=None):
+        """
+        Rebuils MPTT indexes for all data (i.e. all subtrees)
+        """
         top_ids = await cls._fetch_child_ids(None, connection)
-        left = 1
         for top_id in top_ids:
-            left = await cls._rebuild_subtree(top_id, left=left, connection=connection)
+            await cls._rebuild_subtree(top_id, connection=connection)
 
     @classmethod
     async def _get_rightmost_sibling(cls, parent_id, connection):
@@ -167,13 +192,15 @@ class MPTTMixin:
         kwargs['level'] = 0 if not parent else parent['level'] + 1
         kwargs[cls._field_name('parent_id')] = parent.pk if parent else None
         kwargs['tree_id'] = \
-            parent['tree_id'] if parent else rightmost_sibling['tree_id'] + 1 if rightmost_sibling else 0
-        kwargs['lft'] = rightmost_sibling['rght'] + 1 if rightmost_sibling else parent['lft'] + 1 if parent else 1
+            parent['tree_id'] if parent else rightmost_sibling['tree_id'] + 1 if rightmost_sibling else 1
+        kwargs['lft'] = rightmost_sibling['rght'] + 1 if rightmost_sibling and parent_id else \
+            parent['lft'] + 1 if parent else 1
         kwargs['rght'] = kwargs['lft'] + 1
         tree_node = await super().create(connection=connection, **kwargs)
-        if rebuild and parent:
-            # Regenerate MPTT indexes for entire tree
-            await cls.rebuild(connection=connection)
+        if rebuild and parent_id:
+            # Regenerate MPTT indexes for the current subtree
+            root_id = await cls._get_tree_root_id(kwargs['tree_id'], connection=connection)
+            await cls._rebuild_subtree(root_id, connection=connection)
             # Refetch node created
             tree_node = await cls.get_one(tree_node.pk, connection=connection)
         return tree_node
