@@ -7,7 +7,7 @@ from . import models
 
 @derive_from_django(models.MPTTTestModel)
 class MPTTTestModel(MPTTMixin, Model):
-    order_insertion_by = ['created_at']
+    order_insertion_by = ['name']
 
     @classmethod
     def set_defaults(cls, data: dict):
@@ -32,7 +32,9 @@ def get_test_model_instance(app):
     return wrapper
 
 
-def assert_mptt_valid(node, **kwargs):
+async def assert_mptt_valid(node, **kwargs):
+    # Refetch data
+    node = await node.get_one(node.id)
     for k in kwargs:
         assert node[k] == kwargs[k], "wrong {}: expected {}, got {}".format(k, kwargs[k], node[k])
 
@@ -41,34 +43,39 @@ def assert_nodes_ids(items, ids, pk='id'):
     assert sorted(map(lambda i: i[pk], items)) == sorted(ids)
 
 
-@pytest.mark.skip
 @pytest.mark.django_db(transaction=True)
 async def test_create_one_top(create_test_model_instance):
     top1 = await create_test_model_instance(name="Top1")
-    assert top1['id']
-    assert_mptt_valid(top1, parent_id=None, level=0, tree_id=0, lft=1, rght=2)
+    await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
 
 
-@pytest.mark.skip
 @pytest.mark.django_db(transaction=True)
 async def test_create_two_tops(create_test_model_instance):
     top1 = await create_test_model_instance(name="Top1")
     top2 = await create_test_model_instance(name="Top2")
-    assert_mptt_valid(top1, parent_id=None, level=0, tree_id=0, lft=1, rght=2)
-    assert_mptt_valid(top2, parent_id=None, level=0, tree_id=1, lft=3, rght=4)
+    await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
+    await assert_mptt_valid(top2, parent_id=None, level=0, tree_id=2, lft=1, rght=2)
 
 
-@pytest.mark.skip
 @pytest.mark.django_db(transaction=True)
 async def test_create_parent_and_child(create_test_model_instance, get_test_model_instance):
     parent = await create_test_model_instance(name="Parent")
     child = await create_test_model_instance(parent_id=parent.pk, name="Child")
-    parent = await get_test_model_instance(parent.name)
-    assert_mptt_valid(parent, parent_id=None, level=0, tree_id=0, lft=1, rght=4)
-    assert_mptt_valid(child, parent_id=parent.pk, level=1, tree_id=0, lft=2, rght=3)
+    await assert_mptt_valid(parent, parent_id=None, level=0, tree_id=1, lft=1, rght=4)
+    await assert_mptt_valid(child, parent_id=parent.pk, level=1, tree_id=1, lft=2, rght=3)
 
 
-@pytest.mark.skip
+@pytest.mark.django_db(transaction=True)
+async def test_create_parent_and_child_and_grandchild(create_test_model_instance, get_test_model_instance):
+    parent = await create_test_model_instance(name="Parent")
+    child = await create_test_model_instance(parent_id=parent.pk, name="Child")
+    grandchild = await create_test_model_instance(parent_id=child.pk, name="GrandChild")
+    # Check
+    await assert_mptt_valid(grandchild, parent_id=child.pk, level=2, tree_id=1, lft=3, rght=4)
+    await assert_mptt_valid(child, parent_id=parent.pk, level=1, tree_id=1, lft=2, rght=5)
+    await assert_mptt_valid(parent, parent_id=None, level=0, tree_id=1, lft=1, rght=6)
+
+
 @pytest.mark.django_db(transaction=True)
 async def test_create_complex_tree(create_test_model_instance, get_test_model_instance):
     # Create tree
@@ -84,6 +91,13 @@ async def test_create_complex_tree(create_test_model_instance, get_test_model_in
     cherry = await create_test_model_instance(parent_id=red.pk, name="Cherry")
     banana = await create_test_model_instance(parent_id=yellow.pk, name="Banana")
 
+    # Make index checks
+    await assert_mptt_valid(drinks, parent_id=None, level=0, tree_id=2, lft=1, rght=4)
+    await assert_mptt_valid(cola, parent_id=drinks.pk, level=1, tree_id=drinks.tree_id, lft=2, rght=3)
+    await assert_mptt_valid(banana, parent_id=yellow.pk, level=3, tree_id=food.tree_id, lft=8, rght=9)
+    await assert_mptt_valid(fruit, parent_id=food.pk, level=1, tree_id=food.tree_id, lft=2, rght=11)
+    await assert_mptt_valid(food, parent_id=None, level=0, tree_id=1, lft=1, rght=18)
+
     # Refetch nodes
     food = await get_test_model_instance(food.name)
     fruit = await get_test_model_instance(fruit.name)
@@ -91,12 +105,6 @@ async def test_create_complex_tree(create_test_model_instance, get_test_model_in
     banana = await get_test_model_instance(banana.name)
     drinks = await get_test_model_instance(drinks.name)
     cola = await get_test_model_instance(cola.name)
-
-    # Make index checks
-    assert_mptt_valid(food, parent_id=None, level=0, tree_id=0, lft=1, rght=18)
-    assert_mptt_valid(banana, parent_id=yellow.pk, level=3, tree_id=food.tree_id, lft=8, rght=9)
-    assert_mptt_valid(drinks, parent_id=None, level=0, tree_id=1, lft=19, rght=22)
-    assert_mptt_valid(cola, parent_id=drinks.pk, level=1, tree_id=drinks.tree_id, lft=20, rght=21)
 
     # Make relation checks
 
@@ -153,19 +161,23 @@ async def test_create_complex_tree(create_test_model_instance, get_test_model_in
         [food.pk, fruit.pk, red.pk, yellow.pk, banana.pk, cherry.pk])
 
     # get_next_sibling
+    sibling = await drinks.get_next_sibling()
+    assert sibling is None
     sibling = await food.get_next_sibling()
-    assert sibling.pk == drinks.pk
+    assert sibling is None
     sibling = await fruit.get_next_sibling()
     assert sibling.pk == meat.pk
-    sibling = await drinks.get_next_sibling()
+    sibling = await food.get_next_sibling()
     assert sibling is None
     sibling = await cola.get_next_sibling()
     assert sibling is None
 
     # get_previous_sibling
     sibling = await drinks.get_previous_sibling()
-    assert sibling.pk == food.pk
+    assert sibling is None
     sibling = await food.get_previous_sibling()
+    assert sibling is None
+    sibling = await drinks.get_previous_sibling()
     assert sibling is None
     sibling = await cola.get_previous_sibling()
     assert sibling is None
@@ -180,7 +192,9 @@ async def test_create_complex_tree(create_test_model_instance, get_test_model_in
     assert_nodes_ids(
         await cola.get_siblings(include_self=True), [cola.pk])
     assert_nodes_ids(
-        await food.get_siblings(), [drinks.pk])
+        await drinks.get_siblings(), [])
+    assert_nodes_ids(
+        await food.get_siblings(), [])
     assert_nodes_ids(
         await fruit.get_siblings(), [meat.pk])
     assert_nodes_ids(
