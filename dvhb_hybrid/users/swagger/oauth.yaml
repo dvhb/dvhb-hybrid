@@ -1,30 +1,50 @@
 paths:
-  '/oauth/{provider}':
-    $name: dvhb_hybrid.user:oauth
+  /oauth/{provider}/redirect:
+    $name: dvhb_hybrid.user:oauth:redirect
     get:
-      $handler: dvhb_hybrid.users.views.UserOAuthView.oauth_handler
+      $handler: dvhb_hybrid.users.views.UserOAuthView.oauth_redirect
       tags:
       - user
-      summary: Login (and user registration if necessary) using social network account
-      description: Returns api_key on successful auth
+      - oauth
+      summary: Initiates oauth process with provider specified
       parameters:
-      - &provider
-        name: provider
-        in: path
-        description: Name of social network (as specified in application configuration file)
-        required: true
-        type: string
-        enum:
-        - facebook
-        - google
-        - vk
+      - $ref: "#/parameters/OauthProvider"
       produces:
-        - application/json
+      - application/json
+      responses:
+        302:
+          description: Redirect to the auth and permission confirmation page of the provider specified
+
+  /oauth/{provider}/callback:
+    $name: dvhb_hybrid.user:oauth:callback
+    get:
+      $handler: dvhb_hybrid.users.views.UserOAuthView.oauth_callback
+      tags:
+      - user
+      - oauth
+      summary: Method to be called by oauth provider
+      parameters:
+      - $ref: "#/parameters/OauthProvider"
+      produces:
+      - application/json
       responses:
         200:
           $ref: "#/responses/AuthSuccessful"
         201:
           $ref: "#/responses/AuthSuccessful"
+
+
+parameters:
+  OauthProvider:
+    name: provider
+    in: path
+    description: Name of social network (as specified in application configuration file)
+    required: true
+    type: string
+    enum:
+    - facebook
+    - google
+    - vk
 
 
 responses:
@@ -39,7 +59,7 @@ responses:
       properties:
         uid:
           type: string
-          description: ID of user
+          description: ID of the user
           required: true
       example:
         uid: 1
