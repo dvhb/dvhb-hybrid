@@ -28,6 +28,7 @@ class UserOAuthView:
     async def _on_login_successful(self, user, connection):
         await gen_api_key(user.id, request=self.request)
         self.request.user = user
+        await user.on_login(connection=connection)
         await self.request.app.m.user_action_log_entry.create_login(self.request, connection=connection)
         logger.info("User '%s' logged in via oauth", user.email)
         # Redirect to our login success page
