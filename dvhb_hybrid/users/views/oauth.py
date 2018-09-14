@@ -121,6 +121,7 @@ class UserOAuthView:
             # User need to be activated
             if not user.is_active:
                 await self._activate_user(user, connection)
+            await user.save_oauth_info(provider, user_info['id'], connection=connection)
         else:
             # Create new user
             user = await self._create_new_user(user_info, provider, connection)
