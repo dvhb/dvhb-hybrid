@@ -38,5 +38,6 @@ setup(
         'pyyaml',
         'Pillow',
         'Babel',
+        'aioauth-client',
     ]
 )

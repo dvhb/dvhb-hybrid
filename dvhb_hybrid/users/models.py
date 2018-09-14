@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
+from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
+from dvhb_hybrid.mailer.models import validate_lang_code
 from dvhb_hybrid.models import UpdatedMixin
 from dvhb_hybrid.utils import enum_to_choice
-from dvhb_hybrid.mailer.models import validate_lang_code
 from .enums import UserConfirmationRequestStatus
 
 
@@ -79,6 +81,14 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
+
+
+class UserOAuthMixin(models.Model):
+    oauth_info = JSONField(_('OAuth information'), default=dict, null=True)
+
+    class Meta:
+        abstract = True
+        indexes = [GinIndex(fields=['oauth_info'])]
 
 
 class BaseAbstractConfirmationRequest(UpdatedMixin, models.Model):
