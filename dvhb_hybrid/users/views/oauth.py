@@ -55,6 +55,21 @@ class UserOAuthView:
         # Redirect to the oauth provider's auth page
         self._redirect(client.get_authorize_url())
 
+    async def _create_new_user(self, user_info, provider, connection):
+        user = self.model(email=user_info['email'], password=make_password(get_random_string()), is_active=True)
+        self.model.set_defaults(user)
+        await user.save(connection=connection)
+        await user.save_oauth_info(provider, user_info['id'], connection=connection)
+        await user.patch_profile(user_info, connection=connection)
+        logger.info(
+            "Created new user email '%s' for oauth provider '%s' ID '%s'",
+            user_info['email'], provider, user_info['id'])
+        return user
+
+    async def _activate_user(self, user, connection):
+        user.is_active = True
+        await user.save(fields=['is_active'], connection=connection)
+
     @method_connect_once
     async def oauth_callback(self, request, provider, access_token=None, connection=None):
         client = self._get_client(provider)
@@ -89,10 +104,8 @@ class UserOAuthView:
         if user is not None:
             # User need to be activated
             if not user.is_active:
-                # Redirect to our activation page
-                self._redirect(self.conf.url.need_activate)
-            else:
-                await self._on_login_successful(user, connection)
+                await self._activate_user(user, connection)
+            await self._on_login_successful(user, connection)
 
         # No email address obtained
         if not user_info.get('email'):
@@ -105,19 +118,11 @@ class UserOAuthView:
 
         # User found
         if user is not None:
+            # User need to be activated
             if not user.is_active:
-                # Redirect to our user activation page
-                url = self.conf.url.need_activate
-                self._redirect(url)
+                await self._activate_user(user, connection)
         else:
             # Create new user
-            user = self.model(email=user_info['email'], password=make_password(get_random_string()), is_active=True)
-            self.model.set_defaults(user)
-            await user.save(connection=connection)
-            await user.save_oauth_info(provider, user_info['id'], connection=connection)
-            await user.patch_profile(user_info, connection=connection)
-            logger.info(
-                "Created new user email '%s' for oauth provider '%s' ID '%s'",
-                user_info['email'], provider, user_info['id'])
+            user = await self._create_new_user(user_info, provider, connection)
 
         await self._on_login_successful(user, connection)
