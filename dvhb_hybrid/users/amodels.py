@@ -110,6 +110,24 @@ class AbstractUser(Model):
         self.last_login = utils.now()
         await self.save(fields=['last_login'], connection=connection)
 
+    @classmethod
+    @method_connect_once
+    async def get_by_oauth_provider(cls, provider, uid, connection=None):
+        try:
+            c_oauth_info = cls.table.c.oauth_info
+        except AttributeError as e:
+            msg = "User model has no column '%s'. It seems that UserOAuthMixin should be enabled" % e
+            raise AttributeError(msg) from e
+        where = [
+            c_oauth_info['provider'].astext == provider,
+            c_oauth_info['id'].astext == str(uid)
+        ]
+        return await cls.get_one(*where, connection=connection, silent=True)
+
+    @method_connect_once
+    async def save_oauth_info(self, provider, uid, connection=None):
+        await self.update_json(oauth_info={provider: uid}, connection=connection)
+
     def __repr__(self):
         return \
             "{self.__class__.__name__}(" \

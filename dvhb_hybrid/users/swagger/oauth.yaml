@@ -1,0 +1,65 @@
+paths:
+  /oauth/{provider}/redirect:
+    $name: dvhb_hybrid.user:oauth:redirect
+    get:
+      $handler: dvhb_hybrid.users.views.UserOAuthView.oauth_redirect
+      tags:
+      - user
+      - oauth
+      summary: Initiates oauth process with provider specified
+      parameters:
+      - $ref: "#/parameters/OauthProvider"
+      produces:
+      - application/json
+      responses:
+        302:
+          description: Redirect to the auth and permission confirmation page of the provider specified
+
+  /oauth/{provider}/callback:
+    $name: dvhb_hybrid.user:oauth:callback
+    get:
+      $handler: dvhb_hybrid.users.views.UserOAuthView.oauth_callback
+      tags:
+      - user
+      - oauth
+      summary: Method to be called by oauth provider
+      parameters:
+      - $ref: "#/parameters/OauthProvider"
+      produces:
+      - application/json
+      responses:
+        200:
+          $ref: "#/responses/AuthSuccessful"
+        201:
+          $ref: "#/responses/AuthSuccessful"
+
+
+parameters:
+  OauthProvider:
+    name: provider
+    in: path
+    description: Name of social network (as specified in application configuration file)
+    required: true
+    type: string
+    enum:
+    - facebook
+    - google
+    - vk
+
+
+responses:
+  AuthSuccessful:
+    description: OK
+    headers:
+      Authorization:
+        type: string
+        description: API key to be used for user identification
+    schema:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: ID of the user
+          required: true
+      example:
+        uid: 1
