@@ -101,28 +101,25 @@ class UserOAuthView:
 
         # Try to find user in DB by provider ID
         user = await self.model.get_by_oauth_provider(provider, user_info['id'],  connection=connection)
-        if user is not None:
-            # User need to be activated
-            if not user.is_active:
-                await self._activate_user(user, connection)
-            await self._on_login_successful(user, connection)
+        # User not found
+        if user is None:
+            # No email address obtained
+            if not user_info.get('email'):
+                # Redirect to our registration page
+                url = URL(self.conf.url.reg).with_query(user_info)
+                self._redirect(url)
 
-        # No email address obtained
-        if not user_info.get('email'):
-            # Redirect to our registration page
-            url = URL(self.conf.url.reg).with_query(user_info)
-            self._redirect(url)
+            # Try to find user by email address
+            user = await self.model.get_user_by_email(user_info['email'],  connection=connection)
+            if user is not None:
+                await user.save_oauth_info(provider, user_info['id'], connection=connection)
 
-        # Try to find user by email address
-        user = await self.model.get_user_by_email(user_info['email'],  connection=connection)
+        # User found and need to be activated
+        if user is not None and not user.is_active:
+            await self._activate_user(user, connection)
 
-        # User found
-        if user is not None:
-            # User need to be activated
-            if not user.is_active:
-                await self._activate_user(user, connection)
-            await user.save_oauth_info(provider, user_info['id'], connection=connection)
-        else:
+        # User still not found
+        if user is None:
             # Create new user
             user = await self._create_new_user(user_info, provider, connection)
 
