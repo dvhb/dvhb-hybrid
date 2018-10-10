@@ -20,6 +20,6 @@ Features
     :alt: Documentation Status
     :target: http://dvhb-hybrid.readthedocs.io/en/latest/?badge=latest
 
-.. |tests| .. image:: https://travis-ci.org/dvhb/dvhb-hybrid.svg?branch=master
+.. |tests| image:: https://travis-ci.org/dvhb/dvhb-hybrid.svg?branch=master
     :target: https://travis-ci.org/dvhb/dvhb-hybrid
     :alt: Build Status
