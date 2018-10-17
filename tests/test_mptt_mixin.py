@@ -15,9 +15,8 @@ class MPTTTestModel(MPTTMixin, Model):
 
 
 @pytest.fixture
-def create_test_model_instance(app):
+def create_test_model_instance(app, test_client):
     async def wrapper(**kwargs):
-        nonlocal app
         model = MPTTTestModel.factory(app)
         return await model.create(**kwargs)
     return wrapper
@@ -26,7 +25,6 @@ def create_test_model_instance(app):
 @pytest.fixture
 def get_test_model_instance(app):
     async def wrapper(name):
-        nonlocal app
         model = MPTTTestModel.factory(app)
         return await model.get_one(model.table.c.name == name)
     return wrapper
@@ -43,12 +41,14 @@ def assert_nodes_ids(items, ids, pk='id'):
     assert sorted(map(lambda i: i[pk], items)) == sorted(ids)
 
 
+@pytest.mark.skip(reason='Do not use transaction')
 @pytest.mark.django_db(transaction=True)
 async def test_create_one_top(create_test_model_instance):
     top1 = await create_test_model_instance(name="Top1")
     await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
 
 
+@pytest.mark.skip(reason='Do not use transaction')
 @pytest.mark.django_db(transaction=True)
 async def test_create_two_tops(create_test_model_instance):
     top1 = await create_test_model_instance(name="Top1")
@@ -57,6 +57,7 @@ async def test_create_two_tops(create_test_model_instance):
     await assert_mptt_valid(top2, parent_id=None, level=0, tree_id=2, lft=1, rght=2)
 
 
+@pytest.mark.skip(reason='Do not use transaction')
 @pytest.mark.django_db(transaction=True)
 async def test_create_parent_and_child(create_test_model_instance, get_test_model_instance):
     parent = await create_test_model_instance(name="Parent")
@@ -65,6 +66,7 @@ async def test_create_parent_and_child(create_test_model_instance, get_test_mode
     await assert_mptt_valid(child, parent_id=parent.pk, level=1, tree_id=1, lft=2, rght=3)
 
 
+@pytest.mark.skip(reason='Do not use transaction')
 @pytest.mark.django_db(transaction=True)
 async def test_create_parent_and_child_and_grandchild(create_test_model_instance, get_test_model_instance):
     parent = await create_test_model_instance(name="Parent")
@@ -76,6 +78,7 @@ async def test_create_parent_and_child_and_grandchild(create_test_model_instance
     await assert_mptt_valid(parent, parent_id=None, level=0, tree_id=1, lft=1, rght=6)
 
 
+@pytest.mark.skip(reason='Do not use transaction')
 @pytest.mark.django_db(transaction=True)
 async def test_create_complex_tree(create_test_model_instance, get_test_model_instance):
     # Create tree

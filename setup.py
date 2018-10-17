@@ -32,6 +32,7 @@ setup(
         'django',
         'psycopg2',
         'aiopg',
+        'aioredis>=1.0.0',
         'aioworkers',
         'aiohttp_apiset',
         'sqlalchemy',

@@ -4,7 +4,8 @@ import tempfile
 from babel.messages import Catalog
 from babel.messages.mofile import write_mo
 
-from .translations import LocaleMiddleware, load_translations
+from dvhb_hybrid.middleware.locale import LocaleMiddleware
+from dvhb_hybrid.translations import load_translations
 
 
 def create_locale(root, locale):

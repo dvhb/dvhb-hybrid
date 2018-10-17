@@ -15,7 +15,9 @@ def make_request(app, test_client):
         response = await method_fn(url, json=json, data=data)
         if expected_status:
             assert response.status == expected_status, await response.text()
-        return await response.json()
+            if response.content_type.startswith('application/json'):
+                return await response.json()
+        return await response.text()
     return wrapper
 
 
