@@ -1,6 +1,6 @@
 import pytest
 from dvhb_hybrid import utils
-from dvhb_hybrid.amodels import Model, MPTTMixin, derive_from_django
+from dvhb_hybrid.amodels import Model, MPTTMixin, derive_from_django, method_connect_once
 
 from . import models
 
@@ -13,12 +13,25 @@ class MPTTTestModel(MPTTMixin, Model):
     def set_defaults(cls, data: dict):
         data.setdefault('created_at', utils.now())
 
+    @classmethod
+    @method_connect_once
+    async def delete_all(cls, connection=None):
+        await connection.execute(cls.table.delete())
+
 
 @pytest.fixture
 def create_test_model_instance(app, test_client):
     async def wrapper(**kwargs):
         model = MPTTTestModel.factory(app)
         return await model.create(**kwargs)
+    return wrapper
+
+
+@pytest.fixture
+def clear_table(app):
+    async def wrapper():
+        model = MPTTTestModel.factory(app)
+        await model.delete_all()
     return wrapper
 
 
@@ -41,34 +54,36 @@ def assert_nodes_ids(items, ids, pk='id'):
     assert sorted(map(lambda i: i[pk], items)) == sorted(ids)
 
 
-@pytest.mark.skip(reason='Do not use transaction')
-@pytest.mark.django_db(transaction=True)
-async def test_create_one_top(create_test_model_instance):
+@pytest.mark.django_db
+async def test_create_one_top(clear_table, create_test_model_instance):
+    await clear_table()
     top1 = await create_test_model_instance(name="Top1")
     await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
 
 
-@pytest.mark.skip(reason='Do not use transaction')
-@pytest.mark.django_db(transaction=True)
-async def test_create_two_tops(create_test_model_instance):
+@pytest.mark.django_db
+async def test_create_two_tops(clear_table, create_test_model_instance):
+    await clear_table()
     top1 = await create_test_model_instance(name="Top1")
     top2 = await create_test_model_instance(name="Top2")
     await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
     await assert_mptt_valid(top2, parent_id=None, level=0, tree_id=2, lft=1, rght=2)
 
 
-@pytest.mark.skip(reason='Do not use transaction')
-@pytest.mark.django_db(transaction=True)
-async def test_create_parent_and_child(create_test_model_instance, get_test_model_instance):
+@pytest.mark.django_db
+async def test_create_parent_and_child(
+        clear_table, create_test_model_instance, get_test_model_instance):
+    await clear_table()
     parent = await create_test_model_instance(name="Parent")
     child = await create_test_model_instance(parent_id=parent.pk, name="Child")
     await assert_mptt_valid(parent, parent_id=None, level=0, tree_id=1, lft=1, rght=4)
     await assert_mptt_valid(child, parent_id=parent.pk, level=1, tree_id=1, lft=2, rght=3)
 
 
-@pytest.mark.skip(reason='Do not use transaction')
-@pytest.mark.django_db(transaction=True)
-async def test_create_parent_and_child_and_grandchild(create_test_model_instance, get_test_model_instance):
+@pytest.mark.django_db
+async def test_create_parent_and_child_and_grandchild(
+        clear_table, create_test_model_instance, get_test_model_instance):
+    await clear_table()
     parent = await create_test_model_instance(name="Parent")
     child = await create_test_model_instance(parent_id=parent.pk, name="Child")
     grandchild = await create_test_model_instance(parent_id=child.pk, name="GrandChild")
@@ -78,9 +93,9 @@ async def test_create_parent_and_child_and_grandchild(create_test_model_instance
     await assert_mptt_valid(parent, parent_id=None, level=0, tree_id=1, lft=1, rght=6)
 
 
-@pytest.mark.skip(reason='Do not use transaction')
-@pytest.mark.django_db(transaction=True)
-async def test_create_complex_tree(create_test_model_instance, get_test_model_instance):
+@pytest.mark.django_db
+async def test_create_complex_tree(clear_table, create_test_model_instance, get_test_model_instance):
+    await clear_table()
     # Create tree
     food = await create_test_model_instance(name="Food")
     drinks = await create_test_model_instance(name="Drinks")
