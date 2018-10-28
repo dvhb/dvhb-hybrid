@@ -49,19 +49,21 @@ paths:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
+      summary: Scale original image to the size specified
     get:
       operationId: photo_handler
       tags:
         - files
-      summary: URL image
-      description: Create URL for image
+      summary: Scale original image to the size specified
+      description: Returns URL for the image scaled to the specified resolution.
+        The image could be cropped to preserve original aspect ratio
 
       parameters:
 
         - &param_uuid
           name: uuid
           in: path
-          description: Image id
+          description: Image ID
           required: true
           type: string
 
@@ -72,12 +74,12 @@ paths:
           required: true
           type: string
           enum:
-            - size
+          - size
 
         - &param_width
           name: width
           in: path
-          description: Width
+          description: Desired width of the image
           required: true
           type: integer
           format: int32
@@ -87,7 +89,7 @@ paths:
         - &param_height
           name: height
           in: path
-          description: Height
+          description: Desired height of the image
           required: true
           type: integer
           format: int32
@@ -97,7 +99,7 @@ paths:
         - &param_ext
           name: ext
           in: path
-          description: File ext
+          description: Image file extension (could be arbitrary)
           required: true
           type: string
 
@@ -117,12 +119,14 @@ paths:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
+      summary: Scale original image to 2x of the size specified
     get:
       operationId: photo_handler
       tags:
         - files
-      summary: URL of image
-      description: Create URL for iamge
+      summary: Scale original image to 2x of the size specified
+      description: Returns URL for the image scaled to 2x of the specified resolution.
+        The image could be cropped to preserve original aspect ratio
 
       parameters:
         - *param_uuid
@@ -140,16 +144,18 @@ paths:
       responses: *get_response
 
   '/{uuid}/origin_2x.{ext}':
+    $name: hybrid.files:image_2x:origin
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
+      summary: Return original image scaled 2x
     get:
       operationId: photo_handler
       tags:
         - files
-      summary: URL
-      description: Creates URL for image
+      summary: Return original image scaled 2x
+      description: Returns URL for the image scaled to 2x of its original resolution
 
       parameters:
         - *param_uuid
@@ -163,12 +169,13 @@ paths:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
+      summary: Return original image
     get:
       operationId: photo_handler
       tags:
         - files
-      summary: URL
-      description: Create URL for image
+      summary: Return original image
+      description: Returns URL for the image
 
       parameters:
         - *param_uuid
