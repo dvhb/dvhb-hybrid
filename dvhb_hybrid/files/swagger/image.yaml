@@ -134,7 +134,8 @@ paths:
         - *param_width
         - *param_height
         - *param_ext
-        - name: retina
+        - &param_retina
+          name: retina
           in: path
           description: Retina
           type: boolean
@@ -180,5 +181,66 @@ paths:
       parameters:
         - *param_uuid
         - *param_ext
+
+      responses: *get_response
+
+  '/{uuid}/{processor}_{width_or_height:\d+}.{ext}':
+    $name: hybrid.files:image_width:processor
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+      - files
+      summary: Scale original image to the width/heigth specified
+    get:
+      operationId: photo_handler
+      tags:
+      - files
+      summary: Scale original image to the width or height specified
+      description: Returns URL of the image scaled to the specified width or height keeping aspect ratio
+
+      parameters:
+      - *param_uuid
+      - &param_processor_wh
+        name: processor
+        in: path
+        description: processor for image
+        required: true
+        type: string
+        enum:
+        - width
+        - height
+      - &param_width_height
+        name: width_or_height
+        in: path
+        description: Desired width or height of the image
+        required: true
+        type: integer
+        format: int32
+        minimum: 2
+        maximum: 3000
+      - *param_ext
+
+      responses: *get_response
+
+  '/{uuid}/{processor}_{width_or_height:\d+}_2x.{ext}':
+    $name: hybrid.files:image_2x_width:processor
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+      - files
+      summary: Scale original image to 2x of the width/heigth specified
+    get:
+      operationId: photo_handler
+      tags:
+      - files
+      summary: Scale original image to 2x of the width/heigth specified
+      description: Returns URL of the image scaled to 2x of the specified width or height keeping aspect ratio
+
+      parameters:
+      - *param_uuid
+      - *param_processor_wh
+      - *param_width_height
+      - *param_ext
+      - *param_retina
 
       responses: *get_response
