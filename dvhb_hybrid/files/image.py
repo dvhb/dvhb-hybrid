@@ -47,7 +47,7 @@ def db_error(request, error):
     request.app.logger.exception(error, exc_info=error)
 
 
-async def get_resized_image(request, uid, w, h):
+async def get_resized_image(request, uid, processor, w, h):
     """
 
     :param request:
@@ -78,8 +78,8 @@ async def get_resized_image(request, uid, w, h):
     if not photo:
         return
 
-    if w and h:
-        ci = image_factory.get_generator(w, h)(source=photo)
+    if w or h:
+        ci = image_factory.get_generator(w, h, processor=processor)(source=photo)
         cachename = ci.cachefile_name
         k = cachename
         f = cache.get(k)
@@ -96,7 +96,7 @@ async def get_resized_image(request, uid, w, h):
                     resizer = PoolExecutor(max_workers=1)
                 request.app['state']['files_photo_resize'] += 1
                 f = cache[k] = request.app.loop.run_in_executor(
-                    resizer, image_factory.resize, photo.name, w, h,
+                    resizer, image_factory.resize, photo.name, w, h, processor
                 )
         if not f:
             pass
@@ -120,7 +120,7 @@ async def get_resized_image(request, uid, w, h):
     return url, photo.mime_type
 
 
-async def photo_handler(request, uuid, width, height, retina):
+async def photo_handler(request, uuid, processor, width, height, retina):
     request.app['state']['files_photo_request'] += 1
     try:
         UUID(uuid)
@@ -129,13 +129,16 @@ async def photo_handler(request, uuid, width, height, retina):
     if (width and width > 3000) or (height and height > 2000):
         raise web.HTTPNotFound()
     if retina:
-        width, height = 2 * width, 2 * height
+        if width:
+            width = 2 * width
+        if height:
+            height = 2 * height
 
     key = (uuid, width, height)
     f = cache.get(key)
     if not f:
         f = cache[key] = asyncio.ensure_future(
-            get_resized_image(request, uuid, width, height))
+            get_resized_image(request, uuid, processor, width, height))
     if not f.done():
         request.app['state']['files_photo_cache_wait'] += 1
         result = await f
@@ -156,3 +159,16 @@ async def photo_handler(request, uuid, width, height, retina):
         url, mimetype = result
         return aviews.response_file(url, mimetype)
     raise web.HTTPNotFound()
+
+
+async def scale_to_width_or_height(request, uuid, processor, width_or_height, retina):
+    if processor == 'width':
+        width = width_or_height
+        height = 0
+    elif processor == 'height':
+        height = width_or_height
+        width = 0
+    else:
+        raise NotImplementedError("Unsupported processor '%s'" % processor)
+
+    return await photo_handler(request, uuid, processor, width, height, retina)
