@@ -47,7 +47,7 @@ def db_error(request, error):
     request.app.logger.exception(error, exc_info=error)
 
 
-async def get_resized_image(request, uid, w, h):
+async def get_resized_image(request, uid, processor, w, h):
     """
 
     :param request:
@@ -79,7 +79,7 @@ async def get_resized_image(request, uid, w, h):
         return
 
     if w and h:
-        ci = image_factory.get_generator(w, h)(source=photo)
+        ci = image_factory.get_generator(w, h, processor=processor)(source=photo)
         cachename = ci.cachefile_name
         k = cachename
         f = cache.get(k)
@@ -96,7 +96,7 @@ async def get_resized_image(request, uid, w, h):
                     resizer = PoolExecutor(max_workers=1)
                 request.app['state']['files_photo_resize'] += 1
                 f = cache[k] = request.app.loop.run_in_executor(
-                    resizer, image_factory.resize, photo.name, w, h,
+                    resizer, image_factory.resize, photo.name, w, h, processor
                 )
         if not f:
             pass
@@ -120,7 +120,7 @@ async def get_resized_image(request, uid, w, h):
     return url, photo.mime_type
 
 
-async def photo_handler(request, uuid, width, height, retina):
+async def photo_handler(request, uuid, processor, width, height, retina):
     request.app['state']['files_photo_request'] += 1
     try:
         UUID(uuid)
@@ -135,7 +135,7 @@ async def photo_handler(request, uuid, width, height, retina):
     f = cache.get(key)
     if not f:
         f = cache[key] = asyncio.ensure_future(
-            get_resized_image(request, uuid, width, height))
+            get_resized_image(request, uuid, processor, width, height))
     if not f.done():
         request.app['state']['files_photo_cache_wait'] += 1
         result = await f

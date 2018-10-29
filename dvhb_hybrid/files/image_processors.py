@@ -30,14 +30,14 @@ class ImageFactory(object):
 
         return Generator
 
-    def get_image(self, image, w, h):
-        generator = self.get_generator(w, h)(source=image)
+    def _get_image(self, image, w, h, processor):
+        generator = self.get_generator(w, h, processor=processor)(source=image)
         file = ImageCacheFile(generator)
         file.generate()
         return file
 
-    def resize(self, image_name, w, h):
+    def resize(self, image_name, w, h, processor='size'):
         django.setup()
         Image = apps.get_model('files.Image')
         image = Image(image=image_name)
-        self.get_image(image.image, w, h)
+        self._get_image(image.image, w, h, processor=processor)
