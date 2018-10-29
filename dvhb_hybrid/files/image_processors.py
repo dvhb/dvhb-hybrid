@@ -15,6 +15,8 @@ class Image:
 class ImageFactory(object):
     processors = {
         'size': pilkit.processors.SmartResize,
+        'width': pilkit.processors.ResizeToCover,
+        'height': pilkit.processors.ResizeToCover,
     }
 
     def get_generator(self, w, h, processor='size'):
@@ -26,18 +28,18 @@ class ImageFactory(object):
             options = {'quality': 70}
 
             def get_hash(self):
-                return '{}x{}'.format(w, h)
+                return '{}x{}'.format(w if w else '-', h if h else '-')
 
         return Generator
 
-    def get_image(self, image, w, h):
-        generator = self.get_generator(w, h)(source=image)
+    def _get_image(self, image, w, h, processor):
+        generator = self.get_generator(w, h, processor=processor)(source=image)
         file = ImageCacheFile(generator)
         file.generate()
         return file
 
-    def resize(self, image_name, w, h):
+    def resize(self, image_name, w, h, processor='size'):
         django.setup()
         Image = apps.get_model('files.Image')
         image = Image(image=image_name)
-        self.get_image(image.image, w, h)
+        self._get_image(image.image, w, h, processor=processor)
