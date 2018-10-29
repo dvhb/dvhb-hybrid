@@ -78,7 +78,7 @@ async def get_resized_image(request, uid, processor, w, h):
     if not photo:
         return
 
-    if w and h:
+    if w or h:
         ci = image_factory.get_generator(w, h, processor=processor)(source=photo)
         cachename = ci.cachefile_name
         k = cachename
@@ -120,7 +120,15 @@ async def get_resized_image(request, uid, processor, w, h):
     return url, photo.mime_type
 
 
-async def photo_handler(request, uuid, processor, width, height, retina):
+async def photo_handler(request, uuid, processor, width, height, width_or_height, retina=False):
+    if width_or_height and processor == 'width':
+        width = width_or_height
+        height = 0
+    if width_or_height and processor == 'height':
+        height = width_or_height
+        width = 0
+    # assert width or height, "Neither image width or height are specified"
+
     request.app['state']['files_photo_request'] += 1
     try:
         UUID(uuid)
@@ -129,7 +137,10 @@ async def photo_handler(request, uuid, processor, width, height, retina):
     if (width and width > 3000) or (height and height > 2000):
         raise web.HTTPNotFound()
     if retina:
-        width, height = 2 * width, 2 * height
+        if width:
+            width = 2 * width
+        if height:
+            height = 2 * height
 
     key = (uuid, width, height)
     f = cache.get(key)

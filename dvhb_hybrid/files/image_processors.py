@@ -15,6 +15,8 @@ class Image:
 class ImageFactory(object):
     processors = {
         'size': pilkit.processors.SmartResize,
+        'width': pilkit.processors.ResizeToCover,
+        'height': pilkit.processors.ResizeToCover,
     }
 
     def get_generator(self, w, h, processor='size'):
@@ -26,7 +28,7 @@ class ImageFactory(object):
             options = {'quality': 70}
 
             def get_hash(self):
-                return '{}x{}'.format(w, h)
+                return '{}x{}'.format(w if w else '-', h if h else '-')
 
         return Generator
 
