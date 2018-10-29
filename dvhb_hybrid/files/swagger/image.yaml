@@ -192,7 +192,7 @@ paths:
       - files
       summary: Scale original image to the width/heigth specified
     get:
-      operationId: photo_handler
+      operationId: scale_to_width_or_height
       tags:
       - files
       summary: Scale original image to the width or height specified
@@ -223,14 +223,14 @@ paths:
       responses: *get_response
 
   '/{uuid}/{processor}_{width_or_height:\d+}_2x.{ext}':
-    $name: hybrid.files:image_2x_width:processor
+    $name: hybrid.files:image_2x_width_height:processor
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
       - files
       summary: Scale original image to 2x of the width/heigth specified
     get:
-      operationId: photo_handler
+      operationId: scale_to_width_or_height
       tags:
       - files
       summary: Scale original image to 2x of the width/heigth specified

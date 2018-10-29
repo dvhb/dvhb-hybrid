@@ -120,15 +120,7 @@ async def get_resized_image(request, uid, processor, w, h):
     return url, photo.mime_type
 
 
-async def photo_handler(request, uuid, processor, width, height, width_or_height, retina=False):
-    if width_or_height and processor == 'width':
-        width = width_or_height
-        height = 0
-    if width_or_height and processor == 'height':
-        height = width_or_height
-        width = 0
-    # assert width or height, "Neither image width or height are specified"
-
+async def photo_handler(request, uuid, processor, width, height, retina):
     request.app['state']['files_photo_request'] += 1
     try:
         UUID(uuid)
@@ -167,3 +159,16 @@ async def photo_handler(request, uuid, processor, width, height, width_or_height
         url, mimetype = result
         return aviews.response_file(url, mimetype)
     raise web.HTTPNotFound()
+
+
+async def scale_to_width_or_height(request, uuid, processor, width_or_height, retina):
+    if processor == 'width':
+        width = width_or_height
+        height = 0
+    elif processor == 'height':
+        height = width_or_height
+        width = 0
+    else:
+        raise NotImplementedError("Unsupported processor '%s'" % processor)
+
+    return await photo_handler(request, uuid, processor, width, height, retina)
