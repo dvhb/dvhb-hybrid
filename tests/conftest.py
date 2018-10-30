@@ -1,8 +1,7 @@
-import aiopg.sa
+import asyncpgsa
+import django
 import pytest
 from aiohttp.web import Application
-
-import django
 from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
@@ -36,10 +35,9 @@ def app(loop):
     import dvhb_hybrid
     from dvhb_hybrid.amodels import AppModels
 
-    db = aiopg.sa.create_engine(database='test_dvhb_hybrid_app', loop=loop)
-
+    pool = asyncpgsa.create_pool('postgres://localhost:5432/test_dvhb_hybrid_app')
     app = Application(loop=loop)
-    app['db'] = loop.run_until_complete(db.__aenter__())
+    app['db'] = loop.run_until_complete(pool.__aenter__())
 
     AppModels.import_all_models_from_packages(dvhb_hybrid)
     app.models = app.m = AppModels(app)
@@ -49,7 +47,7 @@ def app(loop):
 
     yield app
 
-    loop.run_until_complete(db.__aexit__(None, None, None))
+    loop.run_until_complete(pool.__aexit__(None, None, None))
 
 
 @pytest.fixture

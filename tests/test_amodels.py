@@ -1,7 +1,7 @@
 import asyncio
 from uuid import uuid4
 
-import aiopg.sa
+import asyncpgsa
 import pytest
 import sqlalchemy as sa
 from aiohttp.web_app import Application
@@ -12,7 +12,19 @@ from dvhb_hybrid.amodels import Model
 
 @pytest.fixture
 def db_factory(loop):
-    return aiopg.sa.create_engine(database='test_dvhb_hybrid', loop=loop)
+    async def init(connection):
+        import json
+        for t in ['json', 'jsonb']:
+            await connection.set_type_codec(
+                t,
+                encoder=lambda x: x,
+                decoder=json.loads,
+                schema='pg_catalog',
+            )
+    return asyncpgsa.create_pool(
+        'postgres://localhost:5432/test_dvhb_hybrid',
+        init=init,
+    )
 
 
 class Model1(Model):
