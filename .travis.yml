@@ -3,23 +3,23 @@ services:
   - redis-server
 
 addons:
-  postgresql: "9.5"
+  postgresql: "9.6"
 
 language: python
 
 python:
-  - "3.5"
   - "3.6"
+  - "3.7-dev"
 
 before_script:
   - psql -c 'create database test_dvhb_hybrid;' -U postgres
   - psql test_dvhb_hybrid -c 'create table test(id serial, text text NOT NULL, data jsonb);' -U postgres
 
 install:
-  - pip install tox-travis
+  - pip install -U pip setuptools pipenv==2018.5.18
+  - pipenv install -d --skip-lock
 
-script:
-  - tox
+script: pytest
 
 notifications:
   email:

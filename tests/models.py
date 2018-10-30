@@ -7,7 +7,7 @@ from dvhb_hybrid.models import CreatedMixin
 
 class MPTTTestModel(CreatedMixin, MPTTModel):
     name = models.CharField(max_length=255, null=True, blank=True)
-    parent = TreeForeignKey('self', null=True, blank=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 
     class MPTTMeta:
         order_insertion_by = ['name']

@@ -17,8 +17,7 @@ async def test_sitemap(loop, test_client, mocker):
     app.config = mocker.Mock()
     app.config.redis.default.prefix = 'dvhb_hybrid:test'
 
-    app['redis'] = await aioredis.create_pool(
-        ('localhost', 6379), loop=loop)
+    app['redis'] = await aioredis.create_redis_pool(('localhost', 6379), loop=loop)
     app.on_shutdown.append(redis_close)
 
     def sitemap_handler(request):

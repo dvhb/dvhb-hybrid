@@ -51,11 +51,8 @@ def method_redis_once(arg):
             if kwargs.get(redis) is None:
                 app = get_app_from_parameters(*args, **kwargs)
                 # TODO with Guard(redis, app.loop):
-                async with app[redis].get() as connection:
-                    kwargs[redis] = connection
-                    return await func(*args, **kwargs)
-            else:
-                return await func(*args, **kwargs)
+                kwargs[redis] = app[redis]
+            return await func(*args, **kwargs)
         return wrapper
 
     if not callable(arg):
