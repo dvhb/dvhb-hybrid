@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -22,6 +23,7 @@ class Image(UpdatedMixin, models.Model):
         verbose_name = _('image')
         verbose_name_plural = _('images')
         ordering = ('-created_at',)
+        indexes = [GinIndex(fields=['meta'])]
 
     def __str__(self):
         return self.image.name
