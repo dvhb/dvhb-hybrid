@@ -14,13 +14,20 @@ class ContextModels(AbstractEntity):
     def __init__(self, config=None, *, context=None, loop=None):
         super().__init__(config, context=context, loop=loop)
         self._search_models()
+        self.db = None
+        self.redis = None
+        self._module = self.config.get('module', 'amodels')
+
+    async def init(self):
+        self.db = self.context[self.config.get('db', 'db')]
+        self.redis = self.context[self.config.get('redis', 'redis')]
 
     def _search_models(self):
         package = sys.modules[self.config.package]
         for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if ispkg:
                 try:
-                    m = '{}.{}.{}'.format(package.__name__, modname, self.config.models_module)
+                    m = '{}.{}.{}'.format(package.__name__, modname, self._module)
                     importlib.import_module(m)
                     logger.info(f"Load module {m}")
                 except ImportError:
