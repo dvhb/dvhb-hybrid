@@ -2,11 +2,13 @@ from .convert import derive_from_django
 from .decorators import method_connect_once, method_redis_once
 from .model import Model
 from .mptt_mixin import MPTTMixin
+from .entity import ContextModels
 from .. import utils
 
 
 __all__ = [
     'AppModels',
+    'ContextModels',
     'Model',
     'derive_from_django',
     'method_connect_once',
@@ -30,7 +32,7 @@ class AppModels:
     def __getattr__(self, item):
         if item in Model.models:
             model_cls = Model.models[item]
-            sub_class = model_cls.factory(self.app)
+            sub_class = model_cls.factory(app=self.app)
             setattr(self, item, sub_class)
             if hasattr(model_cls, 'relationships'):
                 for k, v in model_cls.relationships.items():

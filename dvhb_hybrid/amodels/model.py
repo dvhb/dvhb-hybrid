@@ -37,6 +37,7 @@ class MetaModel(ABCMeta):
 class Model(dict, metaclass=MetaModel):
     models = {}
     app = None
+    context = None
     primary_key = 'id'
     validators = ()  # Validators for data
     update_validators = ()  # Validators to validate object and data before update
@@ -47,8 +48,8 @@ class Model(dict, metaclass=MetaModel):
     fields_localized = None
 
     @classmethod
-    def factory(cls, app):
-        return type(cls.__name__, (cls,), {'app': app})
+    def factory(cls, app=None, context=None):
+        return type(cls.__name__, (cls,), {'app': app, 'context': context})
 
     @classmethod
     def get_cache_key(cls, *args):

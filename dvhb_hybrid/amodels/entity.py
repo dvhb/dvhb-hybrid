@@ -1,0 +1,43 @@
+import importlib
+import logging
+import pkgutil
+import sys
+
+from aioworkers.core.base import AbstractEntity
+
+from . import Model
+
+logger = logging.getLogger(__name__)
+
+
+class ContextModels(AbstractEntity):
+    def __init__(self, config=None, *, context=None, loop=None):
+        super().__init__(config, context=context, loop=loop)
+        self._search_models()
+
+    def _search_models(self):
+        package = sys.modules[self.config.package]
+        for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
+            if ispkg:
+                try:
+                    m = '{}.{}.{}'.format(package.__name__, modname, self.config.models_module)
+                    importlib.import_module(m)
+                    logger.info(f"Load module {m}")
+                except ImportError:
+                    pass
+
+    def __getitem__(self, item):
+        if hasattr(self, item):
+            return getattr(self, item)
+        return KeyError(item)
+
+    def __getattr__(self, item):
+        if item in Model.models:
+            model_cls = Model.models[item]
+            sub_class = model_cls.factory(context=self.context)
+            setattr(self, item, sub_class)
+            if hasattr(model_cls, 'relationships'):
+                for k, v in model_cls.relationships.items():
+                    setattr(sub_class, k, v(self.context.app))
+            return sub_class
+        raise AttributeError('%r has no attribute %r' % (self, item))
