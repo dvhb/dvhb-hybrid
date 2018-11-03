@@ -13,16 +13,20 @@ logger = logging.getLogger(__name__)
 class ContextModels(AbstractEntity):
     def __init__(self, config=None, *, context=None, loop=None):
         super().__init__(config, context=context, loop=loop)
-        self._search_models()
         self.db = None
         self.redis = None
         self._module = self.config.get('module', 'amodels')
+        self._search_models()
 
     async def init(self):
+        # Models require postgres and redis
         self.db = self.context[self.config.get('db', 'db')]
         self.redis = self.context[self.config.get('redis', 'redis')]
 
     def _search_models(self):
+        """
+        Search for models in specified package
+        """
         package = sys.modules[self.config.package]
         for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
             if ispkg:

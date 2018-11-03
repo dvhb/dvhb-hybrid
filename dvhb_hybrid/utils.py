@@ -190,3 +190,15 @@ def get_app_from_parameters(*args, **kwargs):
             return i.request.app
         elif hasattr(i, '_context'):
             return i._context.app
+
+
+def get_context_from_parameters(*args, **kwargs):
+    if kwargs.get('request') is not None:
+        return kwargs['request'].app.context
+    for i in args:
+        if hasattr(i, 'context'):
+            return i.context
+        elif hasattr(i, 'request'):
+            return i.request.app.context
+        elif hasattr(i, '_context'):
+            return i._context
