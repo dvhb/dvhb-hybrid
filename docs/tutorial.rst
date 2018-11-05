@@ -35,7 +35,7 @@ Install dvhb-hybrid:
 
 .. code-block:: shell
 
-    $ pip install git+https://github.com/dvhbru/dvhb-hybrid
+    $ pip install git+https://github.com/dvhb/dvhb-hybrid
 
 Create an application
 ---------------------
