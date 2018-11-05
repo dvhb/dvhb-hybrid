@@ -30,10 +30,12 @@ def new_object():
 
 
 @pytest.fixture
-def app(loop, db_factory):
+def app(loop, db_factory, context):
     app = Application(loop=loop)
     app['db'] = loop.run_until_complete(db_factory.__aenter__())
     app['model'] = Model1.factory(app)
+    context.app = app
+    context.db = app['db']
 
     yield app
 

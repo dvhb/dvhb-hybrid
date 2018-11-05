@@ -1,0 +1,4 @@
+
+db:
+  uri: postgres:///test_dvhb_hybrid
+  database: test_dvhb_hybrid
