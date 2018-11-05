@@ -200,5 +200,7 @@ def get_context_from_parameters(*args, **kwargs):
             return i.context
         elif hasattr(i, 'request'):
             return i.request.app.context
+        elif hasattr(i, 'app'):
+            return i.app.context
         elif hasattr(i, '_context'):
             return i._context
