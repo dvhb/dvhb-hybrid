@@ -196,11 +196,11 @@ def get_context_from_parameters(*args, **kwargs):
     if kwargs.get('request') is not None:
         return kwargs['request'].app.context
     for i in args:
-        if hasattr(i, 'context'):
+        if getattr(i, 'context', None) is not None:
             return i.context
         elif hasattr(i, 'request'):
             return i.request.app.context
-        elif hasattr(i, 'app'):
+        elif getattr(i, 'app', None) is not None:
             return i.app.context
-        elif hasattr(i, '_context'):
+        elif getattr(i, '_context', None) is not None:
             return i._context
