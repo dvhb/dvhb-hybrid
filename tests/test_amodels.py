@@ -47,6 +47,7 @@ def app(loop, db_factory, context):
     app['db'] = loop.run_until_complete(db_factory.__aenter__())
     app['model'] = Model1.factory(app)
     context.app = app
+    app.context = context
     context.db = app['db']
 
     yield app
