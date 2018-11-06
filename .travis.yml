@@ -16,7 +16,7 @@ before_script:
   - psql test_dvhb_hybrid -c 'create table test(id serial, text text NOT NULL, data jsonb);' -U postgres
 
 install:
-  - pip install -U pip setuptools pipenv==2018.5.18
+  - pip install -U pip setuptools pipenv==2018.10.13
   - pipenv install -d --skip-lock
 
 script: pytest
