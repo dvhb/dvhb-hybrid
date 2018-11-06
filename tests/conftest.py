@@ -63,6 +63,7 @@ def app(context, loop):
 
     app = Application(loop=loop)
     context.app = app
+    app.context = context
     app['db'] = loop.run_until_complete(db.__aenter__())
 
     AppModels.import_all_models_from_packages(dvhb_hybrid)
