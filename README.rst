@@ -2,7 +2,7 @@
 DVHB Hybrid
 ===========
 
-|tests| |docs|
+|tests| |docs| |codecov| |pyup|
 
 Package to create hybrid django and asyncio applications.
 
@@ -23,3 +23,10 @@ Features
 .. |tests| image:: https://travis-ci.org/dvhb/dvhb-hybrid.svg?branch=asyncpg
     :target: https://travis-ci.org/dvhb/dvhb-hybrid
     :alt: Build Status
+
+.. |codecov| image:: https://codecov.io/gh/dvhb/dvhb-hybrid/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/dvhb/dvhb-hybrid
+
+.. |pyup| image:: https://pyup.io/repos/github/dvhb/dvhb-hybrid/shield.svg
+    :target: https://pyup.io/repos/github/dvhb/dvhb-hybrid/
+    :alt: Updates

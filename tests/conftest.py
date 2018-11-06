@@ -1,11 +1,18 @@
+from pathlib import Path
+
 import asyncpgsa
 import django
 import pytest
 from aiohttp.web import Application
 from django.core.management import call_command
+from aioworkers.core.config import Config
+from aioworkers.core.context import Context
 
 from dvhb_hybrid import BASE_DIR
 from dvhb_hybrid.utils import import_class
+
+
+TESTS_DIR = Path(__file__).parent
 
 # Django settings
 SECRET_KEY = '123'
@@ -26,17 +33,35 @@ DATABASES = {
 }
 
 
+@pytest.fixture
+def config():
+    c = Config()
+    c.load(
+        TESTS_DIR / 'config.yaml',
+    )
+    return c
+
+
+@pytest.fixture
+def context(config, loop):
+    with Context(config, loop=loop) as ctx:
+        yield ctx
+
+
 def pytest_configure():
     django.setup()
 
 
 @pytest.fixture
-def app(loop):
+def app(context, loop):
     import dvhb_hybrid
     from dvhb_hybrid.amodels import AppModels
 
     pool = asyncpgsa.create_pool('postgres://localhost:5432/test_dvhb_hybrid_app')
+    context.db = pool
+
     app = Application(loop=loop)
+    context.app = app
     app['db'] = loop.run_until_complete(pool.__aenter__())
 
     AppModels.import_all_models_from_packages(dvhb_hybrid)
