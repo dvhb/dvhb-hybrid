@@ -44,6 +44,8 @@ def method_connect_once(arg):
 
 
 def method_redis_once(arg):
+    redis: str = 'redis'
+
     def with_arg(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
