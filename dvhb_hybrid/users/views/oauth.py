@@ -2,6 +2,7 @@ import logging
 
 import aioauth_client
 from aiohttp.web_exceptions import HTTPNotFound, HTTPFound
+from aiohttp.web_request import Request
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
 from yarl import URL
@@ -16,6 +17,7 @@ aioauth_client.User = lambda **kwargs: kwargs
 
 
 class UserOAuthView:
+    request: Request
 
     @property
     def model(self):
@@ -23,7 +25,7 @@ class UserOAuthView:
 
     @property
     def conf(self):
-        return getattr(self.request.app.config, 'social', {})
+        return self.request.app.context.config.social
 
     async def _on_login_successful(self, user, connection):
         await gen_api_key(user.id, request=self.request)
