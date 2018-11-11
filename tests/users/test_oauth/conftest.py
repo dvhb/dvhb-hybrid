@@ -1,15 +1,18 @@
+from uuid import uuid4
+
 import pytest
 from yarl import URL
 
 
 @pytest.fixture
-def oauth_redirect_request(app, make_request, social_conf):
+def uuid():
+    return uuid4
 
-    async def wrapper(provider_name, expected_status=None, configure_social=True, **kwargs):
-        if configure_social:
-            app.config.social = social_conf
-        else:
-            app.config.social = None
+
+@pytest.fixture
+def oauth_redirect_request(app, make_request):
+
+    async def wrapper(provider_name, expected_status=None, **kwargs):
         return await make_request(
             'dvhb_hybrid.user:oauth:redirect', url_params=dict(provider=provider_name), url_query=kwargs, method='get',
             expected_status=expected_status, decode_json=False, allow_redirects=False)
@@ -17,13 +20,9 @@ def oauth_redirect_request(app, make_request, social_conf):
 
 
 @pytest.fixture
-def oauth_callback_request(app, make_request, social_conf):
+def oauth_callback_request(app, make_request):
 
-    async def wrapper(provider_name, client=None, expected_status=None, configure_social=True, **kwargs):
-        if configure_social:
-            app.config.social = social_conf
-        else:
-            app.config.social = None
+    async def wrapper(provider_name, client=None, expected_status=None, **kwargs):
         return await make_request(
             'dvhb_hybrid.user:oauth:callback', client=client, method='get', expected_status=expected_status,
             decode_json=False, allow_redirects=False, url_params=dict(provider=provider_name), url_query=kwargs)
@@ -31,8 +30,11 @@ def oauth_callback_request(app, make_request, social_conf):
 
 
 @pytest.fixture
-def social_conf():
-    return {
+def config(config):
+    config.update({'app.resources': {
+        '/': {'include': 'users/swagger/oauth.yaml'},
+    }})
+    config.update({'social': {
         'url': {
             'success': '/',
             'reject': '/login/reject',
@@ -55,7 +57,8 @@ def social_conf():
             'client_secret': 'WgKadvY82wlnleOAyw6T',
             'scope': 'offline,email'
         },
-    }
+    }})
+    return config
 
 
 PROVIDERS_TO_TEST = ['facebook', 'google']
@@ -75,7 +78,7 @@ PROVIDER_PARAMS = {
             'gender': 'M',
         }),
     'google': dict(
-        auth_url='https://accounts.google.com/o/oauth2/auth',
+        auth_url='https://accounts.google.com/o/oauth2/v2/auth',
         auth_code='4/AADl81f301C0_qHriZCyyKxphdGq-psxBNcr2zMqBr3ZqkONdChRCE2GSvq0ztMQ2p8Rt_FN54lJfWRe9Lt_jHk',
         token_url='https://accounts.google.com/o/oauth2/token',
         token='ya29.Gl17Be2cs7p1O1GnVsoSzNDo0-2z3Pb2hk7ypCKsW7vpolEswuLzl6ZCFnGIOW7v3rUqgVJShXTEopCtwUCQaFnKTxrxcqZBy4xkigS9cl9Rj_hqZtP_IAXUcjj-Jg0',  # noqa
