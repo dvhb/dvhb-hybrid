@@ -1,23 +1,51 @@
+import logging
+from types import MappingProxyType
 from uuid import uuid4
 
 from django.contrib.auth.hashers import make_password
 
 import pytest
 
+logger = logging.getLogger(__name__)
+
 
 @pytest.fixture
 def make_request(app, test_client):
-    async def wrapper(url, url_params={}, method='post', client=None, json=None, data=None, expected_status=None):
+    async def wrapper(
+        url, method='post',
+        url_params=MappingProxyType({}),
+        url_query='',
+        client=None,
+        cookies=MappingProxyType({}),
+        json=None, data=None, decode_json=True,
+        allow_redirects=True, expected_status=None,
+    ):
         client = client or await test_client(app)
-        method_fn = getattr(client, method)
-        url = url if not url_params else app.router[url].url_for(**url_params)
-        print(url)
-        response = await method_fn(url, json=json, data=data)
+        if cookies:
+            client.session.cookie_jar.update_cookies(cookies)
+        if isinstance(url, str) and not url.startswith('/'):
+            url = app.router[url].url_for(**url_params)
+        if url_query:
+            url = url.with_query(url_query)
+        response = await client.request(
+            method, url, json=json, data=data,
+            allow_redirects=allow_redirects)
         if expected_status:
             assert response.status == expected_status, await response.text()
-            if response.content_type.startswith('application/json'):
-                return await response.json()
-        return await response.text()
+        if decode_json:
+            try:
+                result = await response.json()
+                if result is None:
+                    result = dict()
+                result['_headers'] = response.headers
+                return result
+            except Exception as e:
+                logger.error(
+                    "Failed to decode JSON from response text"
+                    " '%s' (%s)", await response.text(), e)
+                raise
+        else:
+            return response
     return wrapper
 
 
