@@ -37,6 +37,7 @@ DATABASES = {
 @pytest.fixture
 def config():
     c = Config()
+    c.load_plugins(force=True)
     c.load(
         TESTS_DIR / 'config.yaml',
     )
@@ -54,16 +55,14 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context, loop):
+def app(context, loop, config):
     import dvhb_hybrid
     from dvhb_hybrid.amodels import AppModels
 
-    db = aiopg.sa.create_engine(database='test_dvhb_hybrid_app', loop=loop)
+    db = aiopg.sa.create_engine(database=config.db.database, loop=loop)
     context.db = db
 
-    app = Application(loop=loop)
-    context.app = app
-    app.context = context
+    app = context.app
     app['db'] = loop.run_until_complete(db.__aenter__())
 
     AppModels.import_all_models_from_packages(dvhb_hybrid)
@@ -79,6 +78,7 @@ def app(context, loop):
 
 @pytest.fixture
 def cli(app, test_client):
+    # TODO Rename (cli is command line interface)
     async def create_client():
         client = await test_client(app)
         return client

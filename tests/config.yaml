@@ -1,4 +1,9 @@
 
+app:
+  router:
+    search_in_modules:
+     - dvhb_hybrid
+
 db:
   uri: postgres:///test_dvhb_hybrid
   database: test_dvhb_hybrid
