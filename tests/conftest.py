@@ -29,7 +29,7 @@ INSTALLED_APPS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dvhb_hybrid_app',
+        'NAME': 'dvhb_hybrid',
     }
 }
 
