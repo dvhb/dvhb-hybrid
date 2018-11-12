@@ -7,15 +7,21 @@ name = "pypi"
 python_version = '3.6'
 
 [packages]
-
-[dev-packages]
 aiohttp = "*"
 aiohttp_apiset = "*"
+aioworkers = "*"
+aioworkers-aiohttp = "*"
+django = "*"
+sqlalchemy = "*"
+django-mptt = "*"
+babel = "*"
+
+[dev-packages]
 aiohttp_jinja2 = "*"
+aioauth-client = "*"
+asyncpgsa = "*"
 aiopg = "*"
 aioredis = "*"
-aioworkers = "*"
-django = "*"
 openpyxl = "*"
 Pillow = "*"
 flake8 = "*"
@@ -28,10 +34,5 @@ pytest-mock = "*"
 pytest-mypy = "*"
 pytest-pythonpath = "*"
 pytest-aiohttp = "*"
-sqlalchemy = "*"
-django-mptt = "*"
-babel = "*"
 aioresponses = "*"
-aioauth-client = "*"
-asyncpgsa = "*"
 mypy = "*"
