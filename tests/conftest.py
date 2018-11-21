@@ -56,7 +56,7 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context, loop):
+def app(context):
     yield context.app
 
 
