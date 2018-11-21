@@ -3,7 +3,10 @@ app:
   router:
     search_in_modules:
      - dvhb_hybrid
+  cleanup_ctx:
+    aiopg: dvhb_hybrid.config.cleanup_ctx_aiopg
 
-db:
-  uri: postgres:///test_dvhb_hybrid
-  database: test_dvhb_hybrid
+databases:
+  default:
+    uri: postgres:///test_dvhb_hybrid
+    database: test_dvhb_hybrid

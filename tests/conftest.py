@@ -1,17 +1,13 @@
 from pathlib import Path
 
-import aiopg.sa
-import pytest
-from aiohttp.web import Application
-
 import django
-from django.core.management import call_command
+import pytest
+import yaml
 from aioworkers.core.config import Config
 from aioworkers.core.context import Context
+from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
-from dvhb_hybrid.utils import import_class
-
 
 TESTS_DIR = Path(__file__).parent
 
@@ -34,9 +30,14 @@ DATABASES = {
 }
 
 
+class Conf(Config):
+    def load_yaml(self, s):
+        self.update(yaml.load(s))
+
+
 @pytest.fixture
 def config():
-    c = Config()
+    c = Conf()
     c.load_plugins(force=True)
     c.load(
         TESTS_DIR / 'config.yaml',
@@ -55,25 +56,8 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context, loop, config):
-    import dvhb_hybrid
-    from dvhb_hybrid.amodels import AppModels
-
-    db = aiopg.sa.create_engine(database=config.db.database, loop=loop)
-    context.db = db
-
-    app = context.app
-    app['db'] = loop.run_until_complete(db.__aenter__())
-
-    AppModels.import_all_models_from_packages(dvhb_hybrid)
-    app.models = app.m = AppModels(app)
-
-    Mailer = import_class('dvhb_hybrid.mailer.django.Mailer')
-    Mailer.setup(app, {'from_email': 'no-replay@dvhb.ru'})
-
-    yield app
-
-    loop.run_until_complete(db.__aexit__(None, None, None))
+def app(context, loop):
+    yield context.app
 
 
 @pytest.fixture
