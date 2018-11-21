@@ -76,6 +76,16 @@ cleanup_ctx_redis_sessions = functools.partial(
     cleanup_ctx_redis, app_key='sessions', cfg_key='sessions')
 
 
+async def cleanup_ctx_aiopg(app, cfg_key='default', app_key='db'):
+    import aiopg.sa
+    from dvhb_hybrid.amodels import AppModels
+    dbparams = app.context.config.databases.get(cfg_key)
+    app.models = app.m = AppModels(app)
+    async with aiopg.sa.create_engine(dbparams.uri) as pool:
+        app[app_key] = pool
+        yield
+
+
 async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
     import asyncpgsa
     from dvhb_hybrid.amodels import AppModels
