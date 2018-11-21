@@ -17,10 +17,12 @@ class Guard:
     def __enter__(self):
         if self._task in self._d:
             raise BlockingIOError('Repeated acquire %s' % self._key)
-        self._d[self._task] = True
+        if self._task is not None:
+            self._d[self._task] = True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        del self._d[self._task]
+        if self._task is not None:
+            del self._d[self._task]
 
 
 def method_connect_once(arg):
