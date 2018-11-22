@@ -92,6 +92,8 @@ def get_template(app, data):
 
 
 class TemplateRender(Render):
+    re_img = re.compile(r'(<img.*? src=["\'])\.*/(.*?["\'].*?>)', re.I | re.U)
+
     def __init__(self, template: jinja2.Template, cache: dict) -> None:
         self._template = template
         self._cache = cache
@@ -101,8 +103,13 @@ class TemplateRender(Render):
         if ctx == self._cache.get('ctx'):
             return self._cache['render']
         result = self._template.render(ctx)
-        self._cache['render'] = result
         self._cache['ctx'] = ctx
+        email_url = ctx.get('email_url')
+        if email_url:
+            result = self.re_img.sub(
+                r'\g<1>' + email_url + r'\g<2>', result
+            )
+        self._cache['render'] = result
         return result
 
 
