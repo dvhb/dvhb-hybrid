@@ -1,9 +1,9 @@
 import os
 import re
 from abc import ABC, abstractmethod
-from collections import ChainMap, Mapping
+from collections import ChainMap
 from glob import glob
-from typing import Optional
+from typing import Optional, Any, Mapping
 
 import aiohttp_jinja2
 import attr
@@ -40,7 +40,7 @@ class Render(ABC):
         return context.new_child(kwargs)
 
     @abstractmethod
-    def render(self, context: dict = None, **kwargs) -> str:
+    def render(self, context: Mapping[str, Any], **kwargs) -> str:
         pass
 
 

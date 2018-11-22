@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from collections import Mapping
-from typing import Any, Optional, Tuple, Union
+from collections import ChainMap
+from typing import Any, Optional, Tuple, Union, Mapping
 
 import jinja2
 from aioworkers.core.config import MergeDict
@@ -210,6 +210,23 @@ class BaseMailer(Worker):
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
 
+    def get_context(self, *args, **kwargs) -> Mapping[str, Any]:
+        url = self.context.config.http.get_url('url', '/', null=True)
+        image_url = self.config.get_url('image_url', None, null=True)
+        if image_url:
+            image_url = url.join(image_url)
+        else:
+            image_url = url
+        context = ChainMap(dict(image_url=str(image_url)))
+        for m in args:
+            if not m:
+                continue
+            elif not isinstance(m, Mapping):
+                raise TypeError(
+                    'context should be mapping, not {}'.format(type(context)))
+            context = context.new_child(m)
+        return context.new_child(kwargs)
+
     async def send(self, mail_to, subject=None, body=None, *, html=None,
                    context=None, connection=None, template=None, db_connection=None,
                    attachments=None, save=True, lang_code='en', fallback_lang_code='en'):
@@ -236,8 +253,7 @@ class BaseMailer(Worker):
                 env=self._env,
             )
 
-        if not isinstance(context, Mapping):
-            context = {}
+        ctx = self.get_context(context)
 
         if not isinstance(mail_to, list):
             mail_to = mail_to.split(',')
@@ -245,14 +261,14 @@ class BaseMailer(Worker):
         for recipient in mail_to:
             kwargs = dict(
                 mail_to=[recipient],
-                body=email_template.body.render(context, mail_to=recipient),
-                subject=email_template.subject.render(context, mail_to=recipient),
+                body=email_template.body.render(ctx, mail_to=recipient),
+                subject=email_template.subject.render(ctx, mail_to=recipient),
                 html=None,
                 template=template,
                 attachments=attachments,
             )
             if email_template.html:
-                kwargs['html'] = email_template.html.render(context, mail_to=recipient)
+                kwargs['html'] = email_template.html.render(ctx, mail_to=recipient)
 
             if save:
                 message = await self.app.models.mail_message.create(
