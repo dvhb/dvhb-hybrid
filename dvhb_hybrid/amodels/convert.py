@@ -2,21 +2,18 @@ import logging
 
 import sqlalchemy as sa
 import sqlalchemy.types as sa_types
-
 from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel, OneToOneField
-try:
-    from geoalchemy2.types import Geometry
-except ImportError:
-    def Geometry(*args, **kwargs):
-        return sa_types.NullType()
 from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY, JSONB as SA_JSONB, UUID as SA_UUID
 
 from .model import Model
 from .relations import ManyToManyRelationship
 from ..utils import convert_class_name
 
-
 logger = logging.getLogger(__name__)
+
+
+def Geometry(*args, **kwargs):
+    return sa_types.NullType()
 
 
 class FieldConverter:

@@ -31,9 +31,9 @@ setup(
     install_requires=[
         'django',
         'psycopg2',
-        'aiopg',
         'aioredis>=1.0.0',
         'aioworkers',
+        'aiohttp-apiset',
         'asyncpgsa',
         'aiohttp_apiset',
         'sqlalchemy',

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('template', models.CharField(blank=True, max_length=255, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('sent_at', models.DateTimeField(null=True)),
-                ('attachments', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default={}, null=True)),
+                ('attachments', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, null=True)),
             ],
         ),
     ]

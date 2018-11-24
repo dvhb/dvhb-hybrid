@@ -17,7 +17,7 @@ class Image(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     image = models.ImageField(storage=image_storage)
     mime_type = models.CharField(_('content type'), max_length=99, blank=True)
-    meta = JSONField(_('meta-information'), default={}, blank=True)
+    meta = JSONField(_('meta-information'), default=dict, blank=True)
 
     class Meta:
         verbose_name = _('image')

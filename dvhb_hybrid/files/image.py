@@ -30,12 +30,7 @@ async def get_image(request, uid):
     request.app['state']['files_photo_db'] += 1
     Image = request.app.models.image
     async with request.app['db'].acquire() as conn:
-        result = await conn.execute(
-            Image.table.select()
-            .where(Image.table.c.uuid == uid)
-            .limit(1)
-        )
-        photo = await result.fetchone()
+        photo = await conn.fetchrow(Image.table.select().where(Image.table.c.uuid == uid).limit(1))
 
     if photo:
         request.app['state']['files_photo_db_fetch'] += 1

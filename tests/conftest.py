@@ -1,8 +1,10 @@
 from pathlib import Path
 
+import asyncpgsa
 import django
 import pytest
 import yaml
+from aiohttp.web import Application
 from aioworkers.core.config import Config
 from aioworkers.core.context import Context
 from django.core.management import call_command

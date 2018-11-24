@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='image',
             name='meta',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default={}, verbose_name='meta-information'),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, verbose_name='meta-information'),
         ),
         migrations.AlterField(
             model_name='image',

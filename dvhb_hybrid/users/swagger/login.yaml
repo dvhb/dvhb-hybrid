@@ -1,0 +1,52 @@
+swagger: '2.0'
+
+paths:
+  /login:
+    $name: user:login
+    post:
+      operationId: user_login
+      tags:
+      - user
+      summary: User login
+      description: Returns token on success
+
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
+
+      produces:
+      - application/json
+
+      parameters:
+      - name: email
+        in: formData
+        description: User email address
+        required: true
+        type: string
+        format: email
+
+      - name: password
+        in: formData
+        description: User password
+        required: true
+        type: string
+        format: password
+
+      responses:
+        200:
+          description: OK
+          headers:
+            Authorization:
+              type: string
+              description: Bearer token
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+        400:
+          description: Invalid parameters given
+        401:
+          description: Login incorrect
+        403:
+          description: User disabled

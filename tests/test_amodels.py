@@ -1,6 +1,7 @@
 import asyncio
 from uuid import uuid4
 
+import asyncpgsa
 import pytest
 import sqlalchemy as sa
 

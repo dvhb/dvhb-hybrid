@@ -17,7 +17,7 @@ class Message(models.Model):
     template = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(null=True)
-    attachments = JSONField(default={}, blank=True, null=True)
+    attachments = JSONField(default=dict, blank=True, null=True)
 
 
 class Template(UpdatedMixin, models.Model):

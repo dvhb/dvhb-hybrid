@@ -40,6 +40,9 @@ async def get_current_user(request, *,
                            sessions=None,
                            connection=None,
                            fields=None):
+    if hasattr(request, 'user'):
+        return request.user
+
     data = await get_session_data(request, sessions=sessions)
     if not data:
         raise exceptions.HTTPUnauthorized()
@@ -53,7 +56,7 @@ async def get_current_user(request, *,
         return request.user
 
     user = await request.app.models.user.get_one(
-        user_id,
+        int(user_id),
         connection=connection,
         fields=fields,
         silent=True

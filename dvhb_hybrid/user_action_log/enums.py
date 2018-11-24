@@ -8,6 +8,7 @@ class UserActionLogEntryType(enum.Enum):
     auth = 'auth'
     crud = 'crud'
     email = 'email'
+    password = 'password'
 
     @classmethod
     def translation(cls):
@@ -16,6 +17,7 @@ class UserActionLogEntryType(enum.Enum):
             cls.auth: _('User authentification'),
             cls.crud: _('CRUD'),
             cls.email: _('Email'),
+            cls.password: _('Password'),
         }
 
 
@@ -36,4 +38,16 @@ class UserActionLogEntrySubType(enum.Enum):
             cls.login: _('Login'),
             cls.logout: _('Logout'),
             cls.change_password: _('Change password'),
+        }
+
+
+class UserActionLogStatus(enum.Enum):
+    request = 'request'
+    done = 'done'
+
+    @classmethod
+    def translation(cls):
+        return {
+            cls.request: _('Request'),
+            cls.done: _('done'),
         }

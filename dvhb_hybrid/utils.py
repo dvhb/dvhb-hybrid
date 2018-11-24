@@ -168,6 +168,18 @@ def query_bool(data):
         return False
 
 
+def get_request_from_parameters(*args, **kwargs):
+    if kwargs.get('request') is not None:
+        return kwargs['request']
+    for i in args:
+        if hasattr(i, 'request'):
+            return i.request
+        elif hasattr(i, 'rel_url'):
+            return i
+    else:
+        raise ValueError(*args, **kwargs)
+
+
 def get_app_from_parameters(*args, **kwargs):
     if kwargs.get('request') is not None:
         return kwargs['request'].app
