@@ -1,24 +1,26 @@
 import uuid
 
-import aioredis
-from aiohttp import web
+import pytest
 
 from dvhb_hybrid import sitemap
+from .conftest import Conf
 
 
-async def redis_close(app):
-    pool = app['redis']
-    pool.close()
-    await pool.wait_closed()
+@pytest.fixture
+def config(config):
+    c = Conf()
+    c.load_plugins(force=True)
+    config.load_yaml("""
+    app:
+      cleanup_ctx:
+        redis: dvhb_hybrid.config.cleanup_ctx_redis
+    redis:
+      default: {}
+    """)
+    return config
 
 
-async def test_sitemap(loop, test_client, mocker):
-    app = web.Application(loop=loop)
-    app.config = mocker.Mock()
-    app.config.redis.default.prefix = 'dvhb_hybrid:test'
-
-    app['redis'] = await aioredis.create_redis_pool(('localhost', 6379), loop=loop)
-    app.on_shutdown.append(redis_close)
+async def test_sitemap(app, test_client):
 
     def sitemap_handler(request):
         return sitemap.sitemap(request, key=str(uuid.uuid4()), data={

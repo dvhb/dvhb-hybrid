@@ -24,8 +24,11 @@ def get_xml(request, items: dict):
 
 @amodels.method_redis_once
 async def sitemap(request, redis, *, key, data):
-    prefix = request.app.config.redis.default.prefix
-    key = ':'.join([prefix, 'sitemap', key])
+    prefix = request.app.context.config.redis.default.get('prefix')
+    if prefix:
+        key = ':'.join([prefix, 'sitemap', key])
+    else:
+        key = ':'.join(['sitemap', key])
 
     body = await redis.get(key)
     if body:
