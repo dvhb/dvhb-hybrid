@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 
 
@@ -89,8 +90,23 @@ async def cleanup_ctx_aiopg(app, cfg_key='default', app_key='db'):
 async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
     import asyncpgsa
     from dvhb_hybrid.amodels import AppModels
-    dbparams = app.context.config.databases.get(cfg_key)
+
     app.models = app.m = AppModels(app)
-    async with asyncpgsa.create_pool(**dbparams) as pool:
+
+    async def init(connection):
+        for t in ['json', 'jsonb']:
+            await connection.set_type_codec(
+                t,
+                encoder=lambda x: x,
+                decoder=json.loads,
+                schema='pg_catalog',
+            )
+    dbparams = app.context.config.databases.get(cfg_key)
+    if 'uri' in dbparams:
+        dbargs, dbkwargs = (dbparams.uri,), {}
+    else:
+        dbargs, dbkwargs = (), dbparams
+
+    async with asyncpgsa.create_pool(*dbargs, init=init, **dbkwargs) as pool:
         app[app_key] = pool
         yield
