@@ -2,6 +2,13 @@
 History
 =======
 
+
+0.4
+---
+
+* Models support asyncpg instead of aiopg
+
+
 0.1.0 (2017-04-07)
 ------------------
 
@@ -13,6 +20,7 @@ History
 
 * Tutorial.
 * Application example.
+
 
 0.0.4 (2016-02-07)
 ------------------
