@@ -1,15 +1,17 @@
 import asyncio
 import logging
-from collections import Mapping
+from collections import ChainMap
+from typing import Any, Optional, Tuple, Union, Mapping
 
+import jinja2
 from aioworkers.core.config import MergeDict
 from aioworkers.core.context import Context
 from aioworkers.utils import module_path
 from aioworkers.worker.base import Worker
 
-from ..amodels import method_connect_once
 from .. import utils
-from .template import FormatRender, Jinja2Render, load_all, Render
+from ..amodels import method_connect_once
+from .template import EmailTemplate, load_all
 
 logger = logging.getLogger('mailer')
 
@@ -44,11 +46,29 @@ class BaseMailer(Worker):
         conf = MergeDict(conf)
         conf.name = 'mailer'
         m = cls(conf, context=context, loop=app.loop)
+
         async def start(app):
             await m.init()
             await m.start()
         app.on_startup.append(start)
         app.on_shutdown.append(lambda x: m.stop())
+
+    def set_config(self, config):
+        super().set_config(config)
+
+        mod = self.config.get('templates_from_module')
+        if mod:
+            path = module_path(mod, True)
+            self.templates = load_all(self, path)
+        else:
+            self.templates = {}
+
+        search_dirs = self.config.get('search_dirs')
+        if search_dirs:
+            loader = jinja2.FileSystemLoader(search_dirs)
+        else:
+            loader = None
+        self._env = jinja2.Environment(loader=loader)
 
     async def init(self):
         await super().init()
@@ -56,16 +76,15 @@ class BaseMailer(Worker):
         self.conf = self.config
         self.app = self.context.app
         self.app.mailer = self
-        self.app.router.add_route(
-            'GET',
-            self.config.get('status_url', '/monitor/mailer'),
-            self.monitor,
-            name='monitor:mailer',
-        )
-        mod = self.config.get('templates_from_module')
-        if mod:
-            path = module_path(mod, True)
-            self.templates = load_all(self, path)
+
+        resource_name = 'monitor:mailer'
+        status_url = self.config.get('status_url', '/monitor/mailer')
+        if status_url:
+            self.app.router.add_route(
+                'GET', status_url,
+                self.monitor,
+                name=resource_name,
+            )
 
         self.mail_success = 0
         self.mail_failed = 0
@@ -114,8 +133,57 @@ class BaseMailer(Worker):
             loop=self.app.loop, conf=self.conf)
         return connection
 
+    def _tempalte_names(
+        self, template_name: str,
+        lang_code: str,
+        fallback_lang_code: str,
+    ) -> Tuple[Union[str, Tuple[str, str]], ...]:
+        return (
+            (template_name, lang_code),
+            (lang_code, template_name),
+            (template_name, fallback_lang_code),
+            (fallback_lang_code, template_name),
+            template_name
+        )
+
+    async def get_dict_template(
+        self, template_name: str, lang_code: str,
+        fallback_lang_code: str ='en'
+    ) -> Optional[EmailTemplate]:
+        for i in self._tempalte_names(
+            template_name,
+            lang_code,
+            fallback_lang_code,
+        ):
+            t = self.templates.get(i)
+            if t:
+                return t
+
+    async def get_fs_template(
+        self, template_name: str, lang_code: str,
+        fallback_lang_code: str ='en'
+    ) -> Optional[EmailTemplate]:
+        names = []
+        for n in self._tempalte_names(
+            template_name + '.html',
+            lang_code,
+            fallback_lang_code,
+        ):
+            if isinstance(n, tuple):
+                names.append('/'.join(n))
+            else:
+                names.append(n)
+        try:
+            t = self._env.select_template([self._env.select_template])
+        except jinja2.TemplateNotFound:
+            return None
+        return EmailTemplate.create_from_jinja2(t)
+
     @method_connect_once
-    async def get_template_translation(self, template_name, lang_code, fallback_lang_code='en', connection=None):
+    async def get_db_template(
+        self, template_name: str, lang_code: str,
+        fallback_lang_code: str = 'en', connection: Any = None,
+    ) -> Optional[EmailTemplate]:
         """
         Requests translation of the email template with name given to the language specified.
         If there is no translation to the requested language tries to find fallback one.
@@ -126,7 +194,7 @@ class BaseMailer(Worker):
         # Try to find template with name given
         template = await self.app.models.email_template.get_by_name(template_name, connection=connection)
         if template is None:
-            logger.error("No template name '%s' found in DB", template_name)
+            logger.info("No template name '%s' found in DB", template_name)
             return
         # Try to find its translation to specifed language
         translation = await template.get_translation(lang_code, connection=connection)
@@ -137,39 +205,55 @@ class BaseMailer(Worker):
                 lang_code, template_name, fallback_lang_code)
             translation = await template.get_translation(fallback_lang_code, connection=connection)
         if translation:
-            return translation.as_dict()
+            return EmailTemplate(**translation.as_dict())
         else:
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
+
+    def get_context(self, *args, **kwargs) -> Mapping[str, Any]:
+        url = self.context.config.http.get_url('url', '/', null=True)
+        image_url = self.config.get_url('image_url', None, null=True)
+        if image_url:
+            image_url = url.join(image_url)
+        else:
+            image_url = url
+        context = ChainMap(dict(image_url=str(image_url)))
+        for m in args:
+            if not m:
+                continue
+            elif not isinstance(m, Mapping):
+                raise TypeError(
+                    'context should be mapping, not {}'.format(type(context)))
+            context = context.new_child(m)
+        return context.new_child(kwargs)
 
     async def send(self, mail_to, subject=None, body=None, *, html=None,
                    context=None, connection=None, template=None, db_connection=None,
                    attachments=None, save=True, lang_code='en', fallback_lang_code='en'):
         if template:
-            tr = await self.get_template_translation(
-                template, lang_code, fallback_lang_code, connection=db_connection)
-            if not tr:
-                raise KeyError("No template named '{}' in DB".format(template))
-            subject = tr['subject']
-            body = tr['body']
-            if 'html' in tr:
-                html = tr['html']
+            email_template = await self.get_db_template(
+                template, lang_code, fallback_lang_code,
+                connection=db_connection,
+            )
+            if not email_template:
+                email_template = await self.get_fs_template(
+                    template, lang_code, fallback_lang_code,
+                )
+            if not email_template:
+                email_template = await self.get_dict_template(
+                    template, lang_code, fallback_lang_code,
+                )
+            if not email_template:
+                raise KeyError("No template named '{}'".format(template))
+        else:
+            email_template = EmailTemplate.create_from_str(
+                subject=subject,
+                body=body,
+                html=html,
+                env=self._env,
+            )
 
-        elif not subject or not body:
-            raise ValueError()
-
-        if not isinstance(context, Mapping):
-            context = {}
-
-        if isinstance(body, str):
-            body = FormatRender(self.app, body)
-        if isinstance(subject, str):
-            subject = FormatRender(self.app, subject)
-        if isinstance(html, str):
-            html = Jinja2Render(self.app, from_string=html)
-        for i in (subject, body, html):
-            if i and not isinstance(i, Render):
-                raise TypeError('Unsupported type {}'.format(type(i)))
+        ctx = self.get_context(context)
 
         if not isinstance(mail_to, list):
             mail_to = mail_to.split(',')
@@ -177,12 +261,15 @@ class BaseMailer(Worker):
         for recipient in mail_to:
             kwargs = dict(
                 mail_to=[recipient],
-                body=body.render(context, mail_to=recipient),
-                subject=subject.render(context, mail_to=recipient),
+                body=email_template.body.render(ctx, mail_to=recipient),
+                subject=email_template.subject.render(ctx, mail_to=recipient),
+                html=None,
                 template=template,
-                html=html and html.render(context, mail_to=recipient),
                 attachments=attachments,
             )
+            if email_template.html:
+                kwargs['html'] = email_template.html.render(ctx, mail_to=recipient)
+
             if save:
                 message = await self.app.models.mail_message.create(
                     **kwargs, connection=db_connection)

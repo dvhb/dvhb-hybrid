@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 
 
@@ -76,11 +77,36 @@ cleanup_ctx_redis_sessions = functools.partial(
     cleanup_ctx_redis, app_key='sessions', cfg_key='sessions')
 
 
-async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
-    import asyncpgsa
+async def cleanup_ctx_aiopg(app, cfg_key='default', app_key='db'):
+    import aiopg.sa
     from dvhb_hybrid.amodels import AppModels
     dbparams = app.context.config.databases.get(cfg_key)
     app.models = app.m = AppModels(app)
-    async with asyncpgsa.create_pool(**dbparams) as pool:
+    async with aiopg.sa.create_engine(dbparams.uri) as pool:
+        app[app_key] = pool
+        yield
+
+
+async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
+    import asyncpgsa
+    from dvhb_hybrid.amodels import AppModels
+
+    app.models = app.m = AppModels(app)
+
+    async def init(connection):
+        for t in ['json', 'jsonb']:
+            await connection.set_type_codec(
+                t,
+                encoder=lambda x: x,
+                decoder=json.loads,
+                schema='pg_catalog',
+            )
+    dbparams = app.context.config.databases.get(cfg_key)
+    if 'uri' in dbparams:
+        dbargs, dbkwargs = (dbparams.uri,), {}
+    else:
+        dbargs, dbkwargs = (), dbparams
+
+    async with asyncpgsa.create_pool(*dbargs, init=init, **dbkwargs) as pool:
         app[app_key] = pool
         yield

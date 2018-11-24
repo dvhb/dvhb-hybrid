@@ -3,14 +3,13 @@ from pathlib import Path
 import asyncpgsa
 import django
 import pytest
+import yaml
 from aiohttp.web import Application
-from django.core.management import call_command
 from aioworkers.core.config import Config
 from aioworkers.core.context import Context
+from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
-from dvhb_hybrid.utils import import_class
-
 
 TESTS_DIR = Path(__file__).parent
 
@@ -28,14 +27,20 @@ INSTALLED_APPS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dvhb_hybrid_app',
+        'NAME': 'dvhb_hybrid',
     }
 }
 
 
+class Conf(Config):
+    def load_yaml(self, s):
+        self.update(yaml.load(s))
+
+
 @pytest.fixture
 def config():
-    c = Config()
+    c = Conf()
+    c.load_plugins(force=True)
     c.load(
         TESTS_DIR / 'config.yaml',
     )
@@ -53,31 +58,13 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context, loop):
-    import dvhb_hybrid
-    from dvhb_hybrid.amodels import AppModels
-
-    pool = asyncpgsa.create_pool('postgres://localhost:5432/test_dvhb_hybrid_app')
-    context.db = pool
-
-    app = Application(loop=loop)
-    context.app = app
-    app.context = context
-    app['db'] = loop.run_until_complete(pool.__aenter__())
-
-    AppModels.import_all_models_from_packages(dvhb_hybrid)
-    app.models = app.m = AppModels(app)
-
-    Mailer = import_class('dvhb_hybrid.mailer.django.Mailer')
-    Mailer.setup(app, {'from_email': 'no-replay@dvhb.ru'})
-
-    yield app
-
-    loop.run_until_complete(pool.__aexit__(None, None, None))
+def app(context):
+    yield context.app
 
 
 @pytest.fixture
 def cli(app, test_client):
+    # TODO Rename (cli is command line interface)
     async def create_client():
         client = await test_client(app)
         return client

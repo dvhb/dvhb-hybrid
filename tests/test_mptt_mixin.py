@@ -55,14 +55,16 @@ def assert_nodes_ids(items, ids, pk='id'):
 
 
 @pytest.mark.django_db
-async def test_create_one_top(clear_table, create_test_model_instance):
+async def test_create_one_top(clear_table, create_test_model_instance, app, aiohttp_client):
+    await aiohttp_client(app)
     await clear_table()
     top1 = await create_test_model_instance(name="Top1")
     await assert_mptt_valid(top1, parent_id=None, level=0, tree_id=1, lft=1, rght=2)
 
 
 @pytest.mark.django_db
-async def test_create_two_tops(clear_table, create_test_model_instance):
+async def test_create_two_tops(clear_table, create_test_model_instance, app, aiohttp_client):
+    await aiohttp_client(app)
     await clear_table()
     top1 = await create_test_model_instance(name="Top1")
     top2 = await create_test_model_instance(name="Top2")
@@ -72,7 +74,8 @@ async def test_create_two_tops(clear_table, create_test_model_instance):
 
 @pytest.mark.django_db
 async def test_create_parent_and_child(
-        clear_table, create_test_model_instance, get_test_model_instance):
+        clear_table, create_test_model_instance, get_test_model_instance, app, aiohttp_client):
+    await aiohttp_client(app)
     await clear_table()
     parent = await create_test_model_instance(name="Parent")
     child = await create_test_model_instance(parent_id=parent.pk, name="Child")
@@ -82,7 +85,8 @@ async def test_create_parent_and_child(
 
 @pytest.mark.django_db
 async def test_create_parent_and_child_and_grandchild(
-        clear_table, create_test_model_instance, get_test_model_instance):
+        clear_table, create_test_model_instance, get_test_model_instance, app, aiohttp_client):
+    await aiohttp_client(app)
     await clear_table()
     parent = await create_test_model_instance(name="Parent")
     child = await create_test_model_instance(parent_id=parent.pk, name="Child")
@@ -94,7 +98,11 @@ async def test_create_parent_and_child_and_grandchild(
 
 
 @pytest.mark.django_db
-async def test_create_complex_tree(clear_table, create_test_model_instance, get_test_model_instance):
+async def test_create_complex_tree(
+    clear_table, create_test_model_instance, get_test_model_instance,
+    app, aiohttp_client
+):
+    await aiohttp_client(app)
     await clear_table()
     # Create tree
     food = await create_test_model_instance(name="Food")

@@ -13,7 +13,7 @@ async def test_oauth_callback_unknown_provider(oauth_callback_request):
 
 @pytest.mark.django_db
 async def test_oauth_redirect_provider_not_configured(oauth_callback_request):
-    await oauth_callback_request(provider_name='google', configure_social=False, code='xxx', expected_status=404)
+    await oauth_callback_request(provider_name='google', code='xxx', expected_status=404)
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def execute_callback(oauth_callback_request):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize('provider', PROVIDERS_TO_TEST)
-async def test_oauth_callback_successful(provider, app, test_client, execute_callback, social_conf, get_user):
+async def test_oauth_callback_successful(provider, app, test_client, execute_callback, config, get_user):
     await test_client(app)  # To initialize DB
 
     profile_data = PROVIDER_PARAMS[provider]['profile_data']
@@ -51,7 +51,7 @@ async def test_oauth_callback_successful(provider, app, test_client, execute_cal
     # First attempt should create and login new user
     location = await execute_callback(provider)
     # Should be redirected to login success page
-    assert location == social_conf['url']['success']
+    assert location == config.social['url']['success']
     user = await get_user(email=email)
     assert user.last_login is not None
     assert user['oauth_info'][provider] == profile_data['id']
@@ -63,11 +63,11 @@ async def test_oauth_callback_successful(provider, app, test_client, execute_cal
     # Second attempt should login existing user
     location = await execute_callback(provider)
     # Should be redirected to login success page
-    assert location == social_conf['url']['success']
+    assert location == config.social['url']['success']
 
 
 @pytest.mark.django_db
-async def test_oauth_callback_several_providers(app, test_client, uuid, execute_callback, social_conf, get_user):
+async def test_oauth_callback_several_providers(app, test_client, uuid, execute_callback, get_user):
     await test_client(app)  # To initialize DB
 
     email = '{}@example.com'.format(uuid())
