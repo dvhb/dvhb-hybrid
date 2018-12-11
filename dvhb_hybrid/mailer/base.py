@@ -205,7 +205,7 @@ class BaseMailer(Worker):
                 lang_code, template_name, fallback_lang_code)
             translation = await template.get_translation(fallback_lang_code, connection=connection)
         if translation:
-            return EmailTemplate(**translation.as_dict())
+            return EmailTemplate(**translation.as_dict(self._env))
         else:
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
