@@ -42,12 +42,12 @@ class EmailTemplateTranslation(Model):
             connection=connection,
             silent=True)
 
-    def as_dict(self):
+    def as_dict(self, env=None):
         data = {
-            'subject': FormatRender(self.app, self.message_subject),
-            'body': FormatRender(self.app, self.message_body),
+            'subject': FormatRender(self.message_subject),
+            'body': FormatRender(self.message_body),
         }
         html = self.file_html
         if html:
-            data['html'] = Jinja2Render(self.app, template_name=html)
+            data['html'] = Jinja2Render(env=env, template_name=html)
         return data
