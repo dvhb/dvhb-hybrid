@@ -121,7 +121,7 @@ def convert_m2m(field):
         model_name = convert_class_name(dj_model.__name__)
         if hasattr(models, model_name):
             # Get existing relationship model
-            model = getattr(app.m, model_name)
+            model = getattr(models, model_name)
         else:
             # Create new relationship model
             model = type(dj_model.__name__, (Model,), {})
