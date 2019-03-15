@@ -3,7 +3,7 @@ import functools
 from weakref import WeakKeyDictionary
 
 from .debug import ConnectionLogger
-from ..utils import get_context_from_parameters
+from ..utils import get_app_from_parameters, get_context_from_parameters
 
 
 class Guard:
@@ -46,15 +46,15 @@ def method_connect_once(arg):
 
 
 def method_redis_once(arg):
-    redis: str = 'redis'
+    redis = 'redis'
 
     def with_arg(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             if kwargs.get(redis) is None:
-                context = get_context_from_parameters(*args, **kwargs)
-                # redis is predefined key for redis in context
-                kwargs['redis'] = context.redis
+                app = get_app_from_parameters(*args, **kwargs)
+                # TODO with Guard(redis, app.loop):
+                kwargs[redis] = app[redis]
             return await func(*args, **kwargs)
         return wrapper
 
