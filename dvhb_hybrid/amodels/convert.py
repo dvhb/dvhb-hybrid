@@ -116,20 +116,21 @@ def convert_m2m(field):
     else:
         raise ConversionError('Unknown many to many field: %r' % field)
 
-    def m2m_factory(app):
+    def m2m_factory(app=None, context=None):
+        models = context.models if context is not None else app.m
         model_name = convert_class_name(dj_model.__name__)
-        if hasattr(app.m, model_name):
+        if hasattr(models, model_name):
             # Get existing relationship model
             model = getattr(app.m, model_name)
         else:
             # Create new relationship model
             model = type(dj_model.__name__, (Model,), {})
             model.table = model.get_table_from_django(dj_model)
-            model = model.factory(app)
+            model = model.factory(app=app, context=context)
 
         # Note that async model's name should equal to corresponding django model's name
         target_model_name = convert_class_name(field.related_model.__name__)
-        target_model = getattr(app.m, target_model_name)
+        target_model = getattr(models, target_model_name)
 
         return ManyToManyRelationship(app, model, target_model, source_field, target_field)
 

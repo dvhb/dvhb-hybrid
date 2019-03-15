@@ -49,6 +49,6 @@ class ContextModels(AbstractEntity):
             setattr(self, item, sub_class)
             if hasattr(model_cls, 'relationships'):
                 for k, v in model_cls.relationships.items():
-                    setattr(sub_class, k, v(self.context.app))
+                    setattr(sub_class, k, v(app=self.context.app, context=self.context))
             return sub_class
         raise AttributeError('%r has no attribute %r' % (self, item))
