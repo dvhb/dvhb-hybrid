@@ -68,9 +68,9 @@ class Jinja2Render(Render):
         else:
             self._env = None
         if from_string:
-            self.template = env.from_string(from_string)
+            self.template = self._env.from_string(from_string)
         elif self._env:
-            self.template = env.get_template(template_name)
+            self.template = self._env.get_template(template_name)
         else:
             raise ValueError()
 

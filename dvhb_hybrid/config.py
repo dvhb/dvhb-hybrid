@@ -61,7 +61,7 @@ def redis_to_settings(redis_dict):
 async def cleanup_ctx_redis(app, cfg_key='default', app_key='redis'):
     import aioredis
     cfg = app.context.config.redis[cfg_key].get('connection', {})
-    address = cfg.pop('host', 'localhost'), cfg.pop('port', 6379)
+    address = cfg.get('host', 'localhost'), cfg.get('port', 6379)
     pool = await aioredis.create_redis_pool(
         address,
         db=cfg.get('db', 0),
