@@ -30,16 +30,18 @@ async def sitemap(request, redis, *, key, data):
     else:
         key = ':'.join(['sitemap', key])
 
-    body = await redis.get(key)
-    if body:
-        return web.Response(body=body, content_type=content_type)
+    if redis:
+        body = await redis.get(key)
+        if body:
+            return web.Response(body=body, content_type=content_type)
 
     if asyncio.iscoroutine(data):
         data = await data
     body = get_xml(request, data)
     body = '\n'.join([doctype, body])
-    await redis.set(key, body)
-    await redis.expire(key, 3600)
+    if redis:
+        await redis.set(key, body)
+        await redis.expire(key, 3600)
     return web.Response(text=body, content_type=content_type)
 
 
