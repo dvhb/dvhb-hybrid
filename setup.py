@@ -30,7 +30,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'django',
-        'psycopg2',
+        'psycopg2-binary',
         'aioredis>=1.0.0',
         'aioworkers',
         'aiohttp-apiset',
