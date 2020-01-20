@@ -43,66 +43,59 @@ paths:
               uuid:
                 type: string
 
-  '/{uuid}/{processor}_{width:\d+}x{height:\d+}.{ext}':
+  '/{uuid}/{processor}_{width}x{height}.{ext}':
     $name: hybrid.files:image:processor
+    parameters:
+      - &param_uuid
+        name: uuid
+        in: path
+        description: Image ID
+        required: true
+        type: string
+      - &param_processor
+        name: processor
+        in: path
+        description: processor for image
+        required: true
+        type: string
+        enum:
+        - size
+      - &param_width
+        name: width
+        in: path
+        description: Desired width of the image
+        required: true
+        type: integer
+        format: int32
+        minimum: 2
+        maximum: 3000
+      - &param_height
+        name: height
+        in: path
+        description: Desired height of the image
+        required: true
+        type: integer
+        format: int32
+        minimum: 2
+        maximum: 3000
+      - &param_ext
+        name: ext
+        in: path
+        description: Image file extension (could be arbitrary)
+        required: true
+        type: string
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
       summary: Scale original image to the size specified
     get:
-      operationId: photo_handler
+      operationId: photo_handler_wh
       tags:
         - files
       summary: Scale original image to the size specified
       description: Returns URL for the image scaled to the specified resolution.
         The image could be cropped to preserve original aspect ratio
-
-      parameters:
-
-        - &param_uuid
-          name: uuid
-          in: path
-          description: Image ID
-          required: true
-          type: string
-
-        - &param_processor
-          name: processor
-          in: path
-          description: processor for image
-          required: true
-          type: string
-          enum:
-          - size
-
-        - &param_width
-          name: width
-          in: path
-          description: Desired width of the image
-          required: true
-          type: integer
-          format: int32
-          minimum: 2
-          maximum: 3000
-
-        - &param_height
-          name: height
-          in: path
-          description: Desired height of the image
-          required: true
-          type: integer
-          format: int32
-          minimum: 2
-          maximum: 3000
-
-        - &param_ext
-          name: ext
-          in: path
-          description: Image file extension (could be arbitrary)
-          required: true
-          type: string
-
       responses: &get_response
         404:
           description: Not found
@@ -113,92 +106,77 @@ paths:
           schema:
             type: object
 
-  '/{uuid}/{processor}_{width:\d+}x{height:\d+}_2x.{ext}':
+  '/{uuid}/{processor}_{width}x{height}_2x.{ext}':
     $name: hybrid.files:image_2x:processor
+    parameters:
+      - *param_uuid
+      - *param_processor
+      - *param_width
+      - *param_height
+      - *param_ext
+      - &param_retina
+        name: retina
+        in: path
+        description: Retina
+        type: boolean
+        default: true
+        required: true
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
       summary: Scale original image to 2x of the size specified
     get:
-      operationId: photo_handler
+      operationId: photo_handler_wh_2x
       tags:
         - files
       summary: Scale original image to 2x of the size specified
       description: Returns URL for the image scaled to 2x of the specified resolution.
         The image could be cropped to preserve original aspect ratio
-
-      parameters:
-        - *param_uuid
-        - *param_processor
-        - *param_width
-        - *param_height
-        - *param_ext
-        - &param_retina
-          name: retina
-          in: path
-          description: Retina
-          type: boolean
-          default: true
-          required: true
-
       responses: *get_response
 
   '/{uuid}/origin_2x.{ext}':
     $name: hybrid.files:image_2x:origin
+    parameters:
+      - *param_uuid
+      - *param_ext
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
       summary: Return original image scaled 2x
+      parameters:
+        - *param_uuid
+        - *param_ext
     get:
-      operationId: photo_handler
+      operationId: photo_handler_origin_2x
       tags:
         - files
       summary: Return original image scaled 2x
       description: Returns URL for the image scaled to 2x of its original resolution
-
-      parameters:
-        - *param_uuid
-        - *param_ext
-
       responses: *get_response
 
   '/{uuid}/origin.{ext}':
     $name: hybrid.files:image:origin
+    parameters:
+      - *param_uuid
+      - *param_ext
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
         - files
       summary: Return original image
     get:
-      operationId: photo_handler
+      operationId: photo_handler_origin
       tags:
         - files
       summary: Return original image
       description: Returns URL for the image
-
-      parameters:
-        - *param_uuid
-        - *param_ext
-
       responses: *get_response
 
-  '/{uuid}/{processor}_{width_or_height:\d+}.{ext}':
+  '/{uuid}/{processor}_{width_or_height}.{ext}':
     $name: hybrid.files:image_width:processor
-    head:
-      $handler: dvhb_hybrid.aviews.http200
-      tags:
-      - files
-      summary: Scale original image to the width/heigth specified
-    get:
-      operationId: scale_to_width_or_height
-      tags:
-      - files
-      summary: Scale original image to the width or height specified
-      description: Returns URL of the image scaled to the specified width or height keeping aspect ratio
-
-      parameters:
+    parameters:
       - *param_uuid
       - &param_processor_wh
         name: processor
@@ -219,28 +197,36 @@ paths:
         minimum: 2
         maximum: 3000
       - *param_ext
-
+    head:
+      $handler: dvhb_hybrid.aviews.http200
+      tags:
+      - files
+      summary: Scale original image to the width/heigth specified
+    get:
+      operationId: scale_to_width_or_height
+      tags:
+      - files
+      summary: Scale original image to the width or height specified
+      description: Returns URL of the image scaled to the specified width or height keeping aspect ratio
       responses: *get_response
 
-  '/{uuid}/{processor}_{width_or_height:\d+}_2x.{ext}':
+  '/{uuid}/{processor}_{width_or_height}_2x.{ext}':
     $name: hybrid.files:image_2x_width_height:processor
+    parameters:
+      - *param_uuid
+      - *param_processor_wh
+      - *param_width_height
+      - *param_ext
+      - *param_retina
     head:
       $handler: dvhb_hybrid.aviews.http200
       tags:
       - files
       summary: Scale original image to 2x of the width/heigth specified
     get:
-      operationId: scale_to_width_or_height
+      operationId: scale_to_width_or_height_2x
       tags:
       - files
       summary: Scale original image to 2x of the width/heigth specified
       description: Returns URL of the image scaled to 2x of the specified width or height keeping aspect ratio
-
-      parameters:
-      - *param_uuid
-      - *param_processor_wh
-      - *param_width_height
-      - *param_ext
-      - *param_retina
-
       responses: *get_response
