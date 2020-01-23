@@ -50,4 +50,6 @@ class EmailTemplateTranslation(Model):
         html = self.file_html
         if html:
             data['html'] = Jinja2Render(env=env, template_name=html)
+        else:
+            data['html'] = None
         return data
