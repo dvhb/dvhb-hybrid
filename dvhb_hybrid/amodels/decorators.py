@@ -3,7 +3,7 @@ import functools
 from weakref import WeakKeyDictionary
 
 from .debug import ConnectionLogger
-from ..utils import get_app_from_parameters
+from ..utils import get_app_from_parameters, get_context_from_parameters
 
 
 class Guard:
@@ -30,9 +30,10 @@ def method_connect_once(arg):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             if kwargs.get('connection') is None:
-                app = get_app_from_parameters(*args, **kwargs)
-                with Guard('pg', app.loop):
-                    async with app['db'].acquire() as connection:
+                context = get_context_from_parameters(*args, **kwargs)
+                with Guard('pg', context.loop):
+                    # db is predefined key for postgres in context
+                    async with context.db.acquire() as connection:
                         kwargs['connection'] = ConnectionLogger(connection)
                         return await func(*args, **kwargs)
             else:

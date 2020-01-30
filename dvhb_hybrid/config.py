@@ -110,4 +110,6 @@ async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
 
     async with asyncpgsa.create_pool(*dbargs, init=init, **dbkwargs) as pool:
         app[app_key] = pool
+        app.context['databases.' + cfg_key] = pool
+        app.context[app_key] = pool  # TODO delete?
         yield
