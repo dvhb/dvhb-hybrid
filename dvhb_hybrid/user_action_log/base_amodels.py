@@ -39,7 +39,7 @@ class BaseUserActionLogEntry(Model):
             object_repr=None,
         )
         if request is not None:
-            peername = request.transport.get_extra_info('peername')
+            peername = request.transport.get_extra_info('peername') if request.transport else None
             if peername is not None:
                 rec_data['ip_address'], _ = peername
             if hasattr(request, 'user'):
