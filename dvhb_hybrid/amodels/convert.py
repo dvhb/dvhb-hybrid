@@ -2,12 +2,10 @@ import logging
 
 import sqlalchemy as sa
 import sqlalchemy.types as sa_types
-from django.db.models import ForeignKey, ManyToManyField, ManyToManyRel, OneToOneField
+from django.db.models import ForeignKey, OneToOneField
 from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY, JSONB as SA_JSONB, UUID as SA_UUID
 
-from .model import Model
-from .relations import ManyToManyRelationship
-from ..utils import convert_class_name
+from .relations import RelationshipProperty
 
 logger = logging.getLogger(__name__)
 
@@ -104,38 +102,6 @@ class FieldConverter:
 FIELD_CONVERTER = FieldConverter()
 
 
-def convert_m2m(field):
-    if isinstance(field, ManyToManyField):
-        dj_model = field.remote_field.through
-        source_field = field.m2m_column_name()
-        target_field = field.m2m_reverse_name()
-    elif isinstance(field, ManyToManyRel):
-        dj_model = field.through
-        source_field = field.remote_field.m2m_reverse_name()
-        target_field = field.remote_field.m2m_column_name()
-    else:
-        raise ConversionError('Unknown many to many field: %r' % field)
-
-    def m2m_factory(app):
-        model_name = convert_class_name(dj_model.__name__)
-        if hasattr(app.m, model_name):
-            # Get existing relationship model
-            model = getattr(app.m, model_name)
-        else:
-            # Create new relationship model
-            model = type(dj_model.__name__, (Model,), {})
-            model.table = model.get_table_from_django(dj_model)
-            model = model.factory(app)
-
-        # Note that async model's name should equal to corresponding django model's name
-        target_model_name = convert_class_name(field.related_model.__name__)
-        target_model = getattr(app.m, target_model_name)
-
-        return ManyToManyRelationship(app, model, target_model, source_field, target_field)
-
-    return m2m_factory
-
-
 def convert_model(model, **field_types):
     """
     Converts Django model to SQLAlchemy table
@@ -143,24 +109,17 @@ def convert_model(model, **field_types):
     options = model._meta
     fields = []
     rels = {}
-    for f in options.get_fields():
+    for f in options.get_fields(include_hidden=True):
         i = f.name
         if i in field_types:
             fields.append(sa.column(i, field_types[i]))
         elif f.is_relation:
-            if f.many_to_many:
-                rels[i] = convert_m2m(f)
-            elif f.many_to_one:
-                # TODO: Add ManyToOneRelationship to rels
+            rel_name = i.replace('+', '')  # FIXME: should we skip such fields?
+            rels[rel_name] = RelationshipProperty.from_django(f)
+            if f.many_to_one:
                 fields.append(FIELD_CONVERTER.convert(f))
-            elif f.one_to_many:
-                pass  # TODO: Add OneToManyRelationship to rels
-            elif f.one_to_one:
-                # TODO: Add OneToOneRelationship to rels
-                if not f.auto_created:
-                    fields.append(FIELD_CONVERTER.convert(f))
-            else:
-                raise ConversionError('Unknown relation: {}'.format(i))
+            elif f.one_to_one and not f.auto_created:
+                fields.append(FIELD_CONVERTER.convert(f))
         else:
             fields.append(FIELD_CONVERTER.convert(f))
     return sa.table(options.db_table, *fields), rels
@@ -170,7 +129,10 @@ def derive_from_django(dj_model, **field_types):
     def wrapper(amodel):
         table, rels = convert_model(dj_model, **field_types)
         amodel.table = table
-        amodel.relationships = rels
+        amodel.relationships = tuple(rels.keys())
+        for k, v in rels.items():
+            setattr(amodel, k, v)
+        amodel.primary_key = dj_model._meta.pk.attname
         return amodel
     return wrapper
 

@@ -32,9 +32,6 @@ class AppModels:
             model_cls = Model.models[item]
             sub_class = model_cls.factory(self.app)
             setattr(self, item, sub_class)
-            if hasattr(model_cls, 'relationships'):
-                for k, v in model_cls.relationships.items():
-                    setattr(sub_class, k, v(self.app))
             return sub_class
         raise AttributeError('%r has no attribute %r' % (self, item))
 

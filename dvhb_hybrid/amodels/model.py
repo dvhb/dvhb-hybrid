@@ -440,8 +440,28 @@ class Model(dict, metaclass=MetaModel):
 
     @method_connect_once
     async def delete(self, connection=None):
-        pk_field = self.table.c[self.primary_key]
-        await connection.fetchval(self.table.delete().where(pk_field == self.pk))
+        async with connection.transaction():
+            await self._delete_relationships(connection=connection)
+            pk_field = self.table.c[self.primary_key]
+            await connection.fetchval(self.table.delete().where(pk_field == self.pk))
+
+    @method_connect_once
+    async def _delete_relationships(self, connection=None):
+        if not hasattr(self, 'relationships'):
+            return
+        for k in self.relationships:
+            relation = getattr(self, k, None)
+            if relation is None:
+                raise AttributeError('Relationship {} for {} is not found'.format(
+                    k,
+                    type(self).__name__
+                ))
+            if relation.is_many_to_many:
+                await relation.delete_by_source(self.pk, connection=connection)
+            elif relation.is_one_to_many:
+                await relation.delete_related(self.pk, connection=connection)
+            elif relation.is_one_to_one:
+                await relation.delete_related(self.pk, connection=connection)
 
     @classmethod
     @method_connect_once
