@@ -1,8 +1,13 @@
 import json
 
+from django import forms
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import get_available_image_extensions, FileExtensionValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
+from .utils import validate_svg_file
 
 
 class CreatedMixin(models.Model):
@@ -42,3 +47,26 @@ class JSONFieldsMixin:
                 else:
                     setattr(self, f, v)
         super().save(force_insert, force_update, using, update_fields)
+
+
+def validate_image_and_svg_file_extension(value):
+    allowed_extensions = get_available_image_extensions() + ["svg"]
+    return FileExtensionValidator(allowed_extensions=allowed_extensions)(value)
+
+
+class SVGAndImageFieldForm(forms.ImageField):
+    default_validators = [validate_image_and_svg_file_extension]
+
+    def to_python(self, data):
+        try:
+            f = super().to_python(data)
+        except ValidationError:
+            return validate_svg_file(data)
+        return f
+
+
+class SVGAndImageField(models.ImageField):
+    def formfield(self, **kwargs):
+        defaults = {'form_class': SVGAndImageFieldForm}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
