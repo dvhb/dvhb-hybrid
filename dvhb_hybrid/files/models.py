@@ -6,7 +6,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from ..models import UpdatedMixin
+from ..models import UpdatedMixin, SVGAndImageField
 from .storages import image_storage
 
 
@@ -15,7 +15,7 @@ class Image(UpdatedMixin, models.Model):
         settings.AUTH_USER_MODEL, related_name='images',
         verbose_name=_('Author'), on_delete=models.PROTECT)
     uuid = models.UUIDField(_('UUID'), primary_key=True)
-    image = models.ImageField(storage=image_storage)
+    image = SVGAndImageField(storage=image_storage)
     mime_type = models.CharField(_('content type'), max_length=99, blank=True)
     meta = JSONField(_('meta-information'), default=dict, blank=True)
 

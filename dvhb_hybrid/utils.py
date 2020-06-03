@@ -7,9 +7,11 @@ import os
 import re
 import time
 import uuid
+import xml.etree.cElementTree as xml_et
 import zlib
 
 import aiohttp
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from .aviews import JsonEncoder
@@ -190,3 +192,20 @@ def get_app_from_parameters(*args, **kwargs):
             return i.request.app
         elif hasattr(i, '_context'):
             return i._context.app
+
+
+def validate_svg_file(f):
+    tag = None
+    f.seek(0)
+    try:
+        for event, el in xml_et.iterparse(f, ('start',)):
+            tag = el.tag
+            break
+    except xml_et.ParseError:
+        pass
+
+    if tag != '{http://www.w3.org/2000/svg}svg':
+        raise ValidationError('Uploaded file is not an image or SVG file')
+
+    f.seek(0)
+    return f
