@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -33,7 +34,11 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        user_model = get_user_model()
+        registry = admin.site._registry
+        if user_model not in registry:
+            return False
+        return registry[user_model].has_delete_permission(request, obj=obj)
 
     def get_actions(self, request):
         actions = super().get_actions(request)
