@@ -21,7 +21,10 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Дата обновления')),
                 ('uuid', models.UUIDField(primary_key=True, serialize=False, verbose_name='UUID')),
-                ('image', models.ImageField(storage=dvhb_hybrid.files.storages.ImageStorage(), upload_to='')),
+                ('image', dvhb_hybrid.models.SVGAndImageField(
+                    storage=dvhb_hybrid.files.storages.ImageStorage(),
+                    upload_to=''
+                )),
                 ('mime_type', models.CharField(blank=True, max_length=99, verbose_name='тип содежимого')),
                 ('meta', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default={}, verbose_name='мета-информация')),
             ],
