@@ -9,8 +9,8 @@ paths:
       description: Returns api key on success
 
       consumes:
-      - application/json
       - application/x-www-form-urlencoded
+      - application/json
 
       produces:
       - application/json
@@ -71,8 +71,8 @@ paths:
       description: Activate user account using code sent via activation email message
 
       consumes:
-        - application/json
         - application/x-www-form-urlencoded
+        - application/json
 
       parameters:
       - name: activation_code
@@ -103,8 +103,8 @@ paths:
       - UserSecurity: []
 
       consumes:
-        - application/json
         - application/x-www-form-urlencoded
+        - application/json
 
       parameters:
         - name: old_password
@@ -135,8 +135,8 @@ paths:
       - UserSecurity: []
 
       consumes:
-        - application/json
         - application/x-www-form-urlencoded
+        - application/json
 
       parameters:
       - name: lang_code
@@ -163,6 +163,10 @@ paths:
 
       security:
       - UserSecurity: []
+
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
 
       parameters:
       - name: confirmation_code
@@ -191,6 +195,10 @@ paths:
 
       security:
       - UserSecurity: []
+
+      consumes:
+      - application/x-www-form-urlencoded
+      - application/json
 
       parameters:
       - name: confirmation_code
@@ -221,8 +229,8 @@ paths:
       - UserSecurity: []
 
       consumes:
-        - application/json
-        - application/x-www-form-urlencoded
+      - application/x-www-form-urlencoded
+      - application/json
 
       parameters:
         - name: new_email_address
@@ -259,8 +267,8 @@ paths:
       security: []
 
       consumes:
-        - application/json
         - application/x-www-form-urlencoded
+        - application/json
 
       parameters:
       - name: confirmation_code
