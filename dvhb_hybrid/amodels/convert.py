@@ -5,6 +5,7 @@ import sqlalchemy.types as sa_types
 from django.db.models import ForeignKey, OneToOneField
 from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY, JSONB as SA_JSONB, UUID as SA_UUID
 
+from .. import utils
 from .relations import RelationshipProperty
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ def convert_model(model, **field_types):
         if i in field_types:
             fields.append(sa.column(i, field_types[i]))
         elif f.is_relation:
-            rel_name = i.replace('+', '')  # FIXME: should we skip such fields?
+            rel_name = _get_rel_name(f)
             rels[rel_name] = RelationshipProperty.from_django(f)
             if f.many_to_one:
                 fields.append(FIELD_CONVERTER.convert(f))
@@ -139,3 +140,13 @@ def derive_from_django(dj_model, **field_types):
 
 class ConversionError(Exception):
     pass
+
+
+def _get_rel_name(field):
+    name = field.name.replace('+', '')
+    if not name:
+        module_name = field.related_model.__module__.replace('.', '_')
+        class_name = utils.convert_class_name(field.related_model.__name__)
+        field_name = field.remote_field.name
+        name = '_{}_{}_{}'.format(module_name, class_name, field_name)
+    return name
