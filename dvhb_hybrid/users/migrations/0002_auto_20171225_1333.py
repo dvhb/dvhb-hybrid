@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dvhb_hybrid.users', '0001_initial'),
+        ('dvhb_hybrid_users', '0001_initial'),
     ]
 
     operations = [
