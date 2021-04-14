@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
 
@@ -26,7 +25,7 @@ class Migration(migrations.Migration):
                 ('message', models.TextField(verbose_name='log message')),
                 ('type', models.CharField(choices=[('reg', 'User registration'), ('auth', 'User authentification'), ('crud', 'CRUD'), ('email', 'Email')], max_length=20, verbose_name='action type')),
                 ('subtype', models.CharField(choices=[('create', 'Created'), ('update', 'Changed'), ('delete', 'Deleted'), ('login', 'Login'), ('logout', 'Logout'), ('change_password', 'Change password')], max_length=20, verbose_name='action subtype')),
-                ('payload', django.contrib.postgres.fields.jsonb.JSONField(null=True, verbose_name='additional data')),
+                ('payload', models.JSONField(null=True, verbose_name='additional data')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='user')),
             ],
             options={

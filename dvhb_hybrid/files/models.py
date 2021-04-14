@@ -1,7 +1,6 @@
 import uuid
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -17,7 +16,7 @@ class Image(UpdatedMixin, models.Model):
     uuid = models.UUIDField(_('UUID'), primary_key=True)
     image = SVGAndImageField(storage=image_storage)
     mime_type = models.CharField(_('content type'), max_length=99, blank=True)
-    meta = JSONField(_('meta-information'), default=dict, blank=True)
+    meta = models.JSONField(_('meta-information'), default=dict, blank=True)
 
     class Meta:
         verbose_name = _('image')

@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -35,7 +34,7 @@ class BaseUserActionLogEntry(models.Model):
         max_length=20,
         choices=enum_to_choice(UserActionLogEntrySubType)
     )
-    payload = JSONField(_('additional data'), null=True)
+    payload = models.JSONField(_('additional data'), null=True)
     status = models.CharField(
         _('action status'),
         max_length=20, null=True, blank=True,
