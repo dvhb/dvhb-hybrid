@@ -1,7 +1,7 @@
 import os
 
 from django.conf.global_settings import LANGUAGES
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -17,7 +17,7 @@ class Message(models.Model):
     template = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(null=True)
-    attachments = JSONField(default=dict, blank=True, null=True)
+    attachments = models.JSONField(default=dict, blank=True, null=True)
 
 
 class Template(UpdatedMixin, models.Model):

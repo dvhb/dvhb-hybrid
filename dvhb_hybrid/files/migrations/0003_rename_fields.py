@@ -3,7 +3,6 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
 
@@ -32,7 +31,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='image',
             name='meta',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, verbose_name='meta-information'),
+            field=models.JSONField(blank=True, default=dict, verbose_name='meta-information'),
         ),
         migrations.AlterField(
             model_name='image',

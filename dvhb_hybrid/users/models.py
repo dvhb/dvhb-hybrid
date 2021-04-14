@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
-from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
@@ -84,7 +83,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
 
 
 class UserOAuthMixin(models.Model):
-    oauth_info = JSONField(_('OAuth information'), default=dict, null=True)
+    oauth_info = models.JSONField(_('OAuth information'), default=dict, null=True)
 
     class Meta:
         abstract = True
