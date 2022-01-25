@@ -4,7 +4,7 @@ from django.conf.global_settings import LANGUAGES
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from ..models import UpdatedMixin
 

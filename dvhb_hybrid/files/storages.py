@@ -3,8 +3,8 @@ import os
 from uuid import uuid4
 
 from django.core.files.storage import FileSystemStorage
-from django.utils.encoding import force_text, force_str
-from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import force_str
+from django.utils.translation import gettext_lazy as _
 
 from .. import utils
 
@@ -22,7 +22,7 @@ class BaseStorage(FileSystemStorage):
             if not os.path.exists(path):
                 os.makedirs(path)
         except:
-            logger.exception(force_text(self.ERROR_CREATE_DIR).format(path))
+            logger.exception(force_str(self.ERROR_CREATE_DIR).format(path))
 
     def uuid(self, name=None):
         if not name:

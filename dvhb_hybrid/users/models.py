@@ -3,7 +3,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from dvhb_hybrid.mailer.models import validate_lang_code
 from dvhb_hybrid.models import UpdatedMixin

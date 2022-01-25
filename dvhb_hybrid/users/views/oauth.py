@@ -59,7 +59,7 @@ class UserOAuthView:
         self._redirect(client.get_authorize_url())
 
     async def _create_new_user(self, user_info, provider, connection):
-        user = self.model(email=user_info['email'], password=make_password(get_random_string()), is_active=True)
+        user = self.model(email=user_info['email'], password=make_password(get_random_string(12)), is_active=True)
         self.model.set_defaults(user)
         await user.save(connection=connection)
         await user.save_oauth_info(provider, user_info['id'], connection=connection)
