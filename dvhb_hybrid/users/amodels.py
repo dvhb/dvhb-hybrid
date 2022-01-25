@@ -58,7 +58,7 @@ class AbstractUser(Model):
         self.date_deleted = utils.now()
         self.is_active = False
         # Add random string to email to allow new registration with such address
-        self.email = '#'.join((self.email[:230], get_random_string()))
+        self.email = '#'.join((self.email[:230], get_random_string(12)))
         await self.save(fields=['email', 'date_deleted', 'is_active'], connection=connection)
 
     @method_connect_once
