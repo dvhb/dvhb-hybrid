@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserChangeForm
 from django.core.files.images import get_image_dimensions
 from django.core.files.uploadedfile import UploadedFile
 from django.forms import forms
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .models import AbstractUser
 
