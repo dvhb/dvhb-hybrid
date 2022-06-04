@@ -1,6 +1,6 @@
 import pytest
 
-from .conftest import PROVIDERS_TO_TEST, PROVIDER_PARAMS
+from .conftest import PROVIDER_PARAMS, PROVIDERS_TO_TEST
 
 
 @pytest.mark.django_db

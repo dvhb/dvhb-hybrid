@@ -2,9 +2,9 @@ import logging
 from types import MappingProxyType
 from uuid import uuid4
 
+import pytest
 from django.contrib.auth.hashers import make_password
 
-import pytest
 
 logger = logging.getLogger(__name__)
 

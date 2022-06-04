@@ -3,6 +3,7 @@ import uuid
 import pytest
 
 from dvhb_hybrid import sitemap
+
 from .conftest import Conf
 
 
@@ -20,7 +21,8 @@ def config(config):
     return config
 
 
-async def test_sitemap(app, test_client):
+@pytest.mark.django_db
+async def test_sitemap(app, aiohttp_client):
 
     def sitemap_handler(request):
         return sitemap.sitemap(request, key=str(uuid.uuid4()), data={
@@ -30,6 +32,6 @@ async def test_sitemap(app, test_client):
         })
 
     app.router.add_get('/test', sitemap_handler)
-    client = await test_client(app)
+    client = await aiohttp_client(app)
     response = await client.get('/test')
     assert response.status == 200

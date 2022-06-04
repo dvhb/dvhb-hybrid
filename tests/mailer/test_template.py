@@ -1,6 +1,11 @@
 import jinja2
 
-from dvhb_hybrid.mailer.template import EmailTemplate, FormatRender, TemplateRender
+from dvhb_hybrid.mailer.template import (
+    EmailTemplate,
+    FormatRender,
+    TemplateRender,
+)
+
 
 HTML = """
 <html>

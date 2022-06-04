@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+
 import django
 import pytest
 import yaml
@@ -8,6 +10,7 @@ from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
 
+
 TESTS_DIR = Path(__file__).parent
 
 # Django settings
@@ -16,17 +19,23 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.auth',
-    'dvhb_hybrid.users',
+    'dvhb_hybrid.files',
     'dvhb_hybrid.mailer',
     'dvhb_hybrid.user_action_log',
+    'dvhb_hybrid.users',
     'tests',
 ]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'dvhb_hybrid',
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD')
     }
 }
+USE_TZ = False
 
 
 class Conf(Config):
