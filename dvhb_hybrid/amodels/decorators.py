@@ -2,8 +2,8 @@ import asyncio
 import functools
 from weakref import WeakKeyDictionary
 
-from .debug import ConnectionLogger
 from ..utils import get_app_from_parameters
+from .debug import ConnectionLogger
 
 
 class Guard:

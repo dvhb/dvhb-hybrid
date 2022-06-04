@@ -1,16 +1,15 @@
 import itertools
 import json
 import uuid
-
 from abc import ABCMeta
 from functools import reduce
 from operator import and_
 
 import sqlalchemy as sa
-
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy import func
+
 
 try:
     from modeltranslation import translator as dtrans
@@ -18,8 +17,8 @@ except ImportError:
     dtrans = None
 
 
+from .. import aviews, exceptions, utils
 from .decorators import method_connect_once, method_redis_once
-from .. import utils, exceptions, aviews
 
 
 CACHE_CATEGORY_COUNT = 'count'

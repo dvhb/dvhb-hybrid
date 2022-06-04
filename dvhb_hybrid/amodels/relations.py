@@ -11,8 +11,8 @@ from django.db.models import (
     OneToOneRel,
 )
 
-from .model import Model
 from .decorators import method_connect_once
+from .model import Model
 
 
 def _generate_model_name(dj_model):

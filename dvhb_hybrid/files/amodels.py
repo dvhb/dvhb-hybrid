@@ -2,11 +2,11 @@ import mimetypes
 from io import BytesIO
 
 from aiohttp import client
-from sqlalchemy import table, column
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import column, table
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from ..amodels import Model
 from .. import utils
+from ..amodels import Model
 from .storages import image_storage
 
 

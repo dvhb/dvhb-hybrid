@@ -2,8 +2,7 @@ import functools
 import operator
 import uuid
 
-from dvhb_hybrid import amodels, utils
-from dvhb_hybrid import exceptions
+from dvhb_hybrid import amodels, exceptions, utils
 from dvhb_hybrid.amodels import method_redis_once
 from dvhb_hybrid.redis import redis_key
 

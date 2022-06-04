@@ -80,6 +80,7 @@ cleanup_ctx_redis_sessions = functools.partial(
 
 async def cleanup_ctx_aiopg(app, cfg_key='default', app_key='db'):
     import aiopg.sa
+
     from dvhb_hybrid.amodels import AppModels
     dbparams = app.context.config.databases.get(cfg_key)
     app.models = app.m = AppModels(app)
@@ -90,6 +91,7 @@ async def cleanup_ctx_aiopg(app, cfg_key='default', app_key='db'):
 
 async def cleanup_ctx_databases(app, cfg_key='default', app_key='db'):
     import asyncpgsa
+
     from dvhb_hybrid.amodels import AppModels
 
     app.models = app.m = AppModels(app)

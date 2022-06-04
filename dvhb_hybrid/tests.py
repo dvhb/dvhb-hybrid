@@ -2,7 +2,6 @@ import json
 
 import pytest
 from aiohttp import ClientSession, hdrs, test_utils, web
-from aiohttp.web_exceptions import HTTPOk
 
 
 class BaseTestApi:
@@ -20,7 +19,7 @@ class BaseTestApi:
         return self.app.router[name]
 
     @staticmethod
-    async def check_status(result, response=HTTPOk):
+    async def check_status(result, response=web.HTTPOk):
         assert result.status == response.status_code, await result.text()
 
     @staticmethod
@@ -76,7 +75,7 @@ class AuthClient(TestClient):
             kwargs.setdefault(k, v)
         await self.ensure_user(**kwargs)
         response = await self.post(self.token_url, json=kwargs)
-        assert response.status == HTTPOk.status_code, await response.text()
+        assert response.status == web.HTTPOk.status_code, await response.text()
         await self.set_auth_session(response)
 
     async def set_auth_session(self, response):

@@ -1,7 +1,9 @@
 import os
 
-from dvhb_hybrid.config import db_to_settings
 from aioworkers.config import load_conf
+
+from dvhb_hybrid.config import db_to_settings
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

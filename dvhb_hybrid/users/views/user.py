@@ -1,11 +1,15 @@
-from aiohttp.web import json_response
-from aiohttp.web_exceptions import HTTPNotFound, HTTPConflict, HTTPUnauthorized
+from aiohttp.web import (
+    HTTPConflict,
+    HTTPNotFound,
+    HTTPUnauthorized,
+    json_response,
+)
 from aiohttp_apiset.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 
-from dvhb_hybrid.amodels import method_redis_once, method_connect_once
+from dvhb_hybrid.amodels import method_connect_once, method_redis_once
 from dvhb_hybrid.decorators import recaptcha
-from dvhb_hybrid.permissions import permissions, gen_api_key
+from dvhb_hybrid.permissions import gen_api_key, permissions
 from dvhb_hybrid.redis import redis_key
 
 

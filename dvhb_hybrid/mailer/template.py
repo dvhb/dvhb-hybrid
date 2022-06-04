@@ -3,7 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from collections import ChainMap
 from glob import glob
-from typing import Optional, Any, Mapping
+from typing import Any, Mapping, Optional
 
 import aiohttp_jinja2
 import attr

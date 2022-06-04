@@ -1,6 +1,6 @@
 import asyncio
 import io
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import openpyxl
 from aiohttp import web

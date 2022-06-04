@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections import ChainMap
-from typing import Any, Optional, Tuple, Union, Mapping
+from typing import Any, Mapping, Optional, Tuple, Union
 
 import jinja2
 from aioworkers.core.config import MergeDict
@@ -12,6 +12,7 @@ from aioworkers.worker.base import Worker
 from .. import utils
 from ..amodels import method_connect_once
 from .template import EmailTemplate, load_all
+
 
 logger = logging.getLogger('mailer')
 

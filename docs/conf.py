@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # DVHB Hybrid documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan 31 14:10:02 2017.
 #

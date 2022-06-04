@@ -1,8 +1,8 @@
 import django
+import pilkit.processors
 from django.apps import apps
 from imagekit import ImageSpec
 from imagekit.cachefiles import ImageCacheFile
-import pilkit.processors
 
 
 class Image:

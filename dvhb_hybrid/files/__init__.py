@@ -2,6 +2,7 @@ from aiohttp_apiset.swagger.operations import OperationIdMapping
 
 from . import amodels, image  # noqa
 
+
 opid = OperationIdMapping(
     image_upload=image.image_upload,
     photo_handler_wh=image.photo_handler,

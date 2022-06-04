@@ -1,7 +1,13 @@
+from django.contrib.contenttypes.models import ContentType
+
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
-from django.contrib.contenttypes.models import ContentType
-from .enums import UserActionLogEntryType, UserActionLogEntrySubType, UserActionLogStatus
+
+from .enums import (
+    UserActionLogEntrySubType,
+    UserActionLogEntryType,
+    UserActionLogStatus,
+)
 
 
 class BaseUserActionLogEntry(Model):

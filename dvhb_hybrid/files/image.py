@@ -9,8 +9,9 @@ from aiohttp import web
 from django.conf import settings
 
 from .. import aviews
-from .utils import save_image
 from . import image_processors
+from .utils import save_image
+
 
 cache = weakref.WeakValueDictionary()
 resizer = PoolExecutor(max_workers=1)

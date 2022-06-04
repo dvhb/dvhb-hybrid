@@ -1,5 +1,9 @@
 from django.conf import settings
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
@@ -8,6 +12,7 @@ from django.utils.translation import gettext_lazy as _
 from dvhb_hybrid.mailer.models import validate_lang_code
 from dvhb_hybrid.models import UpdatedMixin
 from dvhb_hybrid.utils import enum_to_choice
+
 from .enums import UserConfirmationRequestStatus
 
 

@@ -1,5 +1,5 @@
-from .base_amodels import BaseUserActionLogEntry
 from . import models
+from .base_amodels import BaseUserActionLogEntry
 
 
 class UserActionLogEntry(BaseUserActionLogEntry):

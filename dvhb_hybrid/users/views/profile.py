@@ -1,4 +1,4 @@
-from aiohttp.web_exceptions import HTTPConflict
+from aiohttp.web import HTTPConflict
 
 from dvhb_hybrid.amodels import method_connect_once
 from dvhb_hybrid.permissions import permissions

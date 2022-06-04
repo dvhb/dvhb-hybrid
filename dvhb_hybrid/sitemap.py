@@ -5,6 +5,7 @@ from aiohttp import web
 
 from . import amodels
 
+
 doctype = '<?xml version="1.0" encoding="UTF-8"?>'
 content_type = 'application/xml'
 

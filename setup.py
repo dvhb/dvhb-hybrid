@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 with Path(__file__).with_name('dvhb_hybrid').joinpath('__init__.py').open() as f:
