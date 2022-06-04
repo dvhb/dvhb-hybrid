@@ -34,8 +34,8 @@ class Image(Model):
             async with session.get(url) as response:
                 if response.status != 200:
                     return
-                l = response.content_length
-                if not l or l > 2 ** 23:
+                length = response.content_length
+                if not length or length > 2 ** 23:
                     return
                 content_type = response.content_type
                 if not content_type.startswith('image'):

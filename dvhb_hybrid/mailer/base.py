@@ -103,7 +103,7 @@ class BaseMailer(Worker):
                     try:
                         await self.send_message(msg, conn)
                         self.mail_success += 1
-                    except:
+                    except Exception:
                         self.mail_failed += 1
                         await conn.close()
                         logger.exception('Mailer reconnect')
@@ -148,7 +148,7 @@ class BaseMailer(Worker):
 
     async def get_dict_template(
         self, template_name: str, lang_code: str,
-        fallback_lang_code: str ='en'
+        fallback_lang_code: str = 'en'
     ) -> Optional[EmailTemplate]:
         for i in self._tempalte_names(
             template_name,
@@ -161,7 +161,7 @@ class BaseMailer(Worker):
 
     async def get_fs_template(
         self, template_name: str, lang_code: str,
-        fallback_lang_code: str ='en'
+        fallback_lang_code: str = 'en'
     ) -> Optional[EmailTemplate]:
         names = []
         for n in self._tempalte_names(

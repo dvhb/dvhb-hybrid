@@ -1,7 +1,6 @@
 import asyncio
 from uuid import uuid4
 
-import asyncpgsa
 import pytest
 import sqlalchemy as sa
 
@@ -81,18 +80,17 @@ async def test_get_or_create(app, model, aiohttp_client):
 
 async def test_list(app, model, aiohttp_client):
     await aiohttp_client(app)
-    l = await model.get_list(
-        limit=1, offset=1, fields=['id', 'text'], sort='id')
-    assert isinstance(l, list)
-    l = await model.get_list(sort=['id'])
-    assert isinstance(l, list)
+    items = await model.get_list(limit=1, offset=1, fields=['id', 'text'], sort='id')
+    assert isinstance(items, list)
+    items = await model.get_list(sort=['id'])
+    assert isinstance(items, list)
 
 
 async def test_dict(app, model, aiohttp_client):
     await aiohttp_client(app)
     ids = [o.pk for o in await model.get_list(fields=['id'])]
-    l = await model.get_dict(ids, fields=['id', 'text'])
-    assert isinstance(l, dict)
+    items = await model.get_dict(ids, fields=['id', 'text'])
+    assert isinstance(items, dict)
 
 
 async def test_update_json(app, model, aiohttp_client):

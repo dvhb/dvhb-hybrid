@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django import forms
 from django.conf import settings
@@ -8,6 +9,9 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from .utils import validate_svg_file
+
+
+logger = logging.getLogger(__name__)
 
 
 class CreatedMixin(models.Model):
@@ -42,8 +46,8 @@ class JSONFieldsMixin:
             if isinstance(v, str):
                 try:
                     v = json.loads(v)
-                except:
-                    pass
+                except Exception:
+                    logger.exception('Failed to load json')
                 else:
                     setattr(self, f, v)
         super().save(force_insert, force_update, using, update_fields)

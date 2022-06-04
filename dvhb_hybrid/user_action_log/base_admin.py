@@ -14,11 +14,27 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
 
     list_display = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'object_link'
+        'created_at',
+        'user',
+        'ip_address',
+        'message',
+        'type',
+        'subtype',
+        'status',
+        'object_link',
     ]
     readonly_fields = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'payload', 'content_type', 'object_id',
-        'object_repr'
+        'content_type',
+        'created_at',
+        'ip_address',
+        'message',
+        'object_id',
+        'object_repr',
+        'payload',
+        'type',
+        'status',
+        'subtype',
+        'user',
     ]
     list_filter = [
         'type',

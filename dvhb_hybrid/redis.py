@@ -9,11 +9,11 @@ def redis_key(project_slug, key, *namespaces):
     >>> redis_key('a', 1, 'c', None)
     'a:c:1'
     """
-    l = [project_slug]
+    parts = [project_slug]
     if namespaces:
-        l.extend(namespaces)
-    l.append(key)
-    return ':'.join(str(i)for i in l if i)
+        parts.extend(namespaces)
+    parts.append(key)
+    return ':'.join(str(i) for i in parts if i)
 
 
 class RedisMixin:

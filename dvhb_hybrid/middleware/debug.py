@@ -1,6 +1,6 @@
 import logging
 
-from aiohttp.web_exceptions import HTTPException
+from aiohttp.web import HTTPException
 
 logger = logging.getLogger()
 
@@ -11,7 +11,7 @@ async def debug_factory(app, handler):
             response = await handler(request)
         except HTTPException:
             raise
-        except:
+        except Exception:
             logger.exception('ERROR')
             raise
         return response

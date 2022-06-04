@@ -231,10 +231,8 @@ class Model(dict, metaclass=MetaModel):
             fields = None
         elif cls.primary_key not in fields:
             fields.append(cls.primary_key)
-        l = await cls.get_list(
-            *where, connection=connection,
-            sort=sort, fields=fields)
-        return {i.pk: i for i in l}
+        items = await cls.get_list(*where, connection=connection, sort=sort, fields=fields)
+        return {i.pk: i for i in items}
 
     @classmethod
     def get_table_from_django(cls, model, *jsonb, **field_type):

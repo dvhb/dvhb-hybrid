@@ -11,7 +11,8 @@ from dvhb_hybrid.amodels import AppModels
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tutorial.settings")
 django.setup()
 
-import tutorial
+import tutorial  # noqa
+
 AppModels.import_all_models_from_packages(tutorial)
 
 

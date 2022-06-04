@@ -152,6 +152,3 @@ texinfo_documents = [
      author, 'DVHBHybrid', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

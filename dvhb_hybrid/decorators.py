@@ -12,7 +12,7 @@ RECAPTCHA_FIELD = 'g-recaptcha-response'
 def recaptcha(arg):
     """
     Decorator to verify recaptcha response.
-    
+
     Required properties in "recaptcha" config section:
         url - url to send request.
         active - true if recaptcha verification is active.

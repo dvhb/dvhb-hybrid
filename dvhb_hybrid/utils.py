@@ -85,8 +85,8 @@ def convert_class_name(name):
     >>> convert_class_name('ABClassName')
     'abclass_name'
     """
-    l = re_class_name.findall(name)
-    return '_'.join(i.lower() for i in l if i)
+    items = re_class_name.findall(name)
+    return '_'.join(i.lower() for i in items if i)
 
 
 def int_or_zero(v):
