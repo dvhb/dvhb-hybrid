@@ -84,7 +84,7 @@ class AuthClient(TestClient):
         self._session = ClientSession(headers=headers, loop=self._loop)
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def test_client(loop, client_class):
     """Factory to create a TestClient instance.
     test_client(app, **kwargs)
