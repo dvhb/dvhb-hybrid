@@ -80,5 +80,5 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
 
         return link
 
-    object_link.admin_order_field = 'object_repr'
-    object_link.short_description = 'object'
+    object_link.admin_order_field = 'object_repr'  # type: ignore
+    object_link.short_description = 'object'  # type: ignore

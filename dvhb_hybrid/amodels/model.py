@@ -4,6 +4,7 @@ import uuid
 from abc import ABCMeta
 from functools import reduce
 from operator import and_
+from typing import Any, Dict
 
 import sqlalchemy as sa
 from sqlalchemy import func
@@ -34,7 +35,7 @@ class MetaModel(ABCMeta):
 
 
 class Model(dict, metaclass=MetaModel):
-    models = {}
+    models: Dict[str, Any] = {}
     app = None
     primary_key = 'id'
     validators = ()  # Validators for data

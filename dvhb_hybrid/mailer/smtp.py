@@ -39,4 +39,4 @@ class SMTPConnection(base.BaseConnection):
 
 
 class Mailer(base.BaseMailer):
-    connection_class = SMTPConnection
+    connection_class = SMTPConnection  # type: ignore

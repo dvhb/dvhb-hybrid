@@ -1,3 +1,4 @@
+# type: ignore
 """
 DEPRECATED module. Use aiohttp.web_exceptions instead
 """

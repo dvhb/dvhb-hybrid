@@ -1,3 +1,5 @@
+from typing import List
+
 from dvhb_hybrid.amodels import method_connect_once
 
 
@@ -9,7 +11,7 @@ class MPTTMixin:
     """
 
     parent_key = 'parent_id'  # TODO: take it from django model
-    order_insertion_by = []   # TODO: take it from django model
+    order_insertion_by: List[str] = []   # TODO: take it from django model
     mptt_fields = ['id', parent_key, 'level', 'lft', 'rght', 'tree_id']
 
     @classmethod

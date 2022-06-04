@@ -1,9 +1,7 @@
 import functools
 
-import aiohttp
-import aiohttp.web
-
-from .exceptions import HTTPNotAcceptable
+from aiohttp import ClientSession
+from aiohttp.web import HTTPNotAcceptable, HTTPOk
 
 
 RECAPTCHA_FIELD = 'g-recaptcha-response'
@@ -36,9 +34,9 @@ def recaptcha(arg):
                 return await view(**kwargs)
 
             if response:
-                async with aiohttp.ClientSession() as client:
+                async with ClientSession() as client:
                     async with client.post(c.url, data={'secret': c.secret, 'response': response}) as r:
-                        if r.status == aiohttp.web.HTTPOk.status_code:
+                        if r.status == HTTPOk.status_code:
                             data = await r.json()
                             if data['success']:
                                 return await view(**kwargs)

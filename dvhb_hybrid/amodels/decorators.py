@@ -1,5 +1,6 @@
 import asyncio
 import functools
+from typing import Dict
 from weakref import WeakKeyDictionary
 
 from ..utils import get_app_from_parameters
@@ -7,7 +8,7 @@ from .debug import ConnectionLogger
 
 
 class Guard:
-    tasks = {}
+    tasks: Dict[str, WeakKeyDictionary] = {}
 
     def __init__(self, key, loop):
         self._key = key

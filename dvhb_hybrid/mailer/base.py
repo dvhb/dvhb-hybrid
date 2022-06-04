@@ -159,6 +159,7 @@ class BaseMailer(Worker):
             t = self.templates.get(i)
             if t:
                 return t
+        return None
 
     async def get_fs_template(
         self, template_name: str, lang_code: str,
@@ -196,7 +197,7 @@ class BaseMailer(Worker):
         template = await self.app.models.email_template.get_by_name(template_name, connection=connection)
         if template is None:
             logger.info("No template name '%s' found in DB", template_name)
-            return
+            return None
         # Try to find its translation to specifed language
         translation = await template.get_translation(lang_code, connection=connection)
         # Try to find fallback translation if necessary
@@ -210,6 +211,7 @@ class BaseMailer(Worker):
         else:
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
+        return None
 
     def get_context(self, *args, **kwargs) -> Mapping[str, Any]:
         url = self.context.config.http.get_url('url', '/', null=True)
@@ -225,8 +227,8 @@ class BaseMailer(Worker):
             elif not isinstance(m, Mapping):
                 raise TypeError(
                     'context should be mapping, not {}'.format(type(context)))
-            context = context.new_child(m)
-        return context.new_child(kwargs)
+            context = context.new_child(m)  # type: ignore
+        return context.new_child(kwargs)  # type: ignore
 
     async def send(self, mail_to, subject=None, body=None, *, html=None,
                    context=None, connection=None, template=None, db_connection=None,

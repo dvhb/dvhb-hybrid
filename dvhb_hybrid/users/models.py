@@ -1,3 +1,5 @@
+from typing import List
+
 from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -79,7 +81,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     date_deleted = models.DateTimeField(_('removing date'), null=True, blank=True)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS: List[str] = []
 
     objects = AbstractUserManager()
 

@@ -2,6 +2,7 @@ import datetime
 import functools
 import json
 import uuid
+from typing import Any, Dict, Optional
 
 from aiohttp import web
 from aiohttp_apiset.views import ApiSet
@@ -35,13 +36,13 @@ dumper = functools.partial(
 
 
 class BaseView(RedisMixin, ApiSet):
-    limit_body = None
+    limit_body: Optional[int] = None
 
     @property
     def app(self):
         return self.request.app
 
-    def check_size_body(self, request, limit=None):
+    def check_size_body(self, request: web.Request, limit: Optional[int] = None):
         limit = limit or self.limit_body
         if not limit:
             return
@@ -50,19 +51,23 @@ class BaseView(RedisMixin, ApiSet):
         elif request.content_length > limit:
             raise self.response(status=413)
 
-    def list_params(self, data: dict, limit=10, offset=0):
-        try:
-            limit = int(data.get('limit'))
-            if not 1 <= limit < 1000:  # LIMIT
-                raise ValueError()
-        except (ValueError, TypeError):
-            pass
-        try:
-            offset = int(data.get('offset'))
-            if not 0 <= offset:
-                raise ValueError()
-        except (ValueError, TypeError):
-            pass
+    def list_params(self, data: Dict[str, Any], limit: int = 10, offset: int = 0):
+        raw_limit = data.get('limit')
+        if raw_limit is not None:
+            try:
+                limit = int(raw_limit)
+                if not 1 <= limit < 1000:
+                    raise ValueError()
+            except (ValueError, TypeError):
+                pass
+        raw_offset = data.get('offset')
+        if raw_offset is not None:
+            try:
+                offset = int(raw_offset)
+                if offset is not None and not 0 <= offset:
+                    raise ValueError()
+            except (ValueError, TypeError):
+                pass
         return limit, offset
 
 

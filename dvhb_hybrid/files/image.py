@@ -13,7 +13,7 @@ from . import image_processors
 from .utils import save_image
 
 
-cache = weakref.WeakValueDictionary()
+cache = weakref.WeakValueDictionary()  # type: ignore
 resizer = PoolExecutor(max_workers=1)
 image_factory = image_processors.ImageFactory()
 

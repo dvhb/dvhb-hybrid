@@ -3,13 +3,26 @@ import re
 from abc import ABC, abstractmethod
 from collections import ChainMap
 from glob import glob
-from typing import Any, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional
 
 import aiohttp_jinja2
 import attr
 import jinja2
 import yaml
-from jinja2 import TemplateNotFound  # noqa
+from jinja2 import TemplateNotFound
+
+
+__all__ = [
+    'EmailTemplate',
+    'FormatRender',
+    'Jinja2Render',
+    'Render',
+    'TemplateNotFound',
+    'TemplateRender',
+    'TitleTemplateRender',
+    'load_all',
+    'get_template',
+]
 
 
 def load_all(app, path):
@@ -94,7 +107,7 @@ def get_template(app, data):
 class TemplateRender(Render):
     re_img = re.compile(r'(<img.*? src=["\'])\.*/(.*?["\'].*?>)', re.I | re.U)
 
-    def __init__(self, template: jinja2.Template, cache: dict) -> None:
+    def __init__(self, template: jinja2.Template, cache: Dict[str, Any]):
         self._template = template
         self._cache = cache
 
@@ -134,7 +147,7 @@ class EmailTemplate:
     def create_from_jinja2(
         cls, template: jinja2.Template,
     ) -> 'EmailTemplate':
-        cache = {}
+        cache: Dict[str, Any] = {}
         return cls(
             subject=TitleTemplateRender(template, cache=cache),
             body=FormatRender(''),

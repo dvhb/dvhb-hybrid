@@ -13,7 +13,7 @@ from dvhb_hybrid.permissions import gen_api_key
 logger = logging.getLogger(__name__)
 
 # Prevent limiting data to fields defined in aioauth_client.User
-aioauth_client.User = lambda **kwargs: kwargs
+aioauth_client.User = lambda **kwargs: kwargs  # type: ignore
 
 
 class UserOAuthView:
