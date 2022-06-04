@@ -12,7 +12,7 @@ class Guard:
 
     def __init__(self, key, loop):
         self._key = key
-        self._task = asyncio.Task.current_task(loop=loop)
+        self._task = asyncio.current_task(loop=loop)
         self._d = self.tasks.setdefault(key, WeakKeyDictionary())
 
     def __enter__(self):
