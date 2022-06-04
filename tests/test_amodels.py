@@ -1,4 +1,3 @@
-import asyncio
 from uuid import uuid4
 
 import pytest
@@ -52,16 +51,10 @@ async def test_get_one(app, model, aiohttp_client):
 
 
 @pytest.mark.django_db
-async def test_count(app, mocker, model, aiohttp_client):
+async def test_count(app, model, aiohttp_client):
     await aiohttp_client(app)
     await model.create(text='123')
-    assert await model.get_count(
-        redis=mocker.Mock(
-            get=asyncio.coroutine(lambda x: None),
-            set=asyncio.coroutine(lambda x, v: None),
-            expire=asyncio.coroutine(lambda x, v: None),
-        )
-    )
+    assert await model.get_count()
 
 
 @pytest.mark.django_db

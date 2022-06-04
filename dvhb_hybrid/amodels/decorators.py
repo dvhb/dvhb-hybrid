@@ -45,7 +45,7 @@ def method_connect_once(arg):
     return with_arg(arg)
 
 
-def method_redis_once(arg):
+def method_redis_once(arg):  # TODO: remove
     redis = 'redis'
 
     def with_arg(func):

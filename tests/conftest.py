@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 
@@ -64,7 +65,12 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context):
+def app(context, mocker):
+    context.app.redis = mocker.Mock(
+        get=asyncio.coroutine(lambda x: None),
+        set=asyncio.coroutine(lambda x, v: None),
+        expire=asyncio.coroutine(lambda x, v: None),
+    )
     yield context.app
 
 

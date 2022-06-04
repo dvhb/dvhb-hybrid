@@ -19,7 +19,7 @@ except ImportError:
 
 
 from .. import aviews, exceptions, utils
-from .decorators import method_connect_once, method_redis_once
+from .decorators import method_connect_once
 
 
 CACHE_CATEGORY_COUNT = 'count'
@@ -249,8 +249,7 @@ class Model(dict, metaclass=MetaModel):
         return await connection.fetchval(sql)
 
     @classmethod
-    @method_redis_once
-    async def get_count(cls, *args, postfix=None, connection=None, redis=None, expire=180):
+    async def get_count(cls, *args, postfix=None, connection=None, expire=180):
         """
         Extract query size
         """
@@ -270,6 +269,7 @@ class Model(dict, metaclass=MetaModel):
 
         key = cls.get_cache_key(CACHE_CATEGORY_COUNT, postfix)
 
+        redis = cls.app.redis
         count = await redis.get(key)
         if count is not None:
             return int(count)
@@ -282,9 +282,7 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_connect_once
-    @method_redis_once
-    async def get_sum(cls, column, where, postfix=None, delay=0,
-                      connection=None, redis=None):
+    async def get_sum(cls, column, where, postfix=None, delay=0, connection=None):
         """Calculates sum"""
         sql = sa.select([func.sum(cls.table.c[column])]).where(where)
 
@@ -293,6 +291,7 @@ class Model(dict, metaclass=MetaModel):
 
         key = cls.get_cache_key(CACHE_CATEGORY_SUM, postfix)
 
+        redis = cls.app.redis
         if delay:
             count = await redis.get(key)
             if count is not None:

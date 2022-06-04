@@ -10,7 +10,7 @@ __all__ = [
     'Model',
     'derive_from_django',
     'method_connect_once',
-    'method_redis_once',
+    'method_redis_once',  # TODO: remove
     'MPTTMixin',
 ]
 

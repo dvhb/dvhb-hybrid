@@ -1,9 +1,7 @@
 import functools
-import operator
 import uuid
 
-from dvhb_hybrid import amodels, exceptions, utils
-from dvhb_hybrid.amodels import method_redis_once
+from dvhb_hybrid import exceptions, utils
 from dvhb_hybrid.redis import redis_key
 
 
@@ -25,10 +23,7 @@ async def get_session_data(request, sessions=None):
         except (ValueError, TypeError):
             pass
         else:
-            @amodels.method_redis_once('sessions')
-            def get_data(request, sessions):
-                return sessions.hgetall(redis_key(request.app.name, api_key, 'session'))
-            d = await get_data(request, sessions=sessions)
+            d = await sessions.hgetall(redis_key(request.app.name, api_key, 'session'))
             session = {k.decode(): v.decode() for k, v in d.items()}
     request.session = session
     return session
@@ -102,8 +97,10 @@ def permissions(view=None, *, is_superuser=False):
         return wrapper_outer
 
 
-@method_redis_once('sessions')
-async def gen_api_key(user_id, *, request=None, sessions=None, **kwargs):
+async def gen_api_key(user_id, *, request=None, **kwargs):
+    assert request is not None  # TODO: make request required
+    sessions = request.app.sessions
+
     if user_id:
         kwargs['uid'] = str(user_id)
 
@@ -126,8 +123,7 @@ async def gen_api_key(user_id, *, request=None, sessions=None, **kwargs):
         api_key = str(uuid.uuid4())
         full_key = redis_key(request.app.name, api_key, 'session')
 
-    pairs = functools.reduce(operator.add, u.items())
-    await sessions.hmset(full_key, *pairs)
+    await sessions.hmset(full_key, u)
 
     request.api_key = api_key
     return api_key
