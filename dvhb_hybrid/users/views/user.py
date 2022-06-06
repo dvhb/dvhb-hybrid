@@ -1,11 +1,15 @@
-from aiohttp.web import json_response
-from aiohttp.web_exceptions import HTTPNotFound, HTTPConflict, HTTPUnauthorized
+from aiohttp.web import (
+    HTTPConflict,
+    HTTPNotFound,
+    HTTPUnauthorized,
+    json_response,
+)
 from aiohttp_apiset.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password, make_password
 
-from dvhb_hybrid.amodels import method_redis_once, method_connect_once
+from dvhb_hybrid.amodels import method_connect_once
 from dvhb_hybrid.decorators import recaptcha
-from dvhb_hybrid.permissions import permissions, gen_api_key
+from dvhb_hybrid.permissions import gen_api_key, permissions
 from dvhb_hybrid.redis import redis_key
 
 
@@ -25,11 +29,10 @@ async def login(request, email, password, connection=None):
     raise HTTPUnauthorized(reason="Login incorrect")
 
 
-@method_redis_once('sessions')
 @permissions
-async def logout(request, sessions):
+async def logout(request):
     key = redis_key(request.app.name, request.api_key, 'session')
-    await sessions.delete(key)
+    await request.app.sessions.delete(key)
     await request.app.m.user_action_log_entry.create_logout(request)
     return {'status': 200}
 

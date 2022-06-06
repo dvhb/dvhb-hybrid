@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
 # DVHB Hybrid documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan 31 14:10:02 2017.
 #
@@ -31,7 +29,7 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = []  # type: ignore
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -105,7 +103,7 @@ htmlhelp_basename = 'DVHBHybriddoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
+latex_elements = {  # type: ignore
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
@@ -152,6 +150,3 @@ texinfo_documents = [
      author, 'DVHBHybrid', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

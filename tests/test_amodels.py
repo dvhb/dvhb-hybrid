@@ -1,21 +1,26 @@
-import asyncio
 from uuid import uuid4
 
-import asyncpgsa
 import pytest
 import sqlalchemy as sa
 
 from dvhb_hybrid import exceptions
-from dvhb_hybrid.amodels import Model
+from dvhb_hybrid.amodels import Model, derive_from_django
+
+from . import models
 
 
-class Model1(Model):
+@derive_from_django(models.ExampleModel)
+class ExampleModel(Model):
     table = sa.table(
         'test',
         sa.column('id', sa.Integer),
         sa.column('text', sa.Text),
         sa.column('data', sa.JSON),
     )
+
+    @classmethod
+    def set_defaults(cls, data):
+        data.setdefault('data', {})
 
 
 @pytest.fixture
@@ -25,15 +30,17 @@ def new_object():
 
 @pytest.fixture
 def model(app):
-    return Model1.factory(app)
+    return app.m.example_model
 
 
+@pytest.mark.django_db
 async def test_create(model, app, aiohttp_client):
     await aiohttp_client(app)
     obj = await model.create(text='123', data={'1': 2, '3': '4'})
     assert isinstance(obj.pk, int)
 
 
+@pytest.mark.django_db
 async def test_get_one(app, model, aiohttp_client):
     await aiohttp_client(app)
     obj = await model.create(text='123')
@@ -43,18 +50,14 @@ async def test_get_one(app, model, aiohttp_client):
         await model.get_one(None)
 
 
-async def test_count(app, mocker, model, aiohttp_client):
+@pytest.mark.django_db
+async def test_count(app, model, aiohttp_client):
     await aiohttp_client(app)
     await model.create(text='123')
-    assert await model.get_count(
-        redis=mocker.Mock(
-            get=asyncio.coroutine(lambda x: None),
-            set=asyncio.coroutine(lambda x, v: None),
-            expire=asyncio.coroutine(lambda x, v: None),
-        )
-    )
+    assert await model.get_count()
 
 
+@pytest.mark.django_db
 async def test_save(app, model, aiohttp_client):
     await aiohttp_client(app)
     obj = model(text='123')
@@ -66,6 +69,7 @@ async def test_save(app, model, aiohttp_client):
     assert obj.text == obj2.text
 
 
+@pytest.mark.django_db
 async def test_get_or_create(app, model, aiohttp_client):
     await aiohttp_client(app)
     t = str(uuid4())
@@ -79,22 +83,24 @@ async def test_get_or_create(app, model, aiohttp_client):
     assert not created
 
 
+@pytest.mark.django_db
 async def test_list(app, model, aiohttp_client):
     await aiohttp_client(app)
-    l = await model.get_list(
-        limit=1, offset=1, fields=['id', 'text'], sort='id')
-    assert isinstance(l, list)
-    l = await model.get_list(sort=['id'])
-    assert isinstance(l, list)
+    items = await model.get_list(limit=1, offset=1, fields=['id', 'text'], sort='id')
+    assert isinstance(items, list)
+    items = await model.get_list(sort=['id'])
+    assert isinstance(items, list)
 
 
+@pytest.mark.django_db
 async def test_dict(app, model, aiohttp_client):
     await aiohttp_client(app)
     ids = [o.pk for o in await model.get_list(fields=['id'])]
-    l = await model.get_dict(ids, fields=['id', 'text'])
-    assert isinstance(l, dict)
+    items = await model.get_dict(ids, fields=['id', 'text'])
+    assert isinstance(items, dict)
 
 
+@pytest.mark.django_db
 async def test_update_json(app, model, aiohttp_client):
     await aiohttp_client(app)
     obj = await model.create(text='123', data={'1': 2, '3': {'4': '5'}})
@@ -107,6 +113,7 @@ async def test_update_json(app, model, aiohttp_client):
     assert r['data']['9']['10'] == 11
 
 
+@pytest.mark.django_db
 async def test_create_many(app, model, aiohttp_client):
     await aiohttp_client(app)
     result = await model.create_many([
@@ -117,6 +124,7 @@ async def test_create_many(app, model, aiohttp_client):
     assert all('id' in i for i in result)
 
 
+@pytest.mark.django_db
 async def test_create_delete(app, model, new_object, aiohttp_client):
     await aiohttp_client(app)
     obj = await model.create(**new_object)
@@ -130,6 +138,7 @@ async def test_create_delete(app, model, new_object, aiohttp_client):
     assert not r
 
 
+@pytest.mark.django_db
 async def test_validate_and_save(app, model, new_object, aiohttp_client):
     await aiohttp_client(app)
 

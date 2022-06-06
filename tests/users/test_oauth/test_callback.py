@@ -1,9 +1,8 @@
 import pytest
-
 from aioresponses import aioresponses
 from yarl import URL
 
-from .conftest import PROVIDERS_TO_TEST, PROVIDER_PARAMS, get_email, set_email
+from .conftest import PROVIDER_PARAMS, PROVIDERS_TO_TEST, get_email, set_email
 
 
 @pytest.mark.django_db

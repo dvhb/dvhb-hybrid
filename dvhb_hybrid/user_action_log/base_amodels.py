@@ -1,7 +1,13 @@
+from django.contrib.contenttypes.models import ContentType
+
 from dvhb_hybrid import utils
 from dvhb_hybrid.amodels import Model, method_connect_once
-from django.contrib.contenttypes.models import ContentType
-from .enums import UserActionLogEntryType, UserActionLogEntrySubType, UserActionLogStatus
+
+from .enums import (
+    UserActionLogEntrySubType,
+    UserActionLogEntryType,
+    UserActionLogStatus,
+)
 
 
 class BaseUserActionLogEntry(Model):
@@ -20,7 +26,11 @@ class BaseUserActionLogEntry(Model):
     @classmethod
     @method_connect_once
     async def create_record(
-            cls, request, type, subtype, message=None, payload=None, status=None, user_id=None, object=None, connection=None):
+        cls, request, type, subtype,
+        message=None, payload=None,
+        status=None, user_id=None,
+        object=None, connection=None
+    ):
         rec_data = await cls._prepare_data(
             request, message, type, subtype, payload, user_id, object, status, connection=connection)
         return await cls.create(**rec_data, connection=connection)

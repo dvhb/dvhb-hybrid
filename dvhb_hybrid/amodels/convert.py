@@ -3,10 +3,13 @@ import logging
 import sqlalchemy as sa
 import sqlalchemy.types as sa_types
 from django.db.models import ForeignKey, OneToOneField
-from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY, JSONB as SA_JSONB, UUID as SA_UUID
+from sqlalchemy.dialects.postgresql import ARRAY as SA_ARRAY
+from sqlalchemy.dialects.postgresql import JSONB as SA_JSONB
+from sqlalchemy.dialects.postgresql import UUID as SA_UUID
 
 from .. import utils
 from .relations import RelationshipProperty
+
 
 logger = logging.getLogger(__name__)
 

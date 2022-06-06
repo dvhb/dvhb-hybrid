@@ -1,3 +1,4 @@
+# type: ignore
 """
 DEPRECATED module. Use aiohttp.web_exceptions instead
 """
@@ -5,7 +6,7 @@ DEPRECATED module. Use aiohttp.web_exceptions instead
 import json
 
 import aiohttp.web
-from aiohttp.web_exceptions import HTTPException
+from aiohttp.web import HTTPException
 
 from .aviews import JsonEncoder
 

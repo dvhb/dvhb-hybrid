@@ -1,6 +1,5 @@
 import os
-
-from collections import Sequence
+from collections.abc import Sequence
 
 from babel.support import Translations as BaseTranslations
 

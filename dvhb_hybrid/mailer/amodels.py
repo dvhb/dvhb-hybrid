@@ -1,9 +1,9 @@
 from .. import utils
 from ..amodels import Model, method_connect_once
-from .template import FormatRender, Jinja2Render
 from .models import Message
 from .models import Template as DjangoTemplate
 from .models import TemplateTranslation as DjangoTemplateTranslation
+from .template import FormatRender, Jinja2Render
 
 
 class MailMessage(Model):

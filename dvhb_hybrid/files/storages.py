@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .. import utils
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -21,7 +22,7 @@ class BaseStorage(FileSystemStorage):
         try:
             if not os.path.exists(path):
                 os.makedirs(path)
-        except:
+        except Exception:
             logger.exception(force_str(self.ERROR_CREATE_DIR).format(path))
 
     def uuid(self, name=None):

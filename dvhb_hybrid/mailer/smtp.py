@@ -1,7 +1,7 @@
+import smtplib
 from concurrent.futures import ThreadPoolExecutor
 from email.mime.text import MIMEText
 from functools import partial
-import smtplib
 
 from . import base
 
@@ -39,4 +39,4 @@ class SMTPConnection(base.BaseConnection):
 
 
 class Mailer(base.BaseMailer):
-    connection_class = SMTPConnection
+    connection_class = SMTPConnection  # type: ignore

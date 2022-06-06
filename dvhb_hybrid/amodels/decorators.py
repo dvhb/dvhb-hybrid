@@ -1,17 +1,18 @@
 import asyncio
 import functools
+from typing import Dict
 from weakref import WeakKeyDictionary
 
-from .debug import ConnectionLogger
 from ..utils import get_app_from_parameters
+from .debug import ConnectionLogger
 
 
 class Guard:
-    tasks = {}
+    tasks: Dict[str, WeakKeyDictionary] = {}
 
     def __init__(self, key, loop):
         self._key = key
-        self._task = asyncio.Task.current_task(loop=loop)
+        self._task = asyncio.current_task(loop=loop)
         self._d = self.tasks.setdefault(key, WeakKeyDictionary())
 
     def __enter__(self):
@@ -44,7 +45,7 @@ def method_connect_once(arg):
     return with_arg(arg)
 
 
-def method_redis_once(arg):
+def method_redis_once(arg):  # TODO: remove
     redis = 'redis'
 
     def with_arg(func):

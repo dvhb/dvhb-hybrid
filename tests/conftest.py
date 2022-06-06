@@ -1,15 +1,16 @@
+import asyncio
+import os
 from pathlib import Path
 
-import asyncpgsa
 import django
 import pytest
 import yaml
-from aiohttp.web import Application
 from aioworkers.core.config import Config
 from aioworkers.core.context import Context
 from django.core.management import call_command
 
 from dvhb_hybrid import BASE_DIR
+
 
 TESTS_DIR = Path(__file__).parent
 
@@ -19,17 +20,23 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.auth',
-    'dvhb_hybrid.users',
+    'dvhb_hybrid.files',
     'dvhb_hybrid.mailer',
     'dvhb_hybrid.user_action_log',
+    'dvhb_hybrid.users',
     'tests',
 ]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'dvhb_hybrid',
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD')
     }
 }
+USE_TZ = False
 
 
 class Conf(Config):
@@ -58,7 +65,12 @@ def pytest_configure():
 
 
 @pytest.fixture
-def app(context):
+def app(context, mocker):
+    context.app.redis = mocker.Mock(
+        get=asyncio.coroutine(lambda x: None),
+        set=asyncio.coroutine(lambda x, v: None),
+        expire=asyncio.coroutine(lambda x, v: None),
+    )
     yield context.app
 
 

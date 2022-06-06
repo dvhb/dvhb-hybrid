@@ -4,7 +4,11 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from ..utils import enum_to_choice
-from .enums import UserActionLogEntryType, UserActionLogEntrySubType, UserActionLogStatus
+from .enums import (
+    UserActionLogEntrySubType,
+    UserActionLogEntryType,
+    UserActionLogStatus,
+)
 
 
 class BaseUserActionLogEntry(models.Model):

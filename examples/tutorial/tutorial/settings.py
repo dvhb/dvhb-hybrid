@@ -1,7 +1,10 @@
 import os
+from typing import List
+
+from aioworkers.config import load_conf
 
 from dvhb_hybrid.config import db_to_settings
-from aioworkers.config import load_conf
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -16,7 +19,7 @@ SECRET_KEY = 'vta6@#en!16hga8#z#-4vvssr3^e+2fls7%!=8a-i8aj!#y6s9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition

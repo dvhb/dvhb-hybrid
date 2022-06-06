@@ -1,9 +1,9 @@
-import importlib
-import pkgutil
 import functools
 import hashlib
+import importlib
 import json
 import os
+import pkgutil
 import re
 import time
 import uuid
@@ -15,6 +15,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from .aviews import JsonEncoder
+
 
 r_uuid4 = (r'[a-f0-9]{8}-?'
            r'[a-f0-9]{4}-?'
@@ -85,8 +86,8 @@ def convert_class_name(name):
     >>> convert_class_name('ABClassName')
     'abclass_name'
     """
-    l = re_class_name.findall(name)
-    return '_'.join(i.lower() for i in l if i)
+    items = re_class_name.findall(name)
+    return '_'.join(i.lower() for i in items if i)
 
 
 def int_or_zero(v):

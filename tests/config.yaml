@@ -1,5 +1,21 @@
-
+env:
+  databases:
+    default:
+      host: POSTGRES_HOST
+      port: POSTGRES_PORT
+      user: POSTGRES_USER
+      password: POSTGRES_PASSWORD
+  redis:
+    default:
+      connection:
+        host: REDIS_HOST
+        port: REDIS_PORT
+    sessions:
+      connection:
+        host: REDIS_HOST
+        port: REDIS_PORT
 app:
+  cls: aioworkers_aiohttp.app.Application
   router:
     search_in_modules:
      - dvhb_hybrid
@@ -8,5 +24,16 @@ app:
 
 databases:
   default:
-    uri: postgres:///test_dvhb_hybrid
     database: test_dvhb_hybrid
+
+redis:
+  default:
+    connection:
+      host: 127.0.0.1
+      port: 6379
+      db: 0
+  sessions:
+    connection:
+      host: 127.0.0.1
+      port: 6379
+      db: 1

@@ -1,10 +1,11 @@
 from email.mime.text import MIMEText
+from typing import List
 
 from . import base
 
 
 class Connection(base.BaseConnection):
-    messages = []
+    messages: List[MIMEText] = []
 
     def __init__(self, conf, **kwargs):
         super().__init__(**kwargs)

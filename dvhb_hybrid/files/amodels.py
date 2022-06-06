@@ -2,11 +2,11 @@ import mimetypes
 from io import BytesIO
 
 from aiohttp import client
-from sqlalchemy import table, column
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import column, table
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
-from ..amodels import Model
 from .. import utils
+from ..amodels import Model
 from .storages import image_storage
 
 
@@ -34,8 +34,8 @@ class Image(Model):
             async with session.get(url) as response:
                 if response.status != 200:
                     return
-                l = response.content_length
-                if not l or l > 2 ** 23:
+                length = response.content_length
+                if not length or length > 2 ** 23:
                     return
                 content_type = response.content_type
                 if not content_type.startswith('image'):

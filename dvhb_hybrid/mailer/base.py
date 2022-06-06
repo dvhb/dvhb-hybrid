@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from collections import ChainMap
-from typing import Any, Optional, Tuple, Union, Mapping
+from typing import Any, Mapping, Optional, Tuple, Union
 
 import jinja2
 from aioworkers.core.config import MergeDict
@@ -12,6 +12,7 @@ from aioworkers.worker.base import Worker
 from .. import utils
 from ..amodels import method_connect_once
 from .template import EmailTemplate, load_all
+
 
 logger = logging.getLogger('mailer')
 
@@ -103,7 +104,7 @@ class BaseMailer(Worker):
                     try:
                         await self.send_message(msg, conn)
                         self.mail_success += 1
-                    except:
+                    except Exception:
                         self.mail_failed += 1
                         await conn.close()
                         logger.exception('Mailer reconnect')
@@ -148,7 +149,7 @@ class BaseMailer(Worker):
 
     async def get_dict_template(
         self, template_name: str, lang_code: str,
-        fallback_lang_code: str ='en'
+        fallback_lang_code: str = 'en'
     ) -> Optional[EmailTemplate]:
         for i in self._tempalte_names(
             template_name,
@@ -158,10 +159,11 @@ class BaseMailer(Worker):
             t = self.templates.get(i)
             if t:
                 return t
+        return None
 
     async def get_fs_template(
         self, template_name: str, lang_code: str,
-        fallback_lang_code: str ='en'
+        fallback_lang_code: str = 'en'
     ) -> Optional[EmailTemplate]:
         names = []
         for n in self._tempalte_names(
@@ -195,7 +197,7 @@ class BaseMailer(Worker):
         template = await self.app.models.email_template.get_by_name(template_name, connection=connection)
         if template is None:
             logger.info("No template name '%s' found in DB", template_name)
-            return
+            return None
         # Try to find its translation to specifed language
         translation = await template.get_translation(lang_code, connection=connection)
         # Try to find fallback translation if necessary
@@ -209,6 +211,7 @@ class BaseMailer(Worker):
         else:
             logger.error(
                 "No '%s' fallback translation for template name '%s' found in DB", fallback_lang_code, template_name)
+        return None
 
     def get_context(self, *args, **kwargs) -> Mapping[str, Any]:
         url = self.context.config.http.get_url('url', '/', null=True)
@@ -224,8 +227,8 @@ class BaseMailer(Worker):
             elif not isinstance(m, Mapping):
                 raise TypeError(
                     'context should be mapping, not {}'.format(type(context)))
-            context = context.new_child(m)
-        return context.new_child(kwargs)
+            context = context.new_child(m)  # type: ignore
+        return context.new_child(kwargs)  # type: ignore
 
     async def send(self, mail_to, subject=None, body=None, *, html=None,
                    context=None, connection=None, template=None, db_connection=None,

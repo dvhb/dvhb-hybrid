@@ -1,8 +1,7 @@
 import logging
 
 import aioauth_client
-from aiohttp.web_exceptions import HTTPNotFound, HTTPFound
-from aiohttp.web_request import Request
+from aiohttp.web import HTTPFound, HTTPNotFound, Request
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
 from yarl import URL
@@ -10,10 +9,11 @@ from yarl import URL
 from dvhb_hybrid.amodels import method_connect_once
 from dvhb_hybrid.permissions import gen_api_key
 
+
 logger = logging.getLogger(__name__)
 
 # Prevent limiting data to fields defined in aioauth_client.User
-aioauth_client.User = lambda **kwargs: kwargs
+aioauth_client.User = lambda **kwargs: kwargs  # type: ignore
 
 
 class UserOAuthView:

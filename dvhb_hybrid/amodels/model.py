@@ -1,16 +1,16 @@
 import itertools
 import json
 import uuid
-
 from abc import ABCMeta
 from functools import reduce
 from operator import and_
+from typing import Any, Dict
 
 import sqlalchemy as sa
-
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy import func
+
 
 try:
     from modeltranslation import translator as dtrans
@@ -18,8 +18,8 @@ except ImportError:
     dtrans = None
 
 
-from .decorators import method_connect_once, method_redis_once
-from .. import utils, exceptions, aviews
+from .. import aviews, exceptions, utils
+from .decorators import method_connect_once
 
 
 CACHE_CATEGORY_COUNT = 'count'
@@ -35,7 +35,7 @@ class MetaModel(ABCMeta):
 
 
 class Model(dict, metaclass=MetaModel):
-    models = {}
+    models: Dict[str, Any] = {}
     app = None
     primary_key = 'id'
     validators = ()  # Validators for data
@@ -231,10 +231,8 @@ class Model(dict, metaclass=MetaModel):
             fields = None
         elif cls.primary_key not in fields:
             fields.append(cls.primary_key)
-        l = await cls.get_list(
-            *where, connection=connection,
-            sort=sort, fields=fields)
-        return {i.pk: i for i in l}
+        items = await cls.get_list(*where, connection=connection, sort=sort, fields=fields)
+        return {i.pk: i for i in items}
 
     @classmethod
     def get_table_from_django(cls, model, *jsonb, **field_type):
@@ -251,8 +249,7 @@ class Model(dict, metaclass=MetaModel):
         return await connection.fetchval(sql)
 
     @classmethod
-    @method_redis_once
-    async def get_count(cls, *args, postfix=None, connection=None, redis=None, expire=180):
+    async def get_count(cls, *args, postfix=None, connection=None, expire=180):
         """
         Extract query size
         """
@@ -272,6 +269,7 @@ class Model(dict, metaclass=MetaModel):
 
         key = cls.get_cache_key(CACHE_CATEGORY_COUNT, postfix)
 
+        redis = cls.app.redis
         count = await redis.get(key)
         if count is not None:
             return int(count)
@@ -284,9 +282,7 @@ class Model(dict, metaclass=MetaModel):
 
     @classmethod
     @method_connect_once
-    @method_redis_once
-    async def get_sum(cls, column, where, postfix=None, delay=0,
-                      connection=None, redis=None):
+    async def get_sum(cls, column, where, postfix=None, delay=0, connection=None):
         """Calculates sum"""
         sql = sa.select([func.sum(cls.table.c[column])]).where(where)
 
@@ -295,6 +291,7 @@ class Model(dict, metaclass=MetaModel):
 
         key = cls.get_cache_key(CACHE_CATEGORY_SUM, postfix)
 
+        redis = cls.app.redis
         if delay:
             count = await redis.get(key)
             if count is not None:

@@ -5,7 +5,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from ..models import UpdatedMixin, SVGAndImageField
+from ..models import SVGAndImageField, UpdatedMixin
 from .storages import image_storage
 
 

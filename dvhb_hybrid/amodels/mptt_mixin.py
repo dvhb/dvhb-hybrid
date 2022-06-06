@@ -1,3 +1,8 @@
+from collections import defaultdict
+from typing import List
+
+import sqlalchemy as sa
+
 from dvhb_hybrid.amodels import method_connect_once
 
 
@@ -9,7 +14,7 @@ class MPTTMixin:
     """
 
     parent_key = 'parent_id'  # TODO: take it from django model
-    order_insertion_by = []   # TODO: take it from django model
+    order_insertion_by: List[str] = []   # TODO: take it from django model
     mptt_fields = ['id', parent_key, 'level', 'lft', 'rght', 'tree_id']
 
     @classmethod
@@ -48,6 +53,23 @@ class MPTTMixin:
             self._column('parent_id') == self.pk
         ]
         return await super().get_list(*where_args, connection=connection, **kwargs)
+
+    @classmethod
+    @method_connect_once
+    async def get_children_for_list(cls, parent_ids, connection=None):
+        a = sa.select([
+            cls.table,
+            cls.table.c.parent_id.label('root')
+        ]).where(cls._column('parent_id').in_(parent_ids)).cte(recursive=True)
+        b = sa.select([cls.table, a.c.root]).select_from(
+            cls.table.join(a, cls._column('parent_id') == a.c.id)
+        )
+        stmt = sa.select(['*']).select_from(a.union_all(b)).order_by('id')
+        result = defaultdict(list)
+        for i in await connection.fetch(stmt):
+            i = dict(i)
+            result[i.pop('root')].append(cls(**i))
+        return result
 
     @method_connect_once
     async def get_descendants(self, include_self=False, *, connection=None, **kwargs):
@@ -144,17 +166,17 @@ class MPTTMixin:
         return map(lambda r: r[cls.primary_key], data)
 
     @classmethod
-    async def _update_node(cls, node_id, left, right, connection):
+    async def _update_node(cls, node_id, left, right, tree_id, connection):
         where = cls._column('id') == node_id
-        await cls.update_fields(where, lft=left, rght=right, connection=connection)
+        await cls.update_fields(where, lft=left, rght=right, tree_id=tree_id, connection=connection)
 
     @classmethod
-    async def _rebuild_subtree(cls, root_id, *, left=1, connection=None):
+    async def _rebuild_subtree(cls, root_id, *, tree_id, left=1, connection=None):
         right = left + 1  # in the case it is a leaf node
         child_ids = await cls._fetch_child_ids(root_id, connection)
         for child_id in child_ids:
-            right = await cls._rebuild_subtree(root_id=child_id, left=right, connection=connection)
-        await cls._update_node(root_id, left=left, right=right, connection=connection)
+            right = await cls._rebuild_subtree(root_id=child_id, left=right, tree_id=tree_id, connection=connection)
+        await cls._update_node(root_id, left=left, right=right, tree_id=tree_id, connection=connection)
         return right + 1
 
     @classmethod
@@ -164,8 +186,8 @@ class MPTTMixin:
         Rebuils MPTT indexes for all data (i.e. all subtrees)
         """
         top_ids = await cls._fetch_child_ids(None, connection)
-        for top_id in top_ids:
-            await cls._rebuild_subtree(top_id, connection=connection)
+        for idx, top_id in enumerate(top_ids):
+            await cls._rebuild_subtree(top_id, tree_id=idx + 1, connection=connection)
 
     @classmethod
     async def _get_rightmost_sibling(cls, parent_id, connection):
@@ -200,7 +222,7 @@ class MPTTMixin:
         if rebuild and parent_id:
             # Regenerate MPTT indexes for the current subtree
             root_id = await cls._get_tree_root_id(kwargs['tree_id'], connection=connection)
-            await cls._rebuild_subtree(root_id, connection=connection)
-            # Refetch node created
+            await cls._rebuild_subtree(root_id, tree_id=kwargs['tree_id'], connection=connection)
+            # Refetch created node
             tree_node = await cls.get_one(tree_node.pk, connection=connection)
         return tree_node

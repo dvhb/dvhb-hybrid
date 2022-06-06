@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
@@ -14,11 +14,27 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
 
     list_display = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'object_link'
+        'created_at',
+        'user',
+        'ip_address',
+        'message',
+        'type',
+        'subtype',
+        'status',
+        'object_link',
     ]
     readonly_fields = [
-        'created_at', 'user', 'ip_address', 'message', 'type', 'subtype', 'status', 'payload', 'content_type', 'object_id',
-        'object_repr'
+        'content_type',
+        'created_at',
+        'ip_address',
+        'message',
+        'object_id',
+        'object_repr',
+        'payload',
+        'type',
+        'status',
+        'subtype',
+        'user',
     ]
     list_filter = [
         'type',
@@ -64,5 +80,5 @@ class BaseUserActionLogEntryAdmin(admin.ModelAdmin):
 
         return link
 
-    object_link.admin_order_field = 'object_repr'
-    object_link.short_description = 'object'
+    object_link.admin_order_field = 'object_repr'  # type: ignore
+    object_link.short_description = 'object'  # type: ignore

@@ -69,4 +69,4 @@ class DjangoConnection(base.BaseConnection):
 
 
 class Mailer(base.BaseMailer):
-    connection_class = DjangoConnection
+    connection_class = DjangoConnection  # type: ignore

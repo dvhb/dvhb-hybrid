@@ -1,5 +1,4 @@
 import django.contrib.postgres.indexes
-
 from django.db import migrations
 
 
