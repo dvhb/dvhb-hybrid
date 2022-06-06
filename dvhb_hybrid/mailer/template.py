@@ -6,7 +6,7 @@ from glob import glob
 from typing import Any, Dict, Mapping, Optional
 
 import aiohttp_jinja2
-import attr
+import attrs
 import jinja2
 import yaml
 from jinja2 import TemplateNotFound
@@ -137,7 +137,7 @@ class TitleTemplateRender(TemplateRender):
         return ''
 
 
-@attr.s(auto_attribs=True)
+@attrs.define(auto_attribs=True)
 class EmailTemplate:
     subject: Render
     body: Render
